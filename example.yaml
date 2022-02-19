@@ -1,0 +1,67 @@
+
+roleAssignments:
+  enabled: true
+  rules:
+  - roleDefinitionName: "Network Contributor"
+    scope: {matchRe: "/subscriptions/.+" }
+  - roleDefinitionName: "Contributor"
+  - roleDefinitionName: "Owner"
+  - roleDefinitionName: "Reader"
+
+resourceGroups:
+  enabled: true
+  rules:
+  - location: {matchRe: "westeurope|centralus" }
+
+keyvaultAccessPolicies:
+  enabled: true
+  rules:
+  - permissions:
+      certificates: ["Get","List"]
+
+resourceProviders:
+  enabled: true
+  rules:
+  - namespace: Microsoft.ADHybridHealthService
+  - namespace: Microsoft.Advisor
+  - namespace: Microsoft.AlertsManagement
+  - namespace: Microsoft.Authorization
+  - namespace: Microsoft.Billing
+  - namespace: Microsoft.Cache
+  - namespace: Microsoft.ClassicSubscription
+  - namespace: Microsoft.Commerce
+  - namespace: Microsoft.Compute
+  - namespace: Microsoft.Consumption
+  - namespace: Microsoft.ContainerRegistry
+  - namespace: Microsoft.ContainerService
+  - namespace: Microsoft.CostManagement
+  - namespace: Microsoft.DevTestLab
+  - namespace: Microsoft.EventHub
+  - namespace: Microsoft.Features
+  - namespace: Microsoft.GuestConfiguration
+  - namespace: Microsoft.KeyVault
+  - namespace: Microsoft.ManagedIdentity
+  - namespace: Microsoft.MarketplaceNotifications
+  - namespace: Microsoft.MarketplaceOrdering
+  - namespace: Microsoft.Network
+  - namespace: Microsoft.OperationalInsights
+  - namespace: Microsoft.OperationsManagement
+  - namespace: Microsoft.PolicyInsights
+  - namespace: Microsoft.Portal
+  - namespace: Microsoft.ResourceGraph
+  - namespace: Microsoft.ResourceHealth
+  - namespace: Microsoft.Resources
+  - namespace: Microsoft.Security
+  - namespace: Microsoft.SecurityInsights
+  - namespace: Microsoft.SerialConsole
+  - namespace: Microsoft.Storage
+  - namespace: Microsoft.StorageCache
+  - namespace: Microsoft.StorageSync
+  - namespace: microsoft.insights
+  - namespace: microsoft.support
+
+resourceProviderFeatures:
+  enabled: true
+  rules:
+  - namespace: microsoft.ContainerService
+    feature: CustomNodeConfigPreview

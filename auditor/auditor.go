@@ -19,11 +19,15 @@ type (
 
 		logger *log.Entry
 
+		config AuditConfig
+
 		azure struct {
 			authorizer    autorest.Authorizer
 			environment   azure.Environment
 			subscriptions []subscriptions.Subscription
 		}
+
+		prometheus auditorPrometheus
 	}
 )
 
@@ -35,6 +39,7 @@ func NewAzureAuditor() *AzureAuditor {
 
 func (auditor *AzureAuditor) Init() {
 	auditor.initAzure()
+	auditor.initPrometheus()
 }
 
 func (auditor *AzureAuditor) Run(scrapeTime time.Duration) {
@@ -42,8 +47,36 @@ func (auditor *AzureAuditor) Run(scrapeTime time.Duration) {
 
 	go func() {
 		for {
-			auditor.updateAzureSubscriptions()
+			ctx := context.Background()
+			startTime := time.Now()
+			auditor.logger.Infof("start audit run")
+			auditor.updateAzureSubscriptions(ctx)
 
+			for _, row := range auditor.azure.subscriptions {
+				subscription := row
+
+				if auditor.config.ResourceGroups.IsEnabled() {
+					auditor.auditResourceGroups(ctx, &subscription)
+				}
+
+				if auditor.config.RoleAssignments.IsEnabled() {
+					auditor.auditRoleAssignments(ctx, &subscription)
+				}
+
+				if auditor.config.ResourceProviders.IsEnabled() {
+					auditor.auditResourceProviders(ctx, &subscription)
+				}
+
+				if auditor.config.ResourceProviderFeatures.IsEnabled() {
+					auditor.auditResourceProviderFeatures(ctx, &subscription)
+				}
+
+				if auditor.config.KeyvaultAccessPolicies.IsEnabled() {
+					auditor.auditKeyvaultAccessPolicies(ctx, &subscription)
+				}
+			}
+
+			auditor.logger.Infof("finished audit run after %v", time.Since(startTime))
 			time.Sleep(scrapeTime)
 		}
 	}()
@@ -64,9 +97,7 @@ func (auditor *AzureAuditor) initAzure() {
 	}
 }
 
-func (auditor *AzureAuditor) updateAzureSubscriptions() {
-	ctx := context.Background()
-
+func (auditor *AzureAuditor) updateAzureSubscriptions(ctx context.Context) {
 	client := subscriptions.NewClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -86,6 +117,8 @@ func (auditor *AzureAuditor) updateAzureSubscriptions() {
 			auditor.azure.subscriptions = append(auditor.azure.subscriptions, result)
 		}
 	}
+
+	auditor.logger.Infof("found %v Azure Subscriptions", len(auditor.azure.subscriptions))
 }
 
 func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {

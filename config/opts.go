@@ -17,21 +17,19 @@ type (
 
 		// azure
 		Azure struct {
-			Environment  *string  `long:"azure.environment"       env:"AZURE_ENVIRONMENT"                description:"Azure environment name" default:"AZUREPUBLICCLOUD"`
-			Subscription []string `long:"azure.subscription"      env:"AZURE_SUBSCRIPTION_ID"     env-delim:" "  description:"Azure subscription ID"`
-		}
-
-		Metrics struct {
-			ResourceIdLowercase bool `long:"metrics.resourceid.lowercase"   env:"METRIC_RESOURCEID_LOWERCASE"       description:"Publish lowercase Azure Resoruce ID in metrics"`
+			Environment  *string  `long:"azure.environment"   env:"AZURE_ENVIRONMENT"                     description:"Azure environment name" default:"AZUREPUBLICCLOUD"`
+			Subscription []string `long:"azure.subscription"  env:"AZURE_SUBSCRIPTION_ID"  env-delim:" "  description:"Azure subscription ID"`
 		}
 
 		// scrape times
 		Scrape struct {
-			Time time.Duration `long:"scrape.time"                    env:"SCRAPE_TIME"                    description:"Default scrape time (time.duration)"                      default:"5m"`
+			Time time.Duration `long:"scrape.time" env:"SCRAPE_TIME"  description:"Default scrape time (time.duration)" default:"60m"`
 		}
 
+		Config string `long:"config"  env:"CONFIG"   description:"Config file path"     required:"true"`
+
 		// general options
-		ServerBind string `long:"bind"     env:"SERVER_BIND"   description:"Server address"     default:":8080"`
+		ServerBind string `long:"bind" env:"SERVER_BIND"   description:"Server address"     default:":8080"`
 	}
 )
 

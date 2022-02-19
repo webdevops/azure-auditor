@@ -1,0 +1,59 @@
+package auditor
+
+import (
+	"context"
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/prometheus/client_golang/prometheus"
+	prometheusCommon "github.com/webdevops/go-prometheus-common"
+	"strings"
+)
+
+type (
+	ResourceProvider struct {
+		Namespace string
+	}
+)
+
+func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscription *subscriptions.Subscription) {
+	list := auditor.fetchResourceProviders(ctx, subscription)
+
+	violationMetric := prometheusCommon.NewMetricsList()
+
+	for _, row := range list {
+		if !auditor.config.ResourceProviders.Validate(row) {
+			violationMetric.AddInfo(prometheus.Labels{
+				"subscriptionID":    to.String(subscription.SubscriptionID),
+				"providerNamespace": row.Namespace,
+			})
+		}
+	}
+
+	auditor.prometheus.resourceProvider.Reset()
+	auditor.logger.Infof("found %v illegal ResourceProviders", len(violationMetric.GetList()))
+	violationMetric.GaugeSet(auditor.prometheus.resourceProvider)
+}
+
+func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceProvider) {
+	client := resources.NewProvidersClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+
+	result, err := client.ListComplete(ctx, nil, "")
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	for _, item := range *result.Response().Value {
+		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
+			list = append(
+				list,
+				ResourceProvider{
+					Namespace: to.String(item.Namespace),
+				},
+			)
+		}
+	}
+
+	return
+}

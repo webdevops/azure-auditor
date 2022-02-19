@@ -40,6 +40,7 @@ func main() {
 	audit := auditor.NewAzureAuditor()
 	audit.Opts = opts
 	audit.UserAgent = UserAgent + gitTag
+	audit.ParseConfig(opts.Config)
 	audit.Run(opts.Scrape.Time)
 
 	log.Infof("Starting http server on %s", opts.ServerBind)
