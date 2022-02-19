@@ -1,15 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	auditor "github.com/webdevops/azure-audit-exporter/auditor"
 	"github.com/webdevops/azure-audit-exporter/config"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
 	"net/http"
@@ -29,10 +25,6 @@ var (
 	argparser *flags.Parser
 	opts      config.Opts
 
-	AzureAuthorizer    autorest.Authorizer
-	AzureEnvironment   azure.Environment
-	AzureSubscriptions []subscriptions.Subscription
-
 	// Git version information
 	gitCommit = "<unknown>"
 	gitTag    = "<unknown>"
@@ -44,11 +36,11 @@ func main() {
 	log.Infof("starting azure-audit-exporter v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
 	log.Info(string(opts.GetJson()))
 
-	log.Infof("init Azure connection")
-	initAzureConnection()
-
-	//log.Infof("starting metrics collection")
-	//initMetricCollector()
+	log.Infof("starting audit")
+	audit := auditor.NewAzureAuditor()
+	audit.Opts = opts
+	audit.UserAgent = UserAgent + gitTag
+	audit.Run(opts.Scrape.Time)
 
 	log.Infof("Starting http server on %s", opts.ServerBind)
 	startHttpServer()
@@ -102,42 +94,6 @@ func initArgparser() {
 	}
 }
 
-func initAzureConnection() {
-	var err error
-	ctx := context.Background()
-
-	// azure authorizer
-	AzureAuthorizer, err = auth.NewAuthorizerFromEnvironment()
-	if err != nil {
-		panic(err)
-	}
-
-	AzureEnvironment, err = azure.EnvironmentFromName(*opts.Azure.Environment)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	subscriptionsClient := subscriptions.NewClientWithBaseURI(AzureEnvironment.ResourceManagerEndpoint)
-	decorateAzureClient(&subscriptionsClient.Client, AzureAuthorizer)
-
-	if len(opts.Azure.Subscription) == 0 {
-		listResult, err := subscriptionsClient.List(ctx)
-		if err != nil {
-			panic(err)
-		}
-		AzureSubscriptions = listResult.Values()
-	} else {
-		AzureSubscriptions = []subscriptions.Subscription{}
-		for _, subId := range opts.Azure.Subscription {
-			result, err := subscriptionsClient.Get(ctx, subId)
-			if err != nil {
-				panic(err)
-			}
-			AzureSubscriptions = append(AzureSubscriptions, result)
-		}
-	}
-}
-
 // start and handle prometheus handler
 func startHttpServer() {
 	// healthz
@@ -149,13 +105,4 @@ func startHttpServer() {
 
 	http.Handle("/metrics", azuretracing.RegisterAzureMetricAutoClean(promhttp.Handler()))
 	log.Error(http.ListenAndServe(opts.ServerBind, nil))
-}
-
-func decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {
-	client.Authorizer = authorizer
-	if err := client.AddToUserAgent(UserAgent + gitTag); err != nil {
-		log.Panic(err)
-	}
-
-	azuretracing.DecorateAzureAutoRestClient(client)
 }
