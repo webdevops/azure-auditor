@@ -9,7 +9,7 @@ type (
 	AuditConfigMatcherString         auditConfigMatcherStringInternal
 	auditConfigMatcherStringInternal struct {
 		Match   *string        `yaml:"match"`
-		MatchRe *string        `yaml:"matchRe"`
+		MatchRe *string        `yaml:"regexp"`
 		matchRe *regexp.Regexp //nolint:structcheck
 	}
 

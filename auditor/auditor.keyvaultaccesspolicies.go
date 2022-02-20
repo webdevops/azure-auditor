@@ -13,6 +13,7 @@ import (
 
 type (
 	KeyvaultAccessPolicy struct {
+		ResourceID    string
 		Keyvault      string
 		ApplicationID string
 		ObjectID      string
@@ -77,6 +78,7 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, su
 				list = append(
 					list,
 					KeyvaultAccessPolicy{
+						ResourceID:    to.String(item.ID),
 						Keyvault:      to.String(item.Name),
 						ApplicationID: applicationId,
 						ObjectID:      to.String(accessPolicy.ObjectID),

@@ -22,6 +22,8 @@ import (
 
 type (
 	RoleAssignment struct {
+		ResourceID string
+
 		Type  string
 		Scope string
 
@@ -90,6 +92,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 		}
 
 		list[to.String(roleAssignment.Name)] = RoleAssignment{
+			ResourceID:         to.String(roleAssignment.ID),
 			Type:               to.String(roleAssignment.Type),
 			Scope:              to.String(roleAssignment.Scope),
 			PrincipalID:        to.String(roleAssignment.PrincipalID),

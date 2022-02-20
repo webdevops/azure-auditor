@@ -12,8 +12,9 @@ import (
 
 type (
 	ResourceProviderFeature struct {
-		Namespace string
-		Feature   string
+		ResourceID string
+		Namespace  string
+		Feature    string
 	}
 )
 
@@ -56,8 +57,9 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 				list = append(
 					list,
 					ResourceProviderFeature{
-						Namespace: nameParts[0],
-						Feature:   nameParts[1],
+						ResourceID: to.String(item.ID),
+						Namespace:  nameParts[0],
+						Feature:    nameParts[1],
 					},
 				)
 			}

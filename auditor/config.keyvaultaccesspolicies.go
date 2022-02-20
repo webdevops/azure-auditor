@@ -1,9 +1,12 @@
 package auditor
 
+import "strings"
+
 type (
 	AuditConfigKeyvaultAccessPolicies struct {
-		Enabled bool                              `yaml:"enabled"`
-		Rules   []AuditConfigKeyvaultAccessPolicy `yaml:"rules"`
+		Enabled    bool                                         `yaml:"enabled"`
+		Rules      []AuditConfigKeyvaultAccessPolicy            `yaml:"rules"`
+		ScopeRules map[string][]AuditConfigKeyvaultAccessPolicy `yaml:"scopeRules"`
 	}
 
 	AuditConfigKeyvaultAccessPolicy struct {
@@ -25,10 +28,20 @@ func (audit *AuditConfigKeyvaultAccessPolicies) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigKeyvaultAccessPolicies) Validate(value KeyvaultAccessPolicy) bool {
+func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object KeyvaultAccessPolicy) bool {
 	for _, rule := range audit.Rules {
-		if rule.IsValid(value) {
+		if rule.IsValid(object) {
 			return true
+		}
+	}
+
+	for scope, rules := range audit.ScopeRules {
+		if strings.HasPrefix(object.ResourceID, scope) {
+			for _, rule := range rules {
+				if rule.IsValid(object) {
+					return true
+				}
+			}
 		}
 	}
 

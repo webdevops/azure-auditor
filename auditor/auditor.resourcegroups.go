@@ -11,9 +11,10 @@ import (
 
 type (
 	ResourceGroup struct {
-		Name     string
-		Location string
-		Tags     map[string]string
+		ResourceID string
+		Name       string
+		Location   string
+		Tags       map[string]string
 	}
 )
 
@@ -51,9 +52,10 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscripti
 		list = append(
 			list,
 			ResourceGroup{
-				Name:     to.String(item.Name),
-				Location: to.String(item.Location),
-				Tags:     to.StringMap(item.Tags),
+				ResourceID: to.String(item.ID),
+				Name:       to.String(item.Name),
+				Location:   to.String(item.Location),
+				Tags:       to.StringMap(item.Tags),
 			},
 		)
 	}

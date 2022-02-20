@@ -1,23 +1,30 @@
 
 roleAssignments:
   enabled: true
+
   rules:
-  - roleDefinitionName: "Network Contributor"
-    scope: {matchRe: "/subscriptions/.+" }
-  - roleDefinitionName: "Contributor"
-  - roleDefinitionName: "Owner"
-  - roleDefinitionName: "Reader"
+    - roleDefinitionName: "Network Contributor"
+      scope: {regexp: "/subscriptions/.+" }
+    - roleDefinitionName: "Contributor"
+    - roleDefinitionName: "Owner"
+    - roleDefinitionName: "Reader"
 
 resourceGroups:
   enabled: true
   rules:
-  - location: {matchRe: "westeurope|centralus" }
+  - location: {regexp: "westeurope|centralus" }
 
 keyvaultAccessPolicies:
   enabled: true
+
+  scopeRules:
+    "/subscriptions/d86bcf13-ddf7-45ea-82f1-6f656767a318/":
+      - permissions:
+          certificates: [Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers]
+
   rules:
-  - permissions:
-      certificates: ["Get","List"]
+    - permissions:
+        certificates: ["Get","List"]
 
 resourceProviders:
   enabled: true

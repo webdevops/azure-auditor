@@ -1,9 +1,12 @@
 package auditor
 
+import "strings"
+
 type (
 	AuditConfigRoleAssignments struct {
-		Enabled bool                        `yaml:"enabled"`
-		Rules   []AuditConfigRoleAssignment `yaml:"rules"`
+		Enabled    bool                                   `yaml:"enabled"`
+		Rules      []AuditConfigRoleAssignment            `yaml:"rules"`
+		ScopeRules map[string][]AuditConfigRoleAssignment `yaml:"scopeRules"`
 	}
 
 	AuditConfigRoleAssignment struct {
@@ -25,10 +28,20 @@ func (audit *AuditConfigRoleAssignments) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigRoleAssignments) Validate(value RoleAssignment) bool {
+func (audit *AuditConfigRoleAssignments) Validate(object RoleAssignment) bool {
 	for _, rule := range audit.Rules {
-		if rule.IsValid(value) {
+		if rule.IsValid(object) {
 			return true
+		}
+	}
+
+	for scope, rules := range audit.ScopeRules {
+		if strings.HasPrefix(object.ResourceID, scope) {
+			for _, rule := range rules {
+				if rule.IsValid(object) {
+					return true
+				}
+			}
 		}
 	}
 

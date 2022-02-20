@@ -1,9 +1,12 @@
 package auditor
 
+import "strings"
+
 type (
 	AuditConfigResourceGroups struct {
-		Enabled bool                       `yaml:"enabled"`
-		Rules   []AuditConfigResourceGroup `yaml:"rules"`
+		Enabled    bool                                  `yaml:"enabled"`
+		Rules      []AuditConfigResourceGroup            `yaml:"rules"`
+		ScopeRules map[string][]AuditConfigResourceGroup `yaml:"scopeRules"`
 	}
 
 	AuditConfigResourceGroup struct {
@@ -17,10 +20,20 @@ func (audit *AuditConfigResourceGroups) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceGroups) Validate(value ResourceGroup) bool {
+func (audit *AuditConfigResourceGroups) Validate(object ResourceGroup) bool {
 	for _, rule := range audit.Rules {
-		if rule.IsValid(value) {
+		if rule.IsValid(object) {
 			return true
+		}
+	}
+
+	for scope, rules := range audit.ScopeRules {
+		if strings.HasPrefix(object.ResourceID, scope) {
+			for _, rule := range rules {
+				if rule.IsValid(object) {
+					return true
+				}
+			}
 		}
 	}
 
