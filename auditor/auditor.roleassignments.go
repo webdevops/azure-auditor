@@ -36,7 +36,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription) {
+func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -61,9 +61,10 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 		}
 	}
 
-	auditor.prometheus.roleAssignment.Reset()
-	auditor.logger.Infof("found %v illegal RoleAssignments", len(violationMetric.GetList()))
-	violationMetric.GaugeSet(auditor.prometheus.roleAssignment)
+	callback <- func() {
+		auditor.logger.Infof("found %v illegal RoleAssignments", len(violationMetric.GetList()))
+		violationMetric.GaugeSet(auditor.prometheus.roleAssignment)
+	}
 }
 
 func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription) (list map[string]RoleAssignment) {

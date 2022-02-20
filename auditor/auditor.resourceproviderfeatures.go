@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription) {
+func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchResourceProviderFeatures(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -31,9 +31,10 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 		}
 	}
 
-	auditor.prometheus.resourceProviderFeature.Reset()
-	auditor.logger.Infof("found %v illegal ResourceProviderFeatures", len(violationMetric.GetList()))
-	violationMetric.GaugeSet(auditor.prometheus.resourceProviderFeature)
+	callback <- func() {
+		auditor.logger.Infof("found %v illegal ResourceProviderFeatures", len(violationMetric.GetList()))
+		violationMetric.GaugeSet(auditor.prometheus.resourceProviderFeature)
+	}
 }
 
 func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceProviderFeature) {

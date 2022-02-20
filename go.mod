@@ -13,7 +13,9 @@ require (
 	github.com/microsoft/kiota/authentication/go/azure v0.0.0-20220218183146-4d8ad91cbe67
 	github.com/microsoftgraph/msgraph-sdk-go v0.10.0
 	github.com/microsoftgraph/msgraph-sdk-go-core v0.0.9
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/webdevops/go-prometheus-common v0.0.0-20220214222004-cea8f38b44b7
 	gopkg.in/yaml.v2 v2.4.0
@@ -44,7 +46,6 @@ require (
 	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220216133321-1457eed0a802 // indirect
 	github.com/microsoft/kiota/serialization/go/json v0.0.0-20220208140201-eb59c2593f0e // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect

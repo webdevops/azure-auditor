@@ -41,7 +41,7 @@ func main() {
 	audit.Opts = opts
 	audit.UserAgent = UserAgent + gitTag
 	audit.ParseConfig(opts.Config)
-	audit.Run(opts.Scrape.Time)
+	audit.Run()
 
 	log.Infof("Starting http server on %s", opts.ServerBind)
 	startHttpServer()

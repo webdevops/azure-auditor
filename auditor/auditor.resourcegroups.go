@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscription *subscriptions.Subscription) {
+func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchResourceGroups(ctx, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -32,9 +32,10 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscripti
 		}
 	}
 
-	auditor.prometheus.resourceGroup.Reset()
-	auditor.logger.Infof("found %v illegal ResourceGroups", len(violationMetric.GetList()))
-	violationMetric.GaugeSet(auditor.prometheus.resourceGroup)
+	callback <- func() {
+		auditor.logger.Infof("found %v illegal ResourceGroups", len(violationMetric.GetList()))
+		violationMetric.GaugeSet(auditor.prometheus.resourceGroup)
+	}
 }
 
 func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceGroup) {

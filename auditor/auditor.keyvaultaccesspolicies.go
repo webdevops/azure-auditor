@@ -27,7 +27,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) {
+func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -46,9 +46,10 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 		}
 	}
 
-	auditor.prometheus.keyvaultAccessPolicies.Reset()
-	auditor.logger.Infof("found %v illegal KeyVault AccessPolicies", len(violationMetric.GetList()))
-	violationMetric.GaugeSet(auditor.prometheus.keyvaultAccessPolicies)
+	callback <- func() {
+		auditor.logger.Infof("found %v illegal KeyVault AccessPolicies", len(violationMetric.GetList()))
+		violationMetric.GaugeSet(auditor.prometheus.keyvaultAccessPolicies)
+	}
 }
 
 func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) (list []KeyvaultAccessPolicy) {
