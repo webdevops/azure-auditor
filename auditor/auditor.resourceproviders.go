@@ -15,8 +15,12 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscri
 
 	violationMetric := prometheusCommon.NewMetricsList()
 
+	report := auditor.startReport(ReportResourceProviders)
 	for _, row := range list {
-		if !auditor.config.ResourceProviders.Validate(row) {
+		matchingRuleId, status := auditor.config.ResourceProviders.Validate(row)
+		report.Add(row.ResourceID, matchingRuleId, status)
+
+		if status {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":    to.String(subscription.SubscriptionID),
 				"providerNamespace": row.Namespace,

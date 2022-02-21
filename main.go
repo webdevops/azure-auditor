@@ -9,6 +9,7 @@ import (
 	"github.com/webdevops/azure-audit-exporter/config"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
 	"gopkg.in/yaml.v3"
+	"html/template"
 	"net/http"
 	"os"
 	"path"
@@ -103,6 +104,29 @@ func startHttpServer() {
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
+			log.Error(err)
+		}
+	})
+
+	// report
+	reportTmpl := template.Must(template.ParseFiles("templates/report.html"))
+	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/html")
+
+		content, err := yaml.Marshal(audit.GetConfig())
+		if err != nil {
+			log.Error(err)
+		}
+
+		ReportData := struct {
+			Config string
+			Report map[string]*auditor.AzureAuditorReport
+		}{
+			Config: string(content),
+			Report: audit.GetReport(),
+		}
+
+		if err := reportTmpl.Execute(w, ReportData); err != nil {
 			log.Error(err)
 		}
 	})

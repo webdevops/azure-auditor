@@ -12,11 +12,17 @@ RUN make test
 RUN make build
 RUN ./azure-audit-exporter --help
 
+RUN mkdir /app \
+    && cp /go/src/github.com/webdevops/azure-audit-exporter/azure-audit-exporter /app/azure-audit-exporter \
+    && cp /go/src/github.com/webdevops/azure-audit-exporter/templates /app/templates
+
+
+
 #############################################
 # FINAL IMAGE
 #############################################
 FROM gcr.io/distroless/static
 ENV LOG_JSON=1
-COPY --from=build /go/src/github.com/webdevops/azure-audit-exporter/azure-audit-exporter /
+COPY --from=build /app/* /
 USER 1000:1000
 ENTRYPOINT ["/azure-audit-exporter"]

@@ -21,10 +21,10 @@ func (audit *AuditConfigResourceGroups) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) bool {
+func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return true
+			return rule.RuleID, true
 		}
 	}
 
@@ -32,13 +32,13 @@ func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) bool
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return true
+					return rule.RuleID, true
 				}
 			}
 		}
 	}
 
-	return false
+	return "", false
 }
 
 func (rule *AuditConfigResourceGroup) IsValid(object AzureResourceGroup) bool {

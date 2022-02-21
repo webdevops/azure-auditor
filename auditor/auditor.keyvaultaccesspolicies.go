@@ -15,8 +15,12 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
+	report := auditor.startReport(ReportKeyvaultAccessPolicies)
 	for _, row := range list {
-		if !auditor.config.KeyvaultAccessPolicies.Validate(row) {
+		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(row)
+		report.Add(row.ResourceID, matchingRuleId, status)
+
+		if status {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":          to.String(subscription.SubscriptionID),
 				"keyvault":                row.Keyvault,

@@ -25,8 +25,12 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 
 	violationMetric := prometheusCommon.NewMetricsList()
 
+	report := auditor.startReport(ReportRoleAssignments)
 	for _, row := range list {
-		if !auditor.config.RoleAssignments.Validate(row) {
+		matchingRuleId, status := auditor.config.RoleAssignments.Validate(row)
+		report.Add(row.ResourceID, matchingRuleId, status)
+
+		if status {
 			scopeInfo, _ := azure.ParseResourceID(row.Scope)
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":   to.String(subscription.SubscriptionID),

@@ -19,10 +19,10 @@ func (audit *AuditConfigResourceProviders) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider) bool {
+func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return true
+			return rule.RuleID, true
 		}
 	}
 
@@ -30,13 +30,13 @@ func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return true
+					return rule.RuleID, true
 				}
 			}
 		}
 	}
 
-	return false
+	return "", false
 }
 
 func (rule *AuditConfigResourceProvider) IsValid(object AzureResourceProvider) bool {

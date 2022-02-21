@@ -29,10 +29,10 @@ func (audit *AuditConfigRoleAssignments) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) bool {
+func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return true
+			return rule.RuleID, true
 		}
 	}
 
@@ -40,13 +40,13 @@ func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) bo
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return true
+					return rule.RuleID, true
 				}
 			}
 		}
 	}
 
-	return false
+	return "", false
 }
 
 func (rule *AuditConfigRoleAssignment) IsValid(object AzureRoleAssignment) bool {

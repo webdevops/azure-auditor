@@ -15,6 +15,14 @@ import (
 	"time"
 )
 
+const (
+	ReportKeyvaultAccessPolicies   = "KeyvaultAccessPolicies"
+	ReportResourceProviders        = "ResourceProviders"
+	ReportResourceProviderFeatures = "ResourceProviderFeatures"
+	ReportResourceGroups           = "ResourceGroups"
+	ReportRoleAssignments          = "RoleAssignments"
+)
+
 type (
 	AzureAuditor struct {
 		UserAgent string
@@ -38,13 +46,26 @@ type (
 		cache       *cache.Cache
 		cacheExpiry time.Duration
 
+		report map[string]*AzureAuditorReport
+
 		prometheus auditorPrometheus
+	}
+
+	AzureAuditorReport struct {
+		Lines []*AzureAuditorReportLine
+	}
+
+	AzureAuditorReportLine struct {
+		ResourceID string
+		RuleID     string
+		Status     bool
 	}
 )
 
 func NewAzureAuditor() *AzureAuditor {
 	auditor := AzureAuditor{}
 	auditor.logger = log.WithFields(log.Fields{})
+	auditor.report = map[string]*AzureAuditorReport{}
 	return &auditor
 }
 
@@ -67,7 +88,7 @@ func (auditor *AzureAuditor) Run() {
 
 	if auditor.config.ResourceGroups.IsEnabled() {
 		auditor.addCronjob(
-			"ResourceGroups",
+			ReportResourceGroups,
 			auditor.Opts.Cronjobs.ResourceGroups,
 			auditor.auditResourceGroups,
 			func() {
@@ -78,7 +99,7 @@ func (auditor *AzureAuditor) Run() {
 
 	if auditor.config.RoleAssignments.IsEnabled() {
 		auditor.addCronjob(
-			"RoleAssignments",
+			ReportRoleAssignments,
 			auditor.Opts.Cronjobs.RoleAssignments,
 			auditor.auditRoleAssignments,
 			func() {
@@ -89,7 +110,7 @@ func (auditor *AzureAuditor) Run() {
 
 	if auditor.config.KeyvaultAccessPolicies.IsEnabled() {
 		auditor.addCronjob(
-			"Keyvault AccessPolicies",
+			ReportKeyvaultAccessPolicies,
 			auditor.Opts.Cronjobs.KeyvaultAccessPolicies,
 			auditor.auditKeyvaultAccessPolicies,
 			func() {
@@ -100,7 +121,7 @@ func (auditor *AzureAuditor) Run() {
 
 	if auditor.config.ResourceProviders.IsEnabled() {
 		auditor.addCronjob(
-			"ResourceProviders",
+			ReportResourceProviders,
 			auditor.Opts.Cronjobs.ResourceProvider,
 			auditor.auditResourceProviders,
 			func() {
@@ -111,7 +132,7 @@ func (auditor *AzureAuditor) Run() {
 
 	if auditor.config.ResourceProviderFeatures.IsEnabled() {
 		auditor.addCronjob(
-			"ResourceProviderFeatures",
+			ReportResourceProviderFeatures,
 			auditor.Opts.Cronjobs.ResourceProvider,
 			auditor.auditResourceProviderFeatures,
 			func() {
@@ -252,4 +273,29 @@ func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, author
 	}
 
 	azuretracing.DecorateAzureAutoRestClient(client)
+}
+
+func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
+	return auditor.report
+}
+
+func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
+	auditor.report[name] = &AzureAuditorReport{}
+	auditor.report[name].Lines = []*AzureAuditorReportLine{}
+	return auditor.report[name]
+}
+
+func (report *AzureAuditorReport) Clear() {
+	report.Lines = []*AzureAuditorReportLine{}
+}
+
+func (report *AzureAuditorReport) Add(resourceID, ruleID string, status bool) {
+	report.Lines = append(
+		report.Lines,
+		&AzureAuditorReportLine{
+			ResourceID: resourceID,
+			RuleID:     ruleID,
+			Status:     status,
+		},
+	)
 }

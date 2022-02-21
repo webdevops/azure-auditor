@@ -29,10 +29,10 @@ func (audit *AuditConfigKeyvaultAccessPolicies) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAccessPolicy) bool {
+func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAccessPolicy) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return true
+			return rule.RuleID, true
 		}
 	}
 
@@ -40,13 +40,13 @@ func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAcc
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return true
+					return rule.RuleID, true
 				}
 			}
 		}
 	}
 
-	return false
+	return "", false
 }
 
 func (rule *AuditConfigKeyvaultAccessPolicy) IsValid(object AzureKeyvaultAccessPolicy) bool {
