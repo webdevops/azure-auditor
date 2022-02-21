@@ -3,7 +3,8 @@ roleAssignments:
   enabled: true
 
   rules:
-    - roleDefinitionName: "Network Contributor"
+    - rule: foobar
+      roleDefinitionName: "Network Contributor"
       scope: {regexp: "/subscriptions/.+" }
     - roleDefinitionName: "Contributor"
     - roleDefinitionName: "Owner"
@@ -19,12 +20,30 @@ keyvaultAccessPolicies:
 
   scopeRules:
     "/subscriptions/d86bcf13-ddf7-45ea-82f1-6f656767a318/":
-      - permissions:
+      - rule: barfoo
+        keyvault: {regexp: ".*"}
+        foobar: barfoo
+        permissions:
           certificates: [Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers]
 
   rules:
-    - permissions:
+    - rule: foobarasd123
+      foobar: "asdasdasd"
+      keyvault:
+        match: null
+        regexp: null
+      applicationID:
+        match: null
+        regexp: null
+      objectID:
+        match: null
+        regexp: null
+      permissions:
         certificates: ["Get","List"]
+        secrets: { list: null }
+        keys: { list: null }
+        storage: { list: null }
+
 
 resourceProviders:
   enabled: true

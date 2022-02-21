@@ -8,6 +8,7 @@ import (
 	auditor "github.com/webdevops/azure-audit-exporter/auditor"
 	"github.com/webdevops/azure-audit-exporter/config"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"os"
 	"path"
@@ -25,6 +26,8 @@ var (
 	argparser *flags.Parser
 	opts      config.Opts
 
+	audit *auditor.AzureAuditor
+
 	// Git version information
 	gitCommit = "<unknown>"
 	gitTag    = "<unknown>"
@@ -37,7 +40,7 @@ func main() {
 	log.Info(string(opts.GetJson()))
 
 	log.Infof("starting audit")
-	audit := auditor.NewAzureAuditor()
+	audit = auditor.NewAzureAuditor()
 	audit.Opts = opts
 	audit.UserAgent = UserAgent + gitTag
 	audit.ParseConfig(opts.Config)
@@ -100,6 +103,24 @@ func startHttpServer() {
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
+			log.Error(err)
+		}
+	})
+
+	// config
+	http.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+
+		content, err := yaml.Marshal(audit.GetConfig())
+		if err == nil {
+			if _, writeErr := w.Write(content); writeErr != nil {
+				log.Error(writeErr)
+			}
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			if _, writeErr := w.Write([]byte("Unable to marshal configuration")); writeErr != nil {
+				log.Error(writeErr)
+			}
 			log.Error(err)
 		}
 	})

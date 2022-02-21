@@ -9,15 +9,6 @@ import (
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 )
 
-type (
-	ResourceGroup struct {
-		ResourceID string
-		Name       string
-		Location   string
-		Tags       map[string]string
-	}
-)
-
 func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchResourceGroups(ctx, subscription)
 
@@ -39,7 +30,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscripti
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceGroup) {
+func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureResourceGroup) {
 	client := resources.NewGroupsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -51,11 +42,13 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscripti
 	for _, item := range *result.Response().Value {
 		list = append(
 			list,
-			ResourceGroup{
-				ResourceID: to.String(item.ID),
-				Name:       to.String(item.Name),
-				Location:   to.String(item.Location),
-				Tags:       to.StringMap(item.Tags),
+			AzureResourceGroup{
+				AzureBaseObject: &AzureBaseObject{
+					ResourceID: to.String(item.ID),
+				},
+				Name:     to.String(item.Name),
+				Location: to.String(item.Location),
+				Tags:     to.StringMap(item.Tags),
 			},
 		)
 	}

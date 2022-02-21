@@ -11,23 +11,6 @@ import (
 	"strings"
 )
 
-type (
-	KeyvaultAccessPolicy struct {
-		ResourceID    string
-		Keyvault      string
-		ApplicationID string
-		ObjectID      string
-		Permissions   KeyvaultAccessPolicyPermissions
-	}
-
-	KeyvaultAccessPolicyPermissions struct {
-		Certificates []string
-		Secrets      []string
-		Keys         []string
-		Storage      []string
-	}
-)
-
 func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -53,7 +36,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) (list []KeyvaultAccessPolicy) {
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureKeyvaultAccessPolicy) {
 	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -77,12 +60,14 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, su
 				}
 				list = append(
 					list,
-					KeyvaultAccessPolicy{
-						ResourceID:    to.String(item.ID),
+					AzureKeyvaultAccessPolicy{
+						AzureBaseObject: &AzureBaseObject{
+							ResourceID: to.String(item.ID),
+						},
 						Keyvault:      to.String(item.Name),
 						ApplicationID: applicationId,
 						ObjectID:      to.String(accessPolicy.ObjectID),
-						Permissions: KeyvaultAccessPolicyPermissions{
+						Permissions: AzureKeyvaultAccessPolicyPermissions{
 							Certificates: keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
 							Secrets:      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
 							Keys:         keyvaultKeyPermissionsToStringList(accessPolicy.Permissions.Keys),

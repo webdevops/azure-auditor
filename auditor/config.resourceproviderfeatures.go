@@ -4,14 +4,15 @@ import "strings"
 
 type (
 	AuditConfigResourceProviderFeatures struct {
-		Enabled    bool                                            `yaml:"enabled"`
-		Rules      []AuditConfigResourceProviderFeature            `yaml:"rules"`
-		ScopeRules map[string][]AuditConfigResourceProviderFeature `yaml:"scopeRules"`
+		Enabled    bool                                             `yaml:"enabled"`
+		Rules      []*AuditConfigResourceProviderFeature            `yaml:"rules"`
+		ScopeRules map[string][]*AuditConfigResourceProviderFeature `yaml:"scopeRules"`
 	}
 
 	AuditConfigResourceProviderFeature struct {
-		Namespace AuditConfigMatcherString `yaml:"namespace"`
-		Feature   AuditConfigMatcherString `yaml:"feature"`
+		AuditConfigBaseRule `yaml:",inline"`
+		Namespace           AuditConfigMatcherString `yaml:"namespace,flow"`
+		Feature             AuditConfigMatcherString `yaml:"feature,flow"`
 	}
 )
 
@@ -19,7 +20,7 @@ func (audit *AuditConfigResourceProviderFeatures) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceProviderFeatures) Validate(object ResourceProviderFeature) bool {
+func (audit *AuditConfigResourceProviderFeatures) Validate(object AzureResourceProviderFeature) bool {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
 			return true
@@ -39,14 +40,14 @@ func (audit *AuditConfigResourceProviderFeatures) Validate(object ResourceProvid
 	return false
 }
 
-func (ra *AuditConfigResourceProviderFeature) IsValid(resourceProviderFeature ResourceProviderFeature) bool {
-	if !ra.Namespace.IsMatching(resourceProviderFeature.Namespace) {
-		return false
+func (rule *AuditConfigResourceProviderFeature) IsValid(object AzureResourceProviderFeature) bool {
+	if !rule.Namespace.IsMatching(object.Namespace) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Feature.IsMatching(resourceProviderFeature.Feature) {
-		return false
+	if !rule.Feature.IsMatching(object.Feature) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	return true
+	return rule.handleRuleStatus(object.AzureBaseObject, true)
 }

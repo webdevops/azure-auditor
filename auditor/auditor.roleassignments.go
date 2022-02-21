@@ -20,24 +20,6 @@ import (
 	"strings"
 )
 
-type (
-	RoleAssignment struct {
-		ResourceID string
-
-		Type  string
-		Scope string
-
-		PrincipalID   string
-		PrincipalType string
-		PrincipalName string
-
-		RoleDefinitionID   string
-		RoleDefinitionName string
-
-		Description string
-	}
-)
-
 func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, subscription)
 
@@ -69,8 +51,8 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription) (list map[string]RoleAssignment) {
-	list = map[string]RoleAssignment{}
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription) (list map[string]AzureRoleAssignment) {
+	list = map[string]AzureRoleAssignment{}
 
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, subscription)
 
@@ -91,8 +73,10 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 			roleDefinitionName = val
 		}
 
-		list[to.String(roleAssignment.Name)] = RoleAssignment{
-			ResourceID:         to.String(roleAssignment.ID),
+		list[to.String(roleAssignment.Name)] = AzureRoleAssignment{
+			AzureBaseObject: &AzureBaseObject{
+				ResourceID: to.String(roleAssignment.ID),
+			},
 			Type:               to.String(roleAssignment.Type),
 			Scope:              to.String(roleAssignment.Scope),
 			PrincipalID:        to.String(roleAssignment.PrincipalID),
@@ -111,7 +95,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 	return
 }
 
-func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, subscription *subscriptions.Subscription, roleAssignmentList *map[string]RoleAssignment) {
+func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, subscription *subscriptions.Subscription, roleAssignmentList *map[string]AzureRoleAssignment) {
 	cred, err := azidentity.NewEnvironmentCredential(nil)
 	if err != nil {
 		auditor.logger.Panic(err)

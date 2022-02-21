@@ -4,13 +4,14 @@ import "strings"
 
 type (
 	AuditConfigResourceProviders struct {
-		Enabled    bool                                     `yaml:"enabled"`
-		Rules      []AuditConfigResourceProvider            `yaml:"rules"`
-		ScopeRules map[string][]AuditConfigResourceProvider `yaml:"scopeRules"`
+		Enabled    bool                                      `yaml:"enabled"`
+		Rules      []*AuditConfigResourceProvider            `yaml:"rules"`
+		ScopeRules map[string][]*AuditConfigResourceProvider `yaml:"scopeRules"`
 	}
 
 	AuditConfigResourceProvider struct {
-		Namespace AuditConfigMatcherString `yaml:"namespace"`
+		AuditConfigBaseRule `yaml:",inline"`
+		Namespace           AuditConfigMatcherString `yaml:"namespace,flow"`
 	}
 )
 
@@ -18,7 +19,7 @@ func (audit *AuditConfigResourceProviders) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceProviders) Validate(object ResourceProvider) bool {
+func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider) bool {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
 			return true
@@ -38,10 +39,10 @@ func (audit *AuditConfigResourceProviders) Validate(object ResourceProvider) boo
 	return false
 }
 
-func (ra *AuditConfigResourceProvider) IsValid(resourceProvider ResourceProvider) bool {
-	if !ra.Namespace.IsMatching(resourceProvider.Namespace) {
-		return false
+func (rule *AuditConfigResourceProvider) IsValid(object AzureResourceProvider) bool {
+	if !rule.Namespace.IsMatching(object.Namespace) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	return true
+	return rule.handleRuleStatus(object.AzureBaseObject, true)
 }

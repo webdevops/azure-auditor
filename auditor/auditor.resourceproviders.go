@@ -10,13 +10,6 @@ import (
 	"strings"
 )
 
-type (
-	ResourceProvider struct {
-		ResourceID string
-		Namespace  string
-	}
-)
-
 func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchResourceProviders(ctx, subscription)
 
@@ -37,7 +30,7 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscri
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceProvider) {
+func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureResourceProvider) {
 	client := resources.NewProvidersClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -50,9 +43,11 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscri
 		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
 			list = append(
 				list,
-				ResourceProvider{
-					ResourceID: to.String(item.ID),
-					Namespace:  to.String(item.Namespace),
+				AzureResourceProvider{
+					AzureBaseObject: &AzureBaseObject{
+						ResourceID: to.String(item.ID),
+					},
+					Namespace: to.String(item.Namespace),
 				},
 			)
 		}

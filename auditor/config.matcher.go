@@ -1,26 +1,34 @@
 package auditor
 
 import (
+	"fmt"
+	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 )
 
 type (
-	AuditConfigMatcherString         auditConfigMatcherStringInternal
-	auditConfigMatcherStringInternal struct {
+	AuditConfigMatcherString struct {
+		Match   *string        `yaml:"match,omitempty"`
+		MatchRe *string        `yaml:"regexp,omitempty"`
+		matchRe *regexp.Regexp //nolint:structcheck
+	}
+	AuditConfigMatcherStringInternal struct {
 		Match   *string        `yaml:"match"`
 		MatchRe *string        `yaml:"regexp"`
 		matchRe *regexp.Regexp //nolint:structcheck
 	}
 
-	AuditConfigMatcherList         auditConfigMatcherListInternal
-	auditConfigMatcherListInternal struct {
+	AuditConfigMatcherList struct {
+		List *[]string `yaml:"list"`
+	}
+	AuditConfigMatcherListInternal struct {
 		List *[]string `yaml:"list"`
 	}
 )
 
 func (matcher *AuditConfigMatcherString) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	val := auditConfigMatcherStringInternal{}
+	val := AuditConfigMatcherStringInternal{}
 	err := unmarshal(&val)
 	if err != nil {
 		val := ""
@@ -41,8 +49,12 @@ func (matcher *AuditConfigMatcherString) UnmarshalYAML(unmarshal func(interface{
 	return nil
 }
 
+func (matcher *AuditConfigMatcherString) MarshalYAML() (interface{}, error) {
+	return "something", nil
+}
+
 func (matcher *AuditConfigMatcherList) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	val := auditConfigMatcherListInternal{}
+	val := AuditConfigMatcherListInternal{}
 	err := unmarshal(&val)
 	if err != nil {
 		val := []string{}
@@ -57,6 +69,11 @@ func (matcher *AuditConfigMatcherList) UnmarshalYAML(unmarshal func(interface{})
 		matcher.List = val.List
 	}
 	return nil
+}
+
+func (matcher *AuditConfigMatcherList) MarshalYAML() (interface{}, error) {
+	fmt.Println("marshal list")
+	return yaml.Marshal("")
 }
 
 func (matcher *AuditConfigMatcherString) IsMatching(value string) bool {

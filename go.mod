@@ -8,6 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.24
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
 	github.com/Azure/go-autorest/autorest/to v0.4.0
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/microsoft/kiota/abstractions/go v0.0.0-20220218183146-4d8ad91cbe67
 	github.com/microsoft/kiota/authentication/go/azure v0.0.0-20220218183146-4d8ad91cbe67
@@ -18,7 +19,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/webdevops/go-prometheus-common v0.0.0-20220214222004-cea8f38b44b7
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
@@ -36,7 +37,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cjlapao/common-go v0.0.18 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

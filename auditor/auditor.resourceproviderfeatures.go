@@ -10,14 +10,6 @@ import (
 	"strings"
 )
 
-type (
-	ResourceProviderFeature struct {
-		ResourceID string
-		Namespace  string
-		Feature    string
-	}
-)
-
 func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
 	list := auditor.fetchResourceProviderFeatures(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -38,7 +30,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription) (list []ResourceProviderFeature) {
+func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureResourceProviderFeature) {
 	client := features.NewClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -56,10 +48,12 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 			if len(nameParts) >= 2 {
 				list = append(
 					list,
-					ResourceProviderFeature{
-						ResourceID: to.String(item.ID),
-						Namespace:  nameParts[0],
-						Feature:    nameParts[1],
+					AzureResourceProviderFeature{
+						AzureBaseObject: &AzureBaseObject{
+							ResourceID: to.String(item.ID),
+						},
+						Namespace: nameParts[0],
+						Feature:   nameParts[1],
 					},
 				)
 			}

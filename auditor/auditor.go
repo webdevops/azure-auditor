@@ -55,6 +55,10 @@ func (auditor *AzureAuditor) Init() {
 	auditor.initCron()
 }
 
+func (auditor *AzureAuditor) GetConfig() AuditConfig {
+	return auditor.config
+}
+
 func (auditor *AzureAuditor) Run() {
 	auditor.Init()
 

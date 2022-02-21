@@ -4,23 +4,24 @@ import "strings"
 
 type (
 	AuditConfigKeyvaultAccessPolicies struct {
-		Enabled    bool                                         `yaml:"enabled"`
-		Rules      []AuditConfigKeyvaultAccessPolicy            `yaml:"rules"`
-		ScopeRules map[string][]AuditConfigKeyvaultAccessPolicy `yaml:"scopeRules"`
+		Enabled    bool                                          `yaml:"enabled"`
+		Rules      []*AuditConfigKeyvaultAccessPolicy            `yaml:"rules"`
+		ScopeRules map[string][]*AuditConfigKeyvaultAccessPolicy `yaml:"scopeRules"`
 	}
 
 	AuditConfigKeyvaultAccessPolicy struct {
-		Keyvault      AuditConfigMatcherString                   `yaml:"keyvault"`
-		ApplicationID AuditConfigMatcherString                   `yaml:"applicationID"`
-		ObjectID      AuditConfigMatcherString                   `yaml:"objectID"`
-		Permissions   AuditConfigKeyvaultAccessPolicyPermissions `yaml:"permissions"`
+		AuditConfigBaseRule `yaml:",inline"`
+		Keyvault            AuditConfigMatcherString                   `yaml:"keyvault,flow"`
+		ApplicationID       AuditConfigMatcherString                   `yaml:"applicationID,flow"`
+		ObjectID            AuditConfigMatcherString                   `yaml:"objectID,flow"`
+		Permissions         AuditConfigKeyvaultAccessPolicyPermissions `yaml:"permissions"`
 	}
 
 	AuditConfigKeyvaultAccessPolicyPermissions struct {
-		Certificates AuditConfigMatcherList `yaml:"certificates"`
-		Secrets      AuditConfigMatcherList `yaml:"secrets"`
-		Keys         AuditConfigMatcherList `yaml:"keys"`
-		Storage      AuditConfigMatcherList `yaml:"storage"`
+		Certificates AuditConfigMatcherList `yaml:"certificates,flow"`
+		Secrets      AuditConfigMatcherList `yaml:"secrets,flow"`
+		Keys         AuditConfigMatcherList `yaml:"keys,flow"`
+		Storage      AuditConfigMatcherList `yaml:"storage,flow"`
 	}
 )
 
@@ -28,7 +29,7 @@ func (audit *AuditConfigKeyvaultAccessPolicies) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object KeyvaultAccessPolicy) bool {
+func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAccessPolicy) bool {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
 			return true
@@ -48,34 +49,34 @@ func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object KeyvaultAccessPo
 	return false
 }
 
-func (ra *AuditConfigKeyvaultAccessPolicy) IsValid(keyvaultAccessPolicy KeyvaultAccessPolicy) bool {
-	if !ra.Keyvault.IsMatching(keyvaultAccessPolicy.Keyvault) {
-		return false
+func (rule *AuditConfigKeyvaultAccessPolicy) IsValid(object AzureKeyvaultAccessPolicy) bool {
+	if !rule.Keyvault.IsMatching(object.Keyvault) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.ApplicationID.IsMatching(keyvaultAccessPolicy.ApplicationID) {
-		return false
+	if !rule.ApplicationID.IsMatching(object.ApplicationID) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.ObjectID.IsMatching(keyvaultAccessPolicy.ObjectID) {
-		return false
+	if !rule.ObjectID.IsMatching(object.ObjectID) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Permissions.Certificates.IsMatching(keyvaultAccessPolicy.Permissions.Certificates) {
-		return false
+	if !rule.Permissions.Certificates.IsMatching(object.Permissions.Certificates) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Permissions.Secrets.IsMatching(keyvaultAccessPolicy.Permissions.Secrets) {
-		return false
+	if !rule.Permissions.Secrets.IsMatching(object.Permissions.Secrets) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Permissions.Keys.IsMatching(keyvaultAccessPolicy.Permissions.Keys) {
-		return false
+	if !rule.Permissions.Keys.IsMatching(object.Permissions.Keys) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Permissions.Storage.IsMatching(keyvaultAccessPolicy.Permissions.Storage) {
-		return false
+	if !rule.Permissions.Storage.IsMatching(object.Permissions.Storage) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	return true
+	return rule.handleRuleStatus(object.AzureBaseObject, true)
 }

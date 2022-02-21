@@ -4,15 +4,16 @@ import "strings"
 
 type (
 	AuditConfigResourceGroups struct {
-		Enabled    bool                                  `yaml:"enabled"`
-		Rules      []AuditConfigResourceGroup            `yaml:"rules"`
-		ScopeRules map[string][]AuditConfigResourceGroup `yaml:"scopeRules"`
+		Enabled    bool                                   `yaml:"enabled"`
+		Rules      []*AuditConfigResourceGroup            `yaml:"rules"`
+		ScopeRules map[string][]*AuditConfigResourceGroup `yaml:"scopeRules"`
 	}
 
 	AuditConfigResourceGroup struct {
-		Name     AuditConfigMatcherString            `yaml:"name"`
-		Location AuditConfigMatcherString            `yaml:"location"`
-		Tags     map[string]AuditConfigMatcherString `yaml:"tags"`
+		AuditConfigBaseRule `yaml:",inline"`
+		Name                AuditConfigMatcherString            `yaml:"name,flow"`
+		Location            AuditConfigMatcherString            `yaml:"location,flow"`
+		Tags                map[string]AuditConfigMatcherString `yaml:"tags"`
 	}
 )
 
@@ -20,7 +21,7 @@ func (audit *AuditConfigResourceGroups) IsEnabled() bool {
 	return audit.Enabled
 }
 
-func (audit *AuditConfigResourceGroups) Validate(object ResourceGroup) bool {
+func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) bool {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
 			return true
@@ -40,13 +41,13 @@ func (audit *AuditConfigResourceGroups) Validate(object ResourceGroup) bool {
 	return false
 }
 
-func (ra *AuditConfigResourceGroup) IsValid(resourceGroup ResourceGroup) bool {
-	if !ra.Name.IsMatching(resourceGroup.Name) {
-		return false
+func (rule *AuditConfigResourceGroup) IsValid(object AzureResourceGroup) bool {
+	if !rule.Name.IsMatching(object.Name) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !ra.Location.IsMatching(resourceGroup.Location) {
-		return false
+	if !rule.Location.IsMatching(object.Location) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
 	//if len(ra.Tags) > 0 {
@@ -62,5 +63,5 @@ func (ra *AuditConfigResourceGroup) IsValid(resourceGroup ResourceGroup) bool {
 	//	}
 	//}
 
-	return true
+	return rule.handleRuleStatus(object.AzureBaseObject, true)
 }
