@@ -37,6 +37,8 @@ Help Options:
   -h, --help                          Show this help message
 ```
 
+crons can be disabled by setting them to empty string or `false`
+
 for Azure API authentication (using ENV vars) see https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication
 
 ## Configuration file

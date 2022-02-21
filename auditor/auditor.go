@@ -86,7 +86,7 @@ func (auditor *AzureAuditor) Run() {
 	// force subscription list update
 	auditor.getSubscriptionList(context.Background())
 
-	if auditor.config.ResourceGroups.IsEnabled() {
+	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceGroups) && auditor.config.ResourceGroups.IsEnabled() {
 		auditor.addCronjob(
 			ReportResourceGroups,
 			auditor.Opts.Cronjobs.ResourceGroups,
@@ -97,7 +97,7 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
-	if auditor.config.RoleAssignments.IsEnabled() {
+	if cronspecIsValid(auditor.Opts.Cronjobs.RoleAssignments) && auditor.config.RoleAssignments.IsEnabled() {
 		auditor.addCronjob(
 			ReportRoleAssignments,
 			auditor.Opts.Cronjobs.RoleAssignments,
@@ -108,7 +108,7 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
-	if auditor.config.KeyvaultAccessPolicies.IsEnabled() {
+	if cronspecIsValid(auditor.Opts.Cronjobs.KeyvaultAccessPolicies) && auditor.config.KeyvaultAccessPolicies.IsEnabled() {
 		auditor.addCronjob(
 			ReportKeyvaultAccessPolicies,
 			auditor.Opts.Cronjobs.KeyvaultAccessPolicies,
@@ -119,7 +119,7 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
-	if auditor.config.ResourceProviders.IsEnabled() {
+	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceProvider) && auditor.config.ResourceProviders.IsEnabled() {
 		auditor.addCronjob(
 			ReportResourceProviders,
 			auditor.Opts.Cronjobs.ResourceProvider,
@@ -130,7 +130,7 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
-	if auditor.config.ResourceProviderFeatures.IsEnabled() {
+	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceProvider) && auditor.config.ResourceProviderFeatures.IsEnabled() {
 		auditor.addCronjob(
 			ReportResourceProviderFeatures,
 			auditor.Opts.Cronjobs.ResourceProvider,
