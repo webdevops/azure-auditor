@@ -109,7 +109,7 @@ func startHttpServer() {
 	})
 
 	// report
-	reportTmpl := template.Must(template.ParseFiles("templates/report.html"))
+	reportTmpl := template.Must(template.ParseFiles("./templates/report.html"))
 	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 
