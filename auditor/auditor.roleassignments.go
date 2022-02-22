@@ -6,7 +6,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
-	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/microsoft/kiota/abstractions/go/serialization"
 	a "github.com/microsoft/kiota/authentication/go/azure"
@@ -28,12 +27,12 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 	report := auditor.startReport(ReportRoleAssignments)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(row)
-		scopeInfo, _ := azure.ParseResourceID(row.Scope)
+		azureResourceInfo := extractAzureResourceInfo(row.Scope)
 
 		report.Add(map[string]string{
 			"resourceID":    row.ResourceID,
 			"scope":         row.Scope,
-			"resourceGroup": scopeInfo.ResourceGroup,
+			"resourceGroup": azureResourceInfo.ResourceGroup,
 
 			"principalType": row.PrincipalType,
 			"principalID":   row.PrincipalID,
@@ -49,7 +48,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 				"roleAssignmentID": row.RoleDefinitionID,
 
 				"scope":         row.Scope,
-				"resourceGroup": scopeInfo.ResourceGroup,
+				"resourceGroup": azureResourceInfo.ResourceGroup,
 
 				"principalType": row.PrincipalType,
 				"principalID":   row.PrincipalID,
