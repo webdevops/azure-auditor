@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/webdevops/azure-audit-exporter/config"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
+	"os"
 	"sync"
 	"time"
 )
@@ -141,13 +142,23 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
-	// run all reports to keep report/metrics up2date
-	for _, entry := range auditor.cron.Entries() {
-		entry.WrappedJob.Run()
+	//
+	cronjobEntries := auditor.cron.Entries()
+	if len(cronjobEntries) == 0 {
+		auditor.logger.Error("no cronjobs enabled")
+		os.Exit(1)
 	}
 
-	// start cron scheduling
-	auditor.cron.Start()
+	// start cron in background
+	go func() {
+		// run all reports to keep report/metrics up2date
+		for _, entry := range cronjobEntries {
+			entry.WrappedJob.Run()
+		}
+
+		// start cron scheduling
+		auditor.cron.Start()
+	}()
 }
 
 func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()), resetCallback func()) {
