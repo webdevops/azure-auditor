@@ -80,6 +80,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		[]string{
 			"subscriptionID",
 			"keyvault",
+			"resourceGroup",
 			"objectID",
 			"applicationID",
 			"permissionsCertificates",
