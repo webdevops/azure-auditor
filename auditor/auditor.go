@@ -141,6 +141,12 @@ func (auditor *AzureAuditor) Run() {
 		)
 	}
 
+	// run all reports to keep report/metrics up2date
+	for _, entry := range auditor.cron.Entries() {
+		entry.WrappedJob.Run()
+	}
+
+	// start cron scheduling
 	auditor.cron.Start()
 }
 
