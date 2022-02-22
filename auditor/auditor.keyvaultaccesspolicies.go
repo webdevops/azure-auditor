@@ -18,7 +18,17 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	report := auditor.startReport(ReportKeyvaultAccessPolicies)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(row)
-		report.Add(row.ResourceID, matchingRuleId, status)
+
+		report.Add(map[string]string{
+			"resourceID":              row.ResourceID,
+			"keyvault":                row.Keyvault,
+			"objectID":                row.ObjectID,
+			"applicationID":           row.ApplicationID,
+			"permissionsCertificates": strings.Join(row.Permissions.Certificates, ","),
+			"permissionsSecrets":      strings.Join(row.Permissions.Secrets, ","),
+			"permissionsKeys":         strings.Join(row.Permissions.Keys, ","),
+			"permissionsStorage":      strings.Join(row.Permissions.Storage, ","),
+		}, matchingRuleId, status)
 
 		if status {
 			violationMetric.AddInfo(prometheus.Labels{

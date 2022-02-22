@@ -17,7 +17,12 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	report := auditor.startReport(ReportResourceProviderFeatures)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.ResourceProviderFeatures.Validate(row)
-		report.Add(row.ResourceID, matchingRuleId, status)
+
+		report.Add(map[string]string{
+			"resourceID": row.ResourceID,
+			"namespace":  row.Namespace,
+			"feature":    row.Feature,
+		}, matchingRuleId, status)
 
 		if status {
 			violationMetric.AddInfo(prometheus.Labels{

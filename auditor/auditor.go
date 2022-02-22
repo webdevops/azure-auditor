@@ -56,9 +56,9 @@ type (
 	}
 
 	AzureAuditorReportLine struct {
-		ResourceID string
-		RuleID     string
-		Status     bool
+		Resource map[string]string
+		RuleID   string
+		Status   bool
 	}
 )
 
@@ -289,13 +289,13 @@ func (report *AzureAuditorReport) Clear() {
 	report.Lines = []*AzureAuditorReportLine{}
 }
 
-func (report *AzureAuditorReport) Add(resourceID, ruleID string, status bool) {
+func (report *AzureAuditorReport) Add(resource map[string]string, ruleID string, status bool) {
 	report.Lines = append(
 		report.Lines,
 		&AzureAuditorReportLine{
-			ResourceID: resourceID,
-			RuleID:     ruleID,
-			Status:     status,
+			Resource: resource,
+			RuleID:   ruleID,
+			Status:   status,
 		},
 	)
 }

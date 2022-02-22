@@ -60,7 +60,14 @@
                 {{range $report.Lines}}
                 <tr class="{{ if .Status }} valid {{else}} invalid {{end}}">
                         <td class="status">{{ if .Status }}&#9989; {{else}} &#10060; {{end}}</td>
-                        <td>{{ .ResourceID }}</td>
+                        <td>
+                            <dl>
+                                {{range $fieldName, $fieldValue := .Resource}}
+                                <dt>{{ $fieldName }}:</dt>
+                                <dd>{{ $fieldValue }}</dd>
+                                {{end}}
+                            </dl>
+                        </td>
                         <td>{{ .RuleID }}</td>
                     </tr>
                     {{end}}

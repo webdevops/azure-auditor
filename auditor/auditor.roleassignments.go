@@ -28,10 +28,22 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 	report := auditor.startReport(ReportRoleAssignments)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(row)
-		report.Add(row.ResourceID, matchingRuleId, status)
+		scopeInfo, _ := azure.ParseResourceID(row.Scope)
+
+		report.Add(map[string]string{
+			"resourceID":    row.ResourceID,
+			"scope":         row.Scope,
+			"resourceGroup": scopeInfo.ResourceGroup,
+
+			"principalType": row.PrincipalType,
+			"principalID":   row.PrincipalID,
+			"principalName": row.PrincipalName,
+
+			"roleDefinitionID":   row.RoleDefinitionID,
+			"roleDefinitionName": row.RoleDefinitionName,
+		}, matchingRuleId, status)
 
 		if status {
-			scopeInfo, _ := azure.ParseResourceID(row.Scope)
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":   to.String(subscription.SubscriptionID),
 				"roleAssignmentID": row.RoleDefinitionID,

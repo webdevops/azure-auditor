@@ -17,7 +17,10 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscripti
 	report := auditor.startReport(ReportResourceGroups)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.ResourceGroups.Validate(row)
-		report.Add(row.ResourceID, matchingRuleId, status)
+
+		report.Add(map[string]string{
+			"resourceID": row.ResourceID,
+		}, matchingRuleId, status)
 
 		if status {
 			violationMetric.AddInfo(prometheus.Labels{
