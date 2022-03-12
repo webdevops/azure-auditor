@@ -2,7 +2,6 @@ package auditor
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest/to"
@@ -47,7 +46,6 @@ func (auditor *AzureAuditor) lookupPrincipalIdMap(ctx context.Context, principal
 		}
 
 		principalObjectIDChunkList := lookupPrincipalObjectIDList[i:end]
-		fmt.Println(principalObjectIDChunkList)
 
 		opts := getbyids.GetByIdsRequestBuilderPostOptions{
 			Body: getbyids.NewGetByIdsRequestBody(),
