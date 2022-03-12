@@ -14,9 +14,10 @@ type (
 		Type                AuditConfigMatcherString `yaml:"type,flow"`
 		Scope               AuditConfigMatcherString `yaml:"scope,flow"`
 
-		PrincipalID   AuditConfigMatcherString `yaml:"principalID,flow"`
-		PrincipalType AuditConfigMatcherString `yaml:"principalType,flow"`
-		PrincipalName AuditConfigMatcherString `yaml:"prinicpalName,flow"`
+		PrincipalObjectID      AuditConfigMatcherString `yaml:"principalObjectID,flow"`
+		PrincipalApplicationID AuditConfigMatcherString `yaml:"principalApplicationID,flow"`
+		PrincipalType          AuditConfigMatcherString `yaml:"principalType,flow"`
+		PrincipalName          AuditConfigMatcherString `yaml:"prinicpalName,flow"`
 
 		RoleDefinitionID   AuditConfigMatcherString `yaml:"roleDefinitionID,flow"`
 		RoleDefinitionName AuditConfigMatcherString `yaml:"roleDefinitionName,flow"`
@@ -58,7 +59,11 @@ func (rule *AuditConfigRoleAssignment) IsValid(object AzureRoleAssignment) bool 
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !rule.PrincipalID.IsMatching(object.PrincipalID) {
+	if !rule.PrincipalObjectID.IsMatching(object.PrincipalObjectID) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
+	}
+
+	if !rule.PrincipalApplicationID.IsMatching(object.PrincipalApplicationID) {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 

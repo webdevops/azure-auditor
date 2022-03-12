@@ -44,9 +44,10 @@ type (
 		Type  string
 		Scope string
 
-		PrincipalID   string
-		PrincipalType string
-		PrincipalName string
+		PrincipalObjectID      string
+		PrincipalApplicationID string
+		PrincipalType          string
+		PrincipalName          string
 
 		RoleDefinitionID   string
 		RoleDefinitionName string

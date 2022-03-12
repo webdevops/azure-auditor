@@ -3,9 +3,12 @@ package auditor
 import (
 	"context"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	a "github.com/microsoft/kiota/authentication/go/azure"
+	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -36,6 +39,8 @@ type (
 		azure struct {
 			authorizer  autorest.Authorizer
 			environment azure.Environment
+
+			msGraph *msgraphsdk.GraphServiceClient
 		}
 
 		locks struct {
@@ -72,6 +77,7 @@ func NewAzureAuditor() *AzureAuditor {
 
 func (auditor *AzureAuditor) Init() {
 	auditor.initAzure()
+	auditor.initMsGraph()
 	auditor.initPrometheus()
 	auditor.initCache()
 	auditor.initCron()
@@ -269,6 +275,25 @@ func (auditor *AzureAuditor) initAzure() {
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
+}
+
+func (auditor *AzureAuditor) initMsGraph() {
+	cred, err := azidentity.NewEnvironmentCredential(nil)
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
 }
 
 func (auditor *AzureAuditor) initCache() {
