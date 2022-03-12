@@ -5,19 +5,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/microsoftgraph/msgraph-sdk-go/directoryobjects/getbyids"
 	"github.com/prometheus/client_golang/prometheus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 	"strings"
-)
-
-type (
-	MsGraphDirectoryObjectInfo struct {
-		Type          string
-		DisplayName   string
-		ObjectId      string
-		ApplicationId string
-	}
 )
 
 func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
@@ -38,7 +28,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 			"principalType":          row.PrincipalType,
 			"principalObjectID":      row.PrincipalObjectID,
 			"principalApplicationID": row.PrincipalApplicationID,
-			"principalName":          row.PrincipalName,
+			"principalDisplayName":   row.PrincipalDisplayName,
 
 			"roleDefinitionID":   row.RoleDefinitionID,
 			"roleDefinitionName": row.RoleDefinitionName,
@@ -55,7 +45,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 				"principalType":          row.PrincipalType,
 				"principalObjectID":      row.PrincipalObjectID,
 				"principalApplicationID": row.PrincipalApplicationID,
-				"principalName":          row.PrincipalName,
+				"principalDisplayName":   row.PrincipalDisplayName,
 
 				"roleDefinitionID":   row.RoleDefinitionID,
 				"roleDefinitionName": row.RoleDefinitionName,
@@ -108,88 +98,27 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 		}
 	}
 
-	auditor.lookupRoleAssignmentPrincipals(ctx, subscription, &list)
+	auditor.lookupRoleAssignmentPrincipals(ctx, &list)
 
 	return
 }
 
-func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, subscription *subscriptions.Subscription, roleAssignmentList *map[string]*AzureRoleAssignment) {
-	PrincipalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
-	for _, row := range *roleAssignmentList {
-		PrincipalObjectIDMap[row.PrincipalObjectID] = nil
-		if val, ok := auditor.cache.Get("msgraph:" + row.PrincipalObjectID); ok {
-			if directoryObjectInfo, ok := val.(*MsGraphDirectoryObjectInfo); ok {
-				PrincipalObjectIDMap[row.PrincipalObjectID] = directoryObjectInfo
-			}
+func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, list *map[string]*AzureRoleAssignment) {
+	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
+	for _, row := range *list {
+		if row.PrincipalObjectID != "" {
+			principalObjectIDMap[row.PrincipalObjectID] = nil
 		}
 	}
 
-	// build list of not cached entries
-	lookupPrincipalObjectIDList := []string{}
-	for PrincipalObjectID, directoryObjectInfo := range PrincipalObjectIDMap {
-		if directoryObjectInfo == nil {
-			lookupPrincipalObjectIDList = append(lookupPrincipalObjectIDList, PrincipalObjectID)
-		}
-	}
+	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
 
-	// azure limits objects ids
-	chunkSize := 999
-	for i := 0; i < len(lookupPrincipalObjectIDList); i += chunkSize {
-		end := i + chunkSize
-		if end > len(lookupPrincipalObjectIDList) {
-			end = len(lookupPrincipalObjectIDList)
-		}
-
-		PrincipalObjectIDChunkList := lookupPrincipalObjectIDList[i:end]
-
-		opts := getbyids.GetByIdsRequestBuilderPostOptions{
-			Body: getbyids.NewGetByIdsRequestBody(),
-		}
-		opts.Body.SetIds(PrincipalObjectIDChunkList)
-
-		result, err := auditor.azure.msGraph.DirectoryObjects().GetByIds().Post(&opts)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		for _, row := range result.GetValue() {
-			objectId := to.String(row.GetId())
-			objectData := row.GetAdditionalData()
-
-			objectType := ""
-			if val, exists := objectData["@odata.type"]; exists {
-				objectType = to.String(val.(*string))
-				objectType = strings.ToLower(strings.TrimPrefix(objectType, "#microsoft.graph."))
-			}
-
-			displayName := ""
-			if val, exists := objectData["displayName"]; exists {
-				displayName = to.String(val.(*string))
-			}
-
-			applicationId := ""
-			if val, exists := objectData["appId"]; exists {
-				applicationId = to.String(val.(*string))
-			}
-
-			PrincipalObjectIDMap[objectId] = &MsGraphDirectoryObjectInfo{
-				ObjectId:      objectId,
-				ApplicationId: applicationId,
-				Type:          objectType,
-				DisplayName:   displayName,
-			}
-		}
-	}
-
-	for key, row := range *roleAssignmentList {
-		if directoryObjectInfo, exists := PrincipalObjectIDMap[row.PrincipalObjectID]; exists {
-			auditor.cache.Set("msgraph:"+row.PrincipalObjectID, PrincipalObjectIDMap[row.PrincipalObjectID], auditor.cacheExpiry)
-
-			if directoryObjectInfo != nil {
-				(*roleAssignmentList)[key].PrincipalType = directoryObjectInfo.Type
-				(*roleAssignmentList)[key].PrincipalName = directoryObjectInfo.DisplayName
-				(*roleAssignmentList)[key].PrincipalApplicationID = directoryObjectInfo.ApplicationId
-			}
+	for key, row := range *list {
+		if directoryObjectInfo, exists := principalObjectIDMap[row.PrincipalObjectID]; exists && directoryObjectInfo != nil {
+			(*list)[key].PrincipalType = directoryObjectInfo.Type
+			(*list)[key].PrincipalDisplayName = directoryObjectInfo.DisplayName
+			(*list)[key].PrincipalApplicationID = directoryObjectInfo.ApplicationId
+			(*list)[key].PrincipalObjectID = directoryObjectInfo.ObjectId
 		}
 	}
 }

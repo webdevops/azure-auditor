@@ -7,10 +7,14 @@ type (
 
 	AzureKeyvaultAccessPolicy struct {
 		*AzureBaseObject
-		Keyvault      string
-		ApplicationID string
-		ObjectID      string
-		Permissions   AzureKeyvaultAccessPolicyPermissions
+		Keyvault string
+
+		PrincipalObjectID      string
+		PrincipalApplicationID string
+		PrincipalType          string
+		PrincipalDisplayName   string
+
+		Permissions AzureKeyvaultAccessPolicyPermissions
 	}
 
 	AzureKeyvaultAccessPolicyPermissions struct {
@@ -47,7 +51,7 @@ type (
 		PrincipalObjectID      string
 		PrincipalApplicationID string
 		PrincipalType          string
-		PrincipalName          string
+		PrincipalDisplayName   string
 
 		RoleDefinitionID   string
 		RoleDefinitionName string

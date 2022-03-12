@@ -10,11 +10,13 @@ type (
 	}
 
 	AuditConfigKeyvaultAccessPolicy struct {
-		AuditConfigBaseRule `yaml:",inline"`
-		Keyvault            AuditConfigMatcherString                   `yaml:"keyvault,flow"`
-		ApplicationID       AuditConfigMatcherString                   `yaml:"applicationID,flow"`
-		ObjectID            AuditConfigMatcherString                   `yaml:"objectID,flow"`
-		Permissions         AuditConfigKeyvaultAccessPolicyPermissions `yaml:"permissions"`
+		AuditConfigBaseRule    `yaml:",inline"`
+		Keyvault               AuditConfigMatcherString                   `yaml:"keyvault,flow"`
+		PrincipalType          AuditConfigMatcherString                   `yaml:"principalType,flow"`
+		PrincipalDisplayName   AuditConfigMatcherString                   `yaml:"principalDisplayName,flow"`
+		PrincipalApplicationID AuditConfigMatcherString                   `yaml:"principalApplicationID,flow"`
+		PrincipalObjectID      AuditConfigMatcherString                   `yaml:"principalObjectID,flow"`
+		Permissions            AuditConfigKeyvaultAccessPolicyPermissions `yaml:"permissions"`
 	}
 
 	AuditConfigKeyvaultAccessPolicyPermissions struct {
@@ -54,11 +56,19 @@ func (rule *AuditConfigKeyvaultAccessPolicy) IsValid(object AzureKeyvaultAccessP
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !rule.ApplicationID.IsMatching(object.ApplicationID) {
+	if !rule.PrincipalType.IsMatching(object.PrincipalType) {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !rule.ObjectID.IsMatching(object.ObjectID) {
+	if !rule.PrincipalDisplayName.IsMatching(object.PrincipalDisplayName) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
+	}
+
+	if !rule.PrincipalApplicationID.IsMatching(object.PrincipalApplicationID) {
+		return rule.handleRuleStatus(object.AzureBaseObject, false)
+	}
+
+	if !rule.PrincipalObjectID.IsMatching(object.PrincipalObjectID) {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 

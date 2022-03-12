@@ -17,15 +17,19 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 
 	report := auditor.startReport(ReportKeyvaultAccessPolicies)
 	for _, row := range list {
-		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(row)
+		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(*row)
 		azureResourceInfo := extractAzureResourceInfo(row.ResourceID)
 
 		report.Add(map[string]string{
-			"resourceID":              row.ResourceID,
-			"keyvault":                row.Keyvault,
-			"resourceGroup":           azureResourceInfo.ResourceGroup,
-			"objectID":                row.ObjectID,
-			"applicationID":           row.ApplicationID,
+			"resourceID":    row.ResourceID,
+			"keyvault":      row.Keyvault,
+			"resourceGroup": azureResourceInfo.ResourceGroup,
+
+			"principalType":          row.PrincipalType,
+			"principalDisplayName":   row.PrincipalDisplayName,
+			"principalObjectID":      row.PrincipalObjectID,
+			"principalApplicationID": row.PrincipalApplicationID,
+
 			"permissionsCertificates": strings.Join(row.Permissions.Certificates, ","),
 			"permissionsSecrets":      strings.Join(row.Permissions.Secrets, ","),
 			"permissionsKeys":         strings.Join(row.Permissions.Keys, ","),
@@ -34,11 +38,15 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 
 		if status {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":          to.String(subscription.SubscriptionID),
-				"keyvault":                row.Keyvault,
-				"resourceGroup":           azureResourceInfo.ResourceGroup,
-				"objectID":                row.ObjectID,
-				"applicationID":           row.ApplicationID,
+				"subscriptionID": to.String(subscription.SubscriptionID),
+				"keyvault":       row.Keyvault,
+				"resourceGroup":  azureResourceInfo.ResourceGroup,
+
+				"principalType":          row.PrincipalType,
+				"principalDisplayName":   row.PrincipalDisplayName,
+				"principalObjectID":      row.PrincipalObjectID,
+				"principalApplicationID": row.PrincipalApplicationID,
+
 				"permissionsCertificates": strings.Join(row.Permissions.Certificates, ","),
 				"permissionsSecrets":      strings.Join(row.Permissions.Secrets, ","),
 				"permissionsKeys":         strings.Join(row.Permissions.Keys, ","),
@@ -53,7 +61,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureKeyvaultAccessPolicy) {
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription) (list []*AzureKeyvaultAccessPolicy) {
 	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -77,13 +85,13 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, su
 				}
 				list = append(
 					list,
-					AzureKeyvaultAccessPolicy{
+					&AzureKeyvaultAccessPolicy{
 						AzureBaseObject: &AzureBaseObject{
 							ResourceID: to.String(item.ID),
 						},
-						Keyvault:      to.String(item.Name),
-						ApplicationID: applicationId,
-						ObjectID:      to.String(accessPolicy.ObjectID),
+						Keyvault:               to.String(item.Name),
+						PrincipalApplicationID: applicationId,
+						PrincipalObjectID:      to.String(accessPolicy.ObjectID),
 						Permissions: AzureKeyvaultAccessPolicyPermissions{
 							Certificates: keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
 							Secrets:      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
@@ -96,13 +104,36 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, su
 		}
 	}
 
+	auditor.lookupKeyvaultAccessPolicyPrincipals(ctx, &list)
+
 	return
+}
+
+func (auditor *AzureAuditor) lookupKeyvaultAccessPolicyPrincipals(ctx context.Context, list *[]*AzureKeyvaultAccessPolicy) {
+	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
+	for _, row := range *list {
+		if row.PrincipalObjectID != "" {
+			principalObjectIDMap[row.PrincipalObjectID] = nil
+		}
+	}
+
+	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
+
+	for key, row := range *list {
+		if directoryObjectInfo, exists := principalObjectIDMap[row.PrincipalObjectID]; exists && directoryObjectInfo != nil {
+			(*list)[key].PrincipalType = directoryObjectInfo.Type
+			(*list)[key].PrincipalDisplayName = directoryObjectInfo.DisplayName
+			(*list)[key].PrincipalApplicationID = directoryObjectInfo.ApplicationId
+			(*list)[key].PrincipalObjectID = directoryObjectInfo.ObjectId
+		}
+	}
 }
 
 func keyvaultCertificatePermissionsToStringList(val *[]keyvault.CertificatePermissions) (list []string) {
 	if val != nil {
 		for _, row := range *val {
-			list = append(list, string(row))
+			val := strings.ToLower(string(row))
+			list = append(list, val)
 		}
 	}
 	return
@@ -111,7 +142,8 @@ func keyvaultCertificatePermissionsToStringList(val *[]keyvault.CertificatePermi
 func keyvaultSecretPermissionsToStringList(val *[]keyvault.SecretPermissions) (list []string) {
 	if val != nil {
 		for _, row := range *val {
-			list = append(list, string(row))
+			val := strings.ToLower(string(row))
+			list = append(list, val)
 		}
 	}
 	return
@@ -120,7 +152,8 @@ func keyvaultSecretPermissionsToStringList(val *[]keyvault.SecretPermissions) (l
 func keyvaultKeyPermissionsToStringList(val *[]keyvault.KeyPermissions) (list []string) {
 	if val != nil {
 		for _, row := range *val {
-			list = append(list, string(row))
+			val := strings.ToLower(string(row))
+			list = append(list, val)
 		}
 	}
 	return
@@ -129,7 +162,8 @@ func keyvaultKeyPermissionsToStringList(val *[]keyvault.KeyPermissions) (list []
 func keyvaultStoragePermissionsToStringList(val *[]keyvault.StoragePermissions) (list []string) {
 	if val != nil {
 		for _, row := range *val {
-			list = append(list, string(row))
+			val := strings.ToLower(string(row))
+			list = append(list, val)
 		}
 	}
 	return
