@@ -1,7 +1,6 @@
 package auditor
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
@@ -11,12 +10,12 @@ type (
 	AuditConfigMatcherString struct {
 		Match   *string        `yaml:"match,omitempty"`
 		MatchRe *string        `yaml:"regexp,omitempty"`
-		matchRe *regexp.Regexp //nolint:structcheck
+		matchRe *regexp.Regexp //nolint:structcheck,unused
 	}
 	AuditConfigMatcherStringInternal struct {
 		Match   *string        `yaml:"match"`
 		MatchRe *string        `yaml:"regexp"`
-		matchRe *regexp.Regexp //nolint:structcheck
+		matchRe *regexp.Regexp //nolint:structcheck,unused
 	}
 
 	AuditConfigMatcherList struct {
@@ -72,7 +71,6 @@ func (matcher *AuditConfigMatcherList) UnmarshalYAML(unmarshal func(interface{})
 }
 
 func (matcher *AuditConfigMatcherList) MarshalYAML() (interface{}, error) {
-	fmt.Println("marshal list")
 	return yaml.Marshal("")
 }
 
