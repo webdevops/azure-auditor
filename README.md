@@ -8,6 +8,7 @@
 Prometheus exporter for Azure Audit reporting
 
 Audit reports:
+
 - ResourceGroups
 - RoleAssignments
 - ResourceProviders
@@ -39,7 +40,8 @@ Help Options:
 
 crons can be disabled by setting them to empty string or `false`
 
-for Azure API authentication (using ENV vars) see https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication
+for Azure API authentication (using ENV vars)
+see https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication
 
 ## Configuration file
 
@@ -76,7 +78,6 @@ environment variables (eg. setting buckets, disabling metrics or disable autores
 | `METRIC_AZURERM_API_REQUEST_LABELS`      | `apiEndpoint, method, statusCode`  | Controls labels of `azurerm_api_request_*` metric              |
 | `METRIC_AZURERM_API_RATELIMIT_ENABLE`    | `false`                            | Enables/disables `azurerm_api_ratelimit` metric                |
 | `METRIC_AZURERM_API_RATELIMIT_AUTORESET` | `false`                            | Enables/disables `azurerm_api_ratelimit` autoreset after fetch |
-
 
 | `azurerm_api_request` label | Status             | Description                                                                                              |
 |-----------------------------|--------------------|----------------------------------------------------------------------------------------------------------|

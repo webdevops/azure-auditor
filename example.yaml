@@ -1,4 +1,3 @@
-
 roleAssignments:
   enabled: true
 
@@ -17,7 +16,7 @@ roleAssignments:
         match: null
         regexp: null
       roleDefinitionName: "Network Contributor"
-      scope: {regexp: "/subscriptions/.+" }
+      scope: { regexp: "/subscriptions/.+" }
     - roleDefinitionName: "Contributor"
     - roleDefinitionName: "Owner"
     - roleDefinitionName: "Reader"
@@ -25,7 +24,7 @@ roleAssignments:
 resourceGroups:
   enabled: true
   rules:
-  - location: {regexp: "westeurope|centralus" }
+    - location: { regexp: "westeurope|centralus" }
 
 keyvaultAccessPolicies:
   enabled: true
@@ -33,10 +32,10 @@ keyvaultAccessPolicies:
   scopeRules:
     "/subscriptions/d86bcf13-ddf7-45ea-82f1-6f656767a318/":
       - rule: barfoo
-        keyvault: {regexp: ".*"}
+        keyvault: { regexp: ".*" }
         foobar: barfoo
         permissions:
-          certificates: [Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers]
+          certificates: [ Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers ]
 
   rules:
     - rule: foobarasd123
@@ -57,7 +56,7 @@ keyvaultAccessPolicies:
         match: null
         regexp: null
       permissions:
-        certificates: ["Get","List"]
+        certificates: [ "Get","List" ]
         secrets: { list: null }
         keys: { list: null }
         storage: { list: null }
@@ -66,46 +65,46 @@ keyvaultAccessPolicies:
 resourceProviders:
   enabled: true
   rules:
-  - namespace: Microsoft.ADHybridHealthService
-  - namespace: Microsoft.Advisor
-  - namespace: Microsoft.AlertsManagement
-  - namespace: Microsoft.Authorization
-  - namespace: Microsoft.Billing
-  - namespace: Microsoft.Cache
-  - namespace: Microsoft.ClassicSubscription
-  - namespace: Microsoft.Commerce
-  - namespace: Microsoft.Compute
-  - namespace: Microsoft.Consumption
-  - namespace: Microsoft.ContainerRegistry
-  - namespace: Microsoft.ContainerService
-  - namespace: Microsoft.CostManagement
-  - namespace: Microsoft.DevTestLab
-  - namespace: Microsoft.EventHub
-  - namespace: Microsoft.Features
-  - namespace: Microsoft.GuestConfiguration
-  - namespace: Microsoft.KeyVault
-  - namespace: Microsoft.ManagedIdentity
-  - namespace: Microsoft.MarketplaceNotifications
-  - namespace: Microsoft.MarketplaceOrdering
-  - namespace: Microsoft.Network
-  - namespace: Microsoft.OperationalInsights
-  - namespace: Microsoft.OperationsManagement
-  - namespace: Microsoft.PolicyInsights
-  - namespace: Microsoft.Portal
-  - namespace: Microsoft.ResourceGraph
-  - namespace: Microsoft.ResourceHealth
-  - namespace: Microsoft.Resources
-  - namespace: Microsoft.Security
-  - namespace: Microsoft.SecurityInsights
-  - namespace: Microsoft.SerialConsole
-  - namespace: Microsoft.Storage
-  - namespace: Microsoft.StorageCache
-  - namespace: Microsoft.StorageSync
-  - namespace: microsoft.insights
-  - namespace: microsoft.support
+    - namespace: Microsoft.ADHybridHealthService
+    - namespace: Microsoft.Advisor
+    - namespace: Microsoft.AlertsManagement
+    - namespace: Microsoft.Authorization
+    - namespace: Microsoft.Billing
+    - namespace: Microsoft.Cache
+    - namespace: Microsoft.ClassicSubscription
+    - namespace: Microsoft.Commerce
+    - namespace: Microsoft.Compute
+    - namespace: Microsoft.Consumption
+    - namespace: Microsoft.ContainerRegistry
+    - namespace: Microsoft.ContainerService
+    - namespace: Microsoft.CostManagement
+    - namespace: Microsoft.DevTestLab
+    - namespace: Microsoft.EventHub
+    - namespace: Microsoft.Features
+    - namespace: Microsoft.GuestConfiguration
+    - namespace: Microsoft.KeyVault
+    - namespace: Microsoft.ManagedIdentity
+    - namespace: Microsoft.MarketplaceNotifications
+    - namespace: Microsoft.MarketplaceOrdering
+    - namespace: Microsoft.Network
+    - namespace: Microsoft.OperationalInsights
+    - namespace: Microsoft.OperationsManagement
+    - namespace: Microsoft.PolicyInsights
+    - namespace: Microsoft.Portal
+    - namespace: Microsoft.ResourceGraph
+    - namespace: Microsoft.ResourceHealth
+    - namespace: Microsoft.Resources
+    - namespace: Microsoft.Security
+    - namespace: Microsoft.SecurityInsights
+    - namespace: Microsoft.SerialConsole
+    - namespace: Microsoft.Storage
+    - namespace: Microsoft.StorageCache
+    - namespace: Microsoft.StorageSync
+    - namespace: microsoft.insights
+    - namespace: microsoft.support
 
 resourceProviderFeatures:
   enabled: true
   rules:
-  - namespace: microsoft.ContainerService
-    feature: CustomNodeConfigPreview
+    - namespace: microsoft.ContainerService
+      feature: CustomNodeConfigPreview
