@@ -2,13 +2,14 @@ package auditor
 
 import (
 	"context"
+	"strings"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/mgmt/keyvault"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
-	"strings"
 )
 
 func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {

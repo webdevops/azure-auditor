@@ -1,9 +1,10 @@
 package auditor
 
 import (
-	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type (

@@ -2,10 +2,11 @@ package auditor
 
 import (
 	"fmt"
+	"io/ioutil"
+
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 )
 
 type (

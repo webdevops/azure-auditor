@@ -50,7 +50,7 @@ func (rule *AuditConfigResourceGroup) IsValid(object AzureResourceGroup) bool {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	//if len(ra.Tags) > 0 {
+	// if len(ra.Tags) > 0 {
 	//	for tagName, tagMatcher := range ra.Tags {
 	//		tagValue := ""
 	//		if val, exists := resourceGroup.Tags[tagName]; exists {
@@ -61,7 +61,7 @@ func (rule *AuditConfigResourceGroup) IsValid(object AzureResourceGroup) bool {
 	//			return false
 	//		}
 	//	}
-	//}
+	// }
 
 	return rule.handleRuleStatus(object.AzureBaseObject, true)
 }

@@ -2,6 +2,10 @@ package auditor
 
 import (
 	"context"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
@@ -12,11 +16,9 @@ import (
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/azure-audit-exporter/config"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
-	"os"
-	"sync"
-	"time"
+
+	"github.com/webdevops/azure-audit-exporter/config"
 )
 
 const (
