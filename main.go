@@ -114,6 +114,7 @@ func startHttpServer() {
 	reportTmpl := template.Must(template.ParseFiles("./templates/report.html"))
 	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
+		w.Header().Add("Content-Security-Policy", "default-src 'self'; style-src * data: 'unsafe-inline'; style-src-elem 'self' data: 'unsafe-inline' cdnjs.cloudflare.com; img-src 'self' data:")
 
 		content, err := yaml.Marshal(audit.GetConfig())
 		if err != nil {
