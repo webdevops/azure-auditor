@@ -4,6 +4,18 @@ roleAssignments:
 
   rules:
     - rule: foobar
+      principalType:
+        match: null
+        regexp: null
+      principalDisplayName:
+        match: null
+        regexp: null
+      principalApplicationID:
+        match: null
+        regexp: null
+      principalObjectID:
+        match: null
+        regexp: null
       roleDefinitionName: "Network Contributor"
       scope: {regexp: "/subscriptions/.+" }
     - roleDefinitionName: "Contributor"
@@ -32,10 +44,16 @@ keyvaultAccessPolicies:
       keyvault:
         match: null
         regexp: null
-      applicationID:
+      principalType:
         match: null
         regexp: null
-      objectID:
+      principalDisplayName:
+        match: null
+        regexp: null
+      principalApplicationID:
+        match: null
+        regexp: null
+      principalObjectID:
         match: null
         regexp: null
       permissions:
