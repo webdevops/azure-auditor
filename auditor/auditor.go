@@ -60,7 +60,13 @@ type (
 	}
 
 	AzureAuditorReport struct {
-		Lines []*AzureAuditorReportLine
+		Summary *AzureAuditorReportSummary
+		Lines   []*AzureAuditorReportLine
+	}
+
+	AzureAuditorReportSummary struct {
+		Ok     int64
+		Failed int64
 	}
 
 	AzureAuditorReportLine struct {
@@ -325,6 +331,7 @@ func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
 
 func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
 	auditor.report[name] = &AzureAuditorReport{}
+	auditor.report[name].Summary = &AzureAuditorReportSummary{}
 	auditor.report[name].Lines = []*AzureAuditorReportLine{}
 	return auditor.report[name]
 }
@@ -342,4 +349,10 @@ func (report *AzureAuditorReport) Add(resource map[string]string, ruleID string,
 			Status:   status,
 		},
 	)
+
+	if status {
+		report.Summary.Ok++
+	} else {
+		report.Summary.Failed++
+	}
 }

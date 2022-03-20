@@ -18,8 +18,14 @@
 
         @media (min-width: 768px) {
             body {
-                margin-left: 232px
+                margin-left: 275px
             }
+        }
+
+        .navbar h1 {
+            text-align: center;
+            display: block;
+            width: 100%;
         }
 
         .navbar.fixed-left {
@@ -33,7 +39,7 @@
         @media (min-width: 768px) {
             .navbar.fixed-left {
                 bottom: 0;
-                width: 232px;
+                width: 275px;
                 flex-flow: column nowrap;
                 align-items: flex-start
             }
@@ -50,7 +56,8 @@
             }
 
             .navbar.fixed-left .navbar-collapse .navbar-nav .nav-item {
-                width: 100%
+                width: 100%;
+                white-space: nowrap;
             }
 
             .navbar.fixed-left .navbar-collapse .navbar-nav .nav-item .dropdown-menu {
@@ -84,21 +91,24 @@
 <body>
 
 
-<nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-left">
-    <a class="navbar-brand" href>Azure Audit exporter</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
-            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
+    <h1>
+        <a class="navbar-brand" href>Azure Audit exporter</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarReport"
+                aria-controls="navbarReport" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </h1>
 
-    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <div class="collapse navbar-collapse" id="navbarReport">
         <ul class="navbar-nav">
             <li class="nav-item">
                 <a class="nav-link" href="#config">Config</a>
             </li>
             {{range $ReportName, $report := .Report}}
             <li class="nav-item">
-                <a class="nav-link" href="#{{ $ReportName }}">{{ $ReportName }}</a>
+                <a class="nav-link" href="#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger">{{ $report.Summary.Failed }}</span>
+                </a>
             </li>
             {{end}}
         </ul>
