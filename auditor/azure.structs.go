@@ -1,5 +1,9 @@
 package auditor
 
+import (
+	"time"
+)
+
 type (
 	AzureBaseObject struct {
 		ResourceID string
@@ -57,5 +61,8 @@ type (
 		RoleDefinitionName string
 
 		Description string
+
+		CreationTime time.Time
+		Age          time.Duration
 	}
 )

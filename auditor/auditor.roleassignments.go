@@ -3,6 +3,7 @@ package auditor
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
@@ -33,6 +34,9 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 
 			"roleDefinitionID":   row.RoleDefinitionID,
 			"roleDefinitionName": row.RoleDefinitionName,
+
+			"createdAt": row.CreationTime.Format(time.RFC3339),
+			"age":       row.Age.String(),
 		}, matchingRuleId, status)
 
 		if status {
@@ -92,6 +96,8 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 			RoleDefinitionID:   to.String(roleAssignment.RoleDefinitionID),
 			RoleDefinitionName: roleDefinitionName,
 			Description:        to.String(roleAssignment.Description),
+			CreationTime:       roleAssignment.CreatedOn.Time,
+			Age:                time.Since(roleAssignment.CreatedOn.Time),
 		}
 
 		if response.NextWithContext(ctx) != nil {

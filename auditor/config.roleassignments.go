@@ -1,6 +1,9 @@
 package auditor
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 type (
 	AuditConfigRoleAssignments struct {
@@ -23,6 +26,8 @@ type (
 		RoleDefinitionName AuditConfigMatcherString `yaml:"roleDefinitionName,flow"`
 
 		Description AuditConfigMatcherString `yaml:"description,flow"`
+
+		Age *time.Duration `yaml:"age,flow"`
 	}
 )
 
@@ -83,7 +88,7 @@ func (rule *AuditConfigRoleAssignment) IsValid(object AzureRoleAssignment) bool 
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 
-	if !rule.Description.IsMatching(object.Description) {
+	if rule.Age != nil && rule.Age.Seconds() <= object.Age.Seconds() {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
 

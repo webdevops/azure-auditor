@@ -20,6 +20,8 @@ roleAssignments:
     - roleDefinitionName: "Contributor"
     - roleDefinitionName: "Owner"
     - roleDefinitionName: "Reader"
+    - roleDefinitionName: "Emergency Access"
+      age: 24h
 
 resourceGroups:
   enabled: true
