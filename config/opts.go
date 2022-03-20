@@ -30,6 +30,7 @@ type (
 		}
 
 		Config string `long:"config"  env:"CONFIG"   description:"Config file path"     required:"true"`
+		DryRun bool   `long:"dry-run"  env:"DRYRUN"    description:"Dry Run (report only)"`
 
 		// general options
 		ServerBind string `long:"bind" env:"SERVER_BIND"   description:"Server address"     default:":8080"`

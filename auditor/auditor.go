@@ -213,10 +213,12 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 				metricCallbackList = append(metricCallbackList, metricCallback)
 			}
 
-			// apply/commit metrics
-			resetCallback()
-			for _, metricCallback := range metricCallbackList {
-				metricCallback()
+			// apply/commit metrics (only if not dry run)
+			if !auditor.Opts.DryRun {
+				resetCallback()
+				for _, metricCallback := range metricCallbackList {
+					metricCallback()
+				}
 			}
 
 			reportDuration := time.Since(startTime)
