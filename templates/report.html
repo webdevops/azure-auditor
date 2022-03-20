@@ -18,7 +18,7 @@
 
         @media (min-width: 768px) {
             body {
-                margin-left: 275px
+                margin-left: 290px
             }
         }
 
@@ -39,7 +39,7 @@
         @media (min-width: 768px) {
             .navbar.fixed-left {
                 bottom: 0;
-                width: 275px;
+                width: 290px;
                 flex-flow: column nowrap;
                 align-items: flex-start
             }
@@ -53,6 +53,10 @@
             .navbar.fixed-left .navbar-collapse .navbar-nav {
                 flex-direction: column;
                 width: 100%
+            }
+
+            .navbar.fixed-left .navbar-collapse .navbar-nav .navbar-nav {
+                padding-left: 1rem;
             }
 
             .navbar.fixed-left .navbar-collapse .navbar-nav .nav-item {
@@ -83,6 +87,10 @@
             }
         }
 
+        .badge-disabled {
+            opacity: 0.5;
+        }
+
         table td {
             font-size: 0.8rem;
         }
@@ -105,12 +113,17 @@
             <li class="nav-item">
                 <a class="nav-link" href="#config">Config</a>
             </li>
-            {{range $ReportName, $report := .Report}}
             <li class="nav-item">
-                <a class="nav-link" href="#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger">{{ $report.Summary.Failed }}</span>
-                </a>
+                <a class="nav-link disabled">Reports</a>
+                <ul class="navbar-nav">
+                    {{range $ReportName, $report := .Report}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
+                        </a>
+                    </li>
+                    {{end}}
+                </ul>
             </li>
-            {{end}}
         </ul>
     </div>
 </nav>
