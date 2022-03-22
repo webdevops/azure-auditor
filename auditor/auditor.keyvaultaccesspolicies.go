@@ -21,7 +21,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(*row)
 
-		azureResource, _ := prometheusAzure.ParseResourceId(*row.ResourceID)
+		azureResource, _ := prometheusAzure.ParseResourceId(row.ResourceID)
 
 		report.Add(map[string]string{
 			"resourceID":    row.ResourceID,

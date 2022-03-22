@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(*row)
 
-		azureResource, _ := prometheusAzure.ParseResourceId(*row.Scope)
+		azureResource, _ := prometheusAzure.ParseResourceId(row.Scope)
 
 		report.Add(map[string]string{
 			"resourceID":    row.ResourceID,
