@@ -28,6 +28,8 @@ type (
 		Description AuditConfigMatcherString `yaml:"description,flow"`
 
 		Age *time.Duration `yaml:"age,flow"`
+
+		Action AuditConfigMatcherAction `yaml:"action,flow"`
 	}
 )
 
@@ -38,7 +40,7 @@ func (audit *AuditConfigRoleAssignments) IsEnabled() bool {
 func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return rule.RuleID, true
+			return rule.RuleID, rule.Action.ValidationStatus()
 		}
 	}
 
@@ -46,7 +48,7 @@ func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (s
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return rule.RuleID, true
+					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
 		}

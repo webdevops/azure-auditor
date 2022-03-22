@@ -12,6 +12,7 @@ type (
 	AuditConfigResourceProvider struct {
 		AuditConfigBaseRule `yaml:",inline"`
 		Namespace           AuditConfigMatcherString `yaml:"namespace,flow"`
+		Action              AuditConfigMatcherAction `yaml:"action,flow"`
 	}
 )
 
@@ -22,7 +23,7 @@ func (audit *AuditConfigResourceProviders) IsEnabled() bool {
 func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return rule.RuleID, true
+			return rule.RuleID, rule.Action.ValidationStatus()
 		}
 	}
 
@@ -30,7 +31,7 @@ func (audit *AuditConfigResourceProviders) Validate(object AzureResourceProvider
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return rule.RuleID, true
+					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
 		}

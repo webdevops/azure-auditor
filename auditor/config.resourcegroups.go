@@ -14,6 +14,7 @@ type (
 		Name                AuditConfigMatcherString            `yaml:"name,flow"`
 		Location            AuditConfigMatcherString            `yaml:"location,flow"`
 		Tags                map[string]AuditConfigMatcherString `yaml:"tags"`
+		Action              AuditConfigMatcherAction            `yaml:"action,flow"`
 	}
 )
 
@@ -24,7 +25,7 @@ func (audit *AuditConfigResourceGroups) IsEnabled() bool {
 func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return rule.RuleID, true
+			return rule.RuleID, rule.Action.ValidationStatus()
 		}
 	}
 
@@ -32,7 +33,7 @@ func (audit *AuditConfigResourceGroups) Validate(object AzureResourceGroup) (str
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return rule.RuleID, true
+					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
 		}

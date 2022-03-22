@@ -17,6 +17,7 @@ type (
 		PrincipalApplicationID AuditConfigMatcherString                   `yaml:"principalApplicationID,flow"`
 		PrincipalObjectID      AuditConfigMatcherString                   `yaml:"principalObjectID,flow"`
 		Permissions            AuditConfigKeyvaultAccessPolicyPermissions `yaml:"permissions"`
+		Action                 AuditConfigMatcherAction                   `yaml:"action,flow"`
 	}
 
 	AuditConfigKeyvaultAccessPolicyPermissions struct {
@@ -34,7 +35,7 @@ func (audit *AuditConfigKeyvaultAccessPolicies) IsEnabled() bool {
 func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAccessPolicy) (string, bool) {
 	for _, rule := range audit.Rules {
 		if rule.IsValid(object) {
-			return rule.RuleID, true
+			return rule.RuleID, rule.Action.ValidationStatus()
 		}
 	}
 
@@ -42,7 +43,7 @@ func (audit *AuditConfigKeyvaultAccessPolicies) Validate(object AzureKeyvaultAcc
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
 				if rule.IsValid(object) {
-					return rule.RuleID, true
+					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
 		}
