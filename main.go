@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -113,23 +115,36 @@ func startHttpServer() {
 	// report
 	reportTmpl := template.Must(template.ParseFiles("./templates/report.html"))
 	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
+		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
+
 		w.Header().Add("Content-Type", "text/html")
-		w.Header().Add("Content-Security-Policy", "default-src 'self'; style-src * data: 'unsafe-inline'; style-src-elem 'self' data: 'unsafe-inline' cdnjs.cloudflare.com; img-src 'self' data:")
+		w.Header().Add("Referrer-Policy", "same-origin")
+		w.Header().Add("X-Frame-Options", "DENY")
+		w.Header().Add("X-XSS-Protection", "1; mode=block")
+		w.Header().Add("X-Content-Type-Options", "nosniff")
+		w.Header().Add("Content-Security-Policy",
+			fmt.Sprintf(
+				"default-src 'self'; script-src-elem 'nonce-%[1]s'; style-src 'nonce-%[1]s'; img-src 'self' data:",
+				cspNonce,
+			),
+		)
 
 		content, err := yaml.Marshal(audit.GetConfig())
 		if err != nil {
 			log.Error(err)
 		}
 
-		ReportData := struct {
+		templatePayload := struct {
+			Nonce  string
 			Config string
 			Report map[string]*auditor.AzureAuditorReport
 		}{
+			Nonce:  cspNonce,
 			Config: string(content),
 			Report: audit.GetReport(),
 		}
 
-		if err := reportTmpl.Execute(w, ReportData); err != nil {
+		if err := reportTmpl.Execute(w, templatePayload); err != nil {
 			log.Error(err)
 		}
 	})
