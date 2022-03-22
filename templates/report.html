@@ -36,6 +36,22 @@
             z-index: 1030
         }
 
+        .navbar .nav-item-settings {
+            color: rgba(255,255,255,.55);
+        }
+
+        .navbar .nav-item-settings .form-check {
+            padding-left: 3rem;
+        }
+
+        .report-hide-valid .report-table .valid {
+            display: none;
+        }
+
+        .report-hide-invalid .report-table .invalid {
+            display: none;
+        }
+
         @media (min-width: 768px) {
             .navbar.fixed-left {
                 bottom: 0;
@@ -97,8 +113,6 @@
     </style>
 </head>
 <body>
-
-
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
     <h1>
         <a class="navbar-brand" href>Azure Audit exporter</a>
@@ -124,6 +138,23 @@
                     {{end}}
                 </ul>
             </li>
+
+            <li class="nav-item nav-item-settings settings">
+                <a class="nav-link disabled">Settings</a>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" checked id="showValid" data-body-class="report-hide-valid">
+                    <label class="form-check-label" for="showValid">
+                        Show valid
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" checked id="showInvalid" checked data-body-class="report-hide-invalid">
+                    <label class="form-check-label" for="showInvalid">
+                        Show invalid
+                    </label>
+                </div>
+            </li>
+
         </ul>
     </div>
 </nav>
@@ -143,7 +174,7 @@
         <div class="mb-3 row">
             <h3 id="{{ $ReportName }}">{{ $ReportName }} report</h3>
 
-            <table class="table table-sm table-striped table-hover">
+            <table class="table table-sm table-striped table-hover report-table">
                 <thead>
                 <tr>
                     <th>Status</th>
@@ -173,5 +204,27 @@
         {{end}}
     </div>
 </main>
+
+<script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script nonce="{{ .Nonce }}">
+jQuery( document ).ready(function($) {
+    let processSettings = () => {
+        $(".settings input:checkbox").each((idx, element) => {
+            let el = $(element);
+            if (el.is(':checked')) {
+                $("body").removeClass(el.data("body-class"))
+            } else {
+                $("body").addClass(el.data("body-class"))
+            }
+        })
+    };
+
+    $(document).on("change", ".settings input:checkbox", function() {
+        processSettings()
+    });
+    processSettings();
+});
+</script>
+
 </body>
 </html>
