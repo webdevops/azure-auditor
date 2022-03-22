@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
+	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
 
 func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
@@ -19,12 +20,13 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 	report := auditor.startReport(ReportKeyvaultAccessPolicies)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(*row)
-		azureResourceInfo := extractAzureResourceInfo(row.ResourceID)
+
+		azureResource, _ := prometheusAzure.ParseResourceId(*row.ResourceID)
 
 		report.Add(map[string]string{
 			"resourceID":    row.ResourceID,
 			"keyvault":      row.Keyvault,
-			"resourceGroup": azureResourceInfo.ResourceGroup,
+			"resourceGroup": azureResource.ResourceGroup,
 
 			"principalType":          row.PrincipalType,
 			"principalDisplayName":   row.PrincipalDisplayName,
@@ -41,7 +43,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID": to.String(subscription.SubscriptionID),
 				"keyvault":       row.Keyvault,
-				"resourceGroup":  azureResourceInfo.ResourceGroup,
+				"resourceGroup":  azureResource.ResourceGroup,
 
 				"principalType":          row.PrincipalType,
 				"principalDisplayName":   row.PrincipalDisplayName,

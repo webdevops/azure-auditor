@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
+	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
 
 func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
@@ -20,12 +21,13 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 	report := auditor.startReport(ReportRoleAssignments)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(*row)
-		azureResourceInfo := extractAzureResourceInfo(row.Scope)
+
+		azureResource, _ := prometheusAzure.ParseResourceId(*row.Scope)
 
 		report.Add(map[string]string{
 			"resourceID":    row.ResourceID,
 			"scope":         row.Scope,
-			"resourceGroup": azureResourceInfo.ResourceGroup,
+			"resourceGroup": azureResource.ResourceGroup,
 
 			"principalType":          row.PrincipalType,
 			"principalObjectID":      row.PrincipalObjectID,
@@ -45,7 +47,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 				"roleAssignmentID": row.RoleDefinitionID,
 
 				"scope":         row.Scope,
-				"resourceGroup": azureResourceInfo.ResourceGroup,
+				"resourceGroup": azureResource.ResourceGroup,
 
 				"principalType":          row.PrincipalType,
 				"principalObjectID":      row.PrincipalObjectID,

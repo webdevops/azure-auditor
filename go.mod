@@ -9,6 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/gofrs/uuid v4.2.0+incompatible
+	github.com/google/uuid v1.3.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/microsoft/kiota/authentication/go/azure v0.0.0-20220309144454-31e5897b295c
 	github.com/microsoftgraph/msgraph-sdk-go v0.13.0
@@ -38,7 +39,6 @@ require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/microsoft/kiota/abstractions/go v0.0.0-20220309144454-31e5897b295c // indirect
