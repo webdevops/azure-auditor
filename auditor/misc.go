@@ -2,6 +2,8 @@ package auditor
 
 import (
 	"strings"
+
+	"github.com/Azure/go-autorest/autorest/to"
 )
 
 func cronspecIsValid(cronspec string) bool {
@@ -11,4 +13,8 @@ func cronspecIsValid(cronspec string) bool {
 	default:
 		return true
 	}
+}
+
+func stringPtrToStringLower(val *string) string {
+	return strings.ToLower(to.String(val))
 }

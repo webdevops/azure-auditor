@@ -52,10 +52,10 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, subscripti
 			list,
 			AzureResourceGroup{
 				AzureBaseObject: &AzureBaseObject{
-					ResourceID: to.String(item.ID),
+					ResourceID: stringPtrToStringLower(item.ID),
 				},
-				Name:     to.String(item.Name),
-				Location: to.String(item.Location),
+				Name:     stringPtrToStringLower(item.Name),
+				Location: stringPtrToStringLower(item.Location),
 				Tags:     to.StringMap(item.Tags),
 			},
 		)

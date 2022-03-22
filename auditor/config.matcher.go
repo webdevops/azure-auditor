@@ -136,11 +136,17 @@ func (action *AuditConfigMatcherAction) UnmarshalYAML(unmarshal func(interface{}
 	return nil
 }
 
-func (action *AuditConfigMatcherAction) ValidationStatus() bool {
+func (action *AuditConfigMatcherAction) setDefault() {
 	if action.status == nil {
 		status := true
 		action.status = &status
 		action.Action = "allow"
+	}
+}
+
+func (action *AuditConfigMatcherAction) ValidationStatus() bool {
+	if action.status == nil {
+		action.setDefault()
 	}
 
 	return *action.status

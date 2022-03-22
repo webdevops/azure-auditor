@@ -54,9 +54,9 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscri
 				list,
 				AzureResourceProvider{
 					AzureBaseObject: &AzureBaseObject{
-						ResourceID: to.String(item.ID),
+						ResourceID: stringPtrToStringLower(item.ID),
 					},
-					Namespace: to.String(item.Namespace),
+					Namespace: stringPtrToStringLower(item.Namespace),
 				},
 			)
 		}

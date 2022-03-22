@@ -53,14 +53,14 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 		item := result.Value()
 
 		if strings.EqualFold(to.String(item.Properties.State), "Registered") {
-			nameParts := strings.SplitN(to.String(item.Name), "/", 2)
+			nameParts := strings.SplitN(stringPtrToStringLower(item.Name), "/", 2)
 
 			if len(nameParts) >= 2 {
 				list = append(
 					list,
 					AzureResourceProviderFeature{
 						AzureBaseObject: &AzureBaseObject{
-							ResourceID: to.String(item.ID),
+							ResourceID: stringPtrToStringLower(item.ID),
 						},
 						Namespace: nameParts[0],
 						Feature:   nameParts[1],

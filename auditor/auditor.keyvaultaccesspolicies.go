@@ -90,11 +90,11 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, su
 					list,
 					&AzureKeyvaultAccessPolicy{
 						AzureBaseObject: &AzureBaseObject{
-							ResourceID: to.String(item.ID),
+							ResourceID: stringPtrToStringLower(item.ID),
 						},
-						Keyvault:               to.String(item.Name),
+						Keyvault:               stringPtrToStringLower(item.Name),
 						PrincipalApplicationID: applicationId,
-						PrincipalObjectID:      to.String(accessPolicy.ObjectID),
+						PrincipalObjectID:      stringPtrToStringLower(accessPolicy.ObjectID),
 						Permissions: AzureKeyvaultAccessPolicyPermissions{
 							Certificates: keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
 							Secrets:      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),

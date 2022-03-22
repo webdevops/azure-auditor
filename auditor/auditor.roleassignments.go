@@ -90,12 +90,12 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 
 		list[to.String(roleAssignment.Name)] = &AzureRoleAssignment{
 			AzureBaseObject: &AzureBaseObject{
-				ResourceID: to.String(roleAssignment.ID),
+				ResourceID: stringPtrToStringLower(roleAssignment.ID),
 			},
-			Type:               to.String(roleAssignment.Type),
-			Scope:              to.String(roleAssignment.Scope),
-			PrincipalObjectID:  to.String(roleAssignment.PrincipalID),
-			RoleDefinitionID:   to.String(roleAssignment.RoleDefinitionID),
+			Type:               stringPtrToStringLower(roleAssignment.Type),
+			Scope:              stringPtrToStringLower(roleAssignment.Scope),
+			PrincipalObjectID:  stringPtrToStringLower(roleAssignment.PrincipalID),
+			RoleDefinitionID:   stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 			RoleDefinitionName: roleDefinitionName,
 			Description:        to.String(roleAssignment.Description),
 			CreationTime:       roleAssignment.CreatedOn.Time,
