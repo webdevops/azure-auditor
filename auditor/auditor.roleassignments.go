@@ -13,12 +13,11 @@ import (
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
 
-func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
+func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
 
-	report := auditor.startReport(ReportRoleAssignments)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(*row)
 

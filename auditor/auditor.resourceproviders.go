@@ -11,12 +11,11 @@ import (
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 )
 
-func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceProviders(ctx, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
 
-	report := auditor.startReport(ReportResourceProviders)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.ResourceProviders.Validate(row)
 

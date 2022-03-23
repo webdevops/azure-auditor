@@ -175,7 +175,7 @@ func (auditor *AzureAuditor) Run() {
 	}()
 }
 
-func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()), resetCallback func()) {
+func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), resetCallback func()) {
 	contextLogger := auditor.logger.WithFields(log.Fields{
 		"report": name,
 	})
@@ -193,13 +193,14 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 
 			go func() {
 				subscriptionList := auditor.getSubscriptionList(ctx)
+				report := auditor.startReport(name)
 				for _, row := range subscriptionList {
 					subscription := row
 
 					wg.Add(1)
 					go func(subscription subscriptions.Subscription) {
 						defer wg.Done()
-						callback(ctx, &subscription, metricCallbackChannel)
+						callback(ctx, &subscription, report, metricCallbackChannel)
 					}(subscription)
 				}
 

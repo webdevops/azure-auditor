@@ -13,11 +13,10 @@ import (
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
 
-func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, callback chan<- func()) {
+func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
-	report := auditor.startReport(ReportKeyvaultAccessPolicies)
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(*row)
 
