@@ -2,7 +2,6 @@ package auditor
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
@@ -83,7 +82,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, subscript
 		roleAssignment := response.Value()
 
 		roleDefinitionName := ""
-		if val, exists := roleDefinitionList[to.String(roleAssignment.RoleDefinitionID)]; exists {
+		if val, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
 			roleDefinitionName = val
 		}
 
@@ -135,7 +134,7 @@ func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, subscr
 	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
-	response, err := client.ListComplete(ctx, "", "")
+	response, err := client.ListComplete(ctx, *subscription.ID, "")
 
 	if err != nil {
 		auditor.logger.Panic(err)
@@ -146,14 +145,8 @@ func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, subscr
 	for response.NotDone() {
 		roleDefinition := response.Value()
 
-		roleDefinitionID := to.String(roleDefinition.ID)
-
-		if strings.EqualFold(*roleDefinition.RoleDefinitionProperties.RoleType, "BuiltInRole") {
-			// add subscription prefix to role (builtin roles don't have /subscription/xxxx-xxxx-xxxx-xxx/ prefix)
-			roleDefinitionList[*subscription.ID+roleDefinitionID] = to.String(roleDefinition.RoleName)
-		} else {
-			roleDefinitionList[roleDefinitionID] = to.String(roleDefinition.RoleName)
-		}
+		roleDefinitionID := stringPtrToStringLower(roleDefinition.ID)
+		roleDefinitionList[roleDefinitionID] = stringPtrToStringLower(roleDefinition.RoleName)
 
 		if response.NextWithContext(ctx) != nil {
 			break
