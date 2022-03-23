@@ -26,7 +26,22 @@ roleAssignments:
 resourceGroups:
   enabled: true
   rules:
-    - location: { regexp: "westeurope|centralus" }
+    - rule: westeurope
+      location: { regexp: "westeurope" }
+      action: continue
+
+    - tags:
+        owner:
+          mode: required
+          value: devteam0
+      action: deny
+
+    - tags:
+        owner:
+          mode: required
+          value: { regexp: "[a-z][-_a-z0-9]+" }
+
+
 
 keyvaultAccessPolicies:
   enabled: true

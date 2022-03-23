@@ -1,6 +1,8 @@
 package auditor
 
-import "strings"
+import (
+	"strings"
+)
 
 type (
 	AuditConfigResourceProviderFeatures struct {
@@ -18,20 +20,46 @@ type (
 )
 
 func (audit *AuditConfigResourceProviderFeatures) IsEnabled() bool {
-	return audit.Enabled
+	return audit != nil && audit.Enabled
 }
 
 func (audit *AuditConfigResourceProviderFeatures) Validate(object AzureResourceProviderFeature) (string, bool) {
 	for _, rule := range audit.Rules {
-		if rule.IsValid(object) {
-			return rule.RuleID, rule.Action.ValidationStatus()
+		if rule.IsRuleMatching(object) {
+			if rule.Action.IsContinue() {
+				// rule action is "continue":
+				// if rule matches, go to next rule
+				// otherwise fail validation here
+				if rule.IsRuleMatching(object) {
+					continue
+				} else {
+					return rule.RuleID, false
+				}
+			}
+
+			// normal rule matching (deny/allow)
+			if rule.IsRuleMatching(object) {
+				return rule.RuleID, rule.Action.ValidationStatus()
+			}
 		}
 	}
 
 	for scope, rules := range audit.ScopeRules {
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
-				if rule.IsValid(object) {
+				if rule.Action.IsContinue() {
+					// rule action is "continue":
+					// if rule matches, go to next rule
+					// otherwise fail validation here
+					if rule.IsRuleMatching(object) {
+						continue
+					} else {
+						return rule.RuleID, false
+					}
+				}
+
+				// normal rule matching (deny/allow)
+				if rule.IsRuleMatching(object) {
 					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
@@ -41,7 +69,7 @@ func (audit *AuditConfigResourceProviderFeatures) Validate(object AzureResourceP
 	return "", false
 }
 
-func (rule *AuditConfigResourceProviderFeature) IsValid(object AzureResourceProviderFeature) bool {
+func (rule *AuditConfigResourceProviderFeature) IsRuleMatching(object AzureResourceProviderFeature) bool {
 	if !rule.Namespace.IsMatching(object.Namespace) {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}

@@ -3,6 +3,14 @@ package auditor
 import (
 	"regexp"
 	"strings"
+
+	"github.com/Azure/go-autorest/autorest/to"
+)
+
+const (
+	AuditConfigMatcherActionAllow    = "allow"
+	AuditConfigMatcherActionDeny     = "deny"
+	AuditConfigMatcherActionContinue = "continue"
 )
 
 type (
@@ -25,7 +33,7 @@ type (
 	}
 
 	AuditConfigMatcherAction struct {
-		Action string `yaml:"action,omitempty"`
+		Action *string `yaml:"action,omitempty"`
 		status *bool
 	}
 )
@@ -107,6 +115,8 @@ valueListLoop:
 }
 
 func (action *AuditConfigMatcherAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	ruleAction := AuditConfigMatcherActionAllow
+
 	val := struct{ Action string }{}
 	err := unmarshal(&val)
 	if err != nil {
@@ -116,36 +126,46 @@ func (action *AuditConfigMatcherAction) UnmarshalYAML(unmarshal func(interface{}
 			return err
 		}
 		if len(val) > 0 {
-			action.Action = strings.ToLower(val)
+			ruleAction = strings.ToLower(val)
 		}
 	} else {
-		action.Action = strings.ToLower(val.Action)
+		ruleAction = strings.ToLower(val.Action)
 	}
 
-	status := true
-	switch action.Action {
-	case "deny":
-		status = false
-	case "", "allow":
-		status = true
+	switch ruleAction {
+	case AuditConfigMatcherActionDeny:
+		action.Action = &ruleAction
+		action.status = to.BoolPtr(false)
+	case "", AuditConfigMatcherActionAllow:
+		action.Action = &ruleAction
+		action.status = to.BoolPtr(true)
+	case AuditConfigMatcherActionContinue:
+		action.Action = &ruleAction
+		action.status = nil
 	default:
-		panic("invalid action \"" + action.Action + "\" found, only \"deny\" and \"allow\" are valid")
+		panic("invalid action \"" + ruleAction + "\" found, only \"deny\", \"allow\" and \"continue\" are valid")
 	}
-	action.status = &status
 
 	return nil
 }
 
 func (action *AuditConfigMatcherAction) setDefault() {
-	if action.status == nil {
-		status := true
-		action.status = &status
-		action.Action = "allow"
+	if action.Action == nil {
+		action.Action = to.StringPtr(AuditConfigMatcherActionAllow)
+		action.status = to.BoolPtr(true)
 	}
 }
 
+func (action *AuditConfigMatcherAction) IsContinue() bool {
+	if action.Action == nil {
+		action.setDefault()
+	}
+
+	return action.status == nil
+}
+
 func (action *AuditConfigMatcherAction) ValidationStatus() bool {
-	if action.status == nil {
+	if action.Action == nil {
 		action.setDefault()
 	}
 

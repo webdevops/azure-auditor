@@ -34,12 +34,24 @@ type (
 )
 
 func (audit *AuditConfigRoleAssignments) IsEnabled() bool {
-	return audit.Enabled
+	return audit != nil && audit.Enabled
 }
 
 func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (string, bool) {
 	for _, rule := range audit.Rules {
-		if rule.IsValid(object) {
+		if rule.Action.IsContinue() {
+			// rule action is "continue":
+			// if rule matches, go to next rule
+			// otherwise fail validation here
+			if rule.IsRuleMatching(object) {
+				continue
+			} else {
+				return rule.RuleID, false
+			}
+		}
+
+		// normal rule matching (deny/allow)
+		if rule.IsRuleMatching(object) {
 			return rule.RuleID, rule.Action.ValidationStatus()
 		}
 	}
@@ -47,7 +59,19 @@ func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (s
 	for scope, rules := range audit.ScopeRules {
 		if strings.HasPrefix(object.ResourceID, scope) {
 			for _, rule := range rules {
-				if rule.IsValid(object) {
+				if rule.Action.IsContinue() {
+					// rule action is "continue":
+					// if rule matches, go to next rule
+					// otherwise fail validation here
+					if rule.IsRuleMatching(object) {
+						continue
+					} else {
+						return rule.RuleID, false
+					}
+				}
+
+				// normal rule matching (deny/allow)
+				if rule.IsRuleMatching(object) {
 					return rule.RuleID, rule.Action.ValidationStatus()
 				}
 			}
@@ -57,7 +81,7 @@ func (audit *AuditConfigRoleAssignments) Validate(object AzureRoleAssignment) (s
 	return "", false
 }
 
-func (rule *AuditConfigRoleAssignment) IsValid(object AzureRoleAssignment) bool {
+func (rule *AuditConfigRoleAssignment) IsRuleMatching(object AzureRoleAssignment) bool {
 	if !rule.Type.IsMatching(object.Type) {
 		return rule.handleRuleStatus(object.AzureBaseObject, false)
 	}
