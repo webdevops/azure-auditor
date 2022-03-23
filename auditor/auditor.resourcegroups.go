@@ -32,7 +32,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscripti
 	}
 
 	callback <- func() {
-		auditor.logger.Infof("found %v illegal ResourceGroups", len(violationMetric.GetList()))
+		auditor.logger.WithField("subscription", *subscription.SubscriptionID).Infof("found %v illegal ResourceGroups", len(violationMetric.GetList()))
 		violationMetric.GaugeSet(auditor.prometheus.resourceGroup)
 	}
 }
