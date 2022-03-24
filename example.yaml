@@ -26,22 +26,26 @@ roleAssignments:
 resourceGroups:
   enabled: true
   rules:
+    ## validate location but continue with next rules
     - rule: westeurope
       location: { regexp: "westeurope" }
       action: continue
 
-    - tags:
+    - rule: no-tag-owner-devteam0
+      tags:
         owner:
-          mode: required
+          mode: optional
           value: devteam0
       action: deny
 
-    - tags:
+    - rule: require-owner-tag
+      tags:
         owner:
           mode: required
           value: { regexp: "[a-z][-_a-z0-9]+" }
+      action: continue
 
-
+    - rule: match-everything
 
 keyvaultAccessPolicies:
   enabled: true
