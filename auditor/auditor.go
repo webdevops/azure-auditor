@@ -70,7 +70,7 @@ type (
 	}
 
 	AzureAuditorReportLine struct {
-		Resource map[string]string
+		Resource map[string]interface{}
 		RuleID   string
 		Status   bool
 	}
@@ -343,7 +343,7 @@ func (report *AzureAuditorReport) Clear() {
 	report.Lines = []*AzureAuditorReportLine{}
 }
 
-func (report *AzureAuditorReport) Add(resource map[string]string, ruleID string, status bool) {
+func (report *AzureAuditorReport) Add(resource map[string]interface{}, ruleID string, status bool) {
 	report.Lines = append(
 		report.Lines,
 		&AzureAuditorReportLine{

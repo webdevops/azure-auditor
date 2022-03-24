@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, subscript
 
 		azureResource, _ := prometheusAzure.ParseResourceId(row.Scope)
 
-		report.Add(map[string]string{
+		report.Add(map[string]interface{}{
 			"resourceID":    row.ResourceID,
 			"scope":         row.Scope,
 			"resourceGroup": azureResource.ResourceGroup,

@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, su
 
 		azureResource, _ := prometheusAzure.ParseResourceId(row.ResourceID)
 
-		report.Add(map[string]string{
+		report.Add(map[string]interface{}{
 			"resourceID":    row.ResourceID,
 			"keyvault":      row.Keyvault,
 			"resourceGroup": azureResource.ResourceGroup,

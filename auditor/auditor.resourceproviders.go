@@ -19,7 +19,7 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscri
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.ResourceProviders.Validate(row)
 
-		report.Add(map[string]string{
+		report.Add(map[string]interface{}{
 			"resourceID": row.ResourceID,
 			"namespace":  row.Namespace,
 		}, matchingRuleId, status)

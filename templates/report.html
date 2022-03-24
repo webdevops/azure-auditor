@@ -1,3 +1,4 @@
+{{ $root := . }}
 <!doctype html>
 <html lang="en">
 <head>
@@ -44,11 +45,11 @@
             padding-left: 3rem;
         }
 
-        .report-hide-valid .report-table .valid {
+        .report-hide-allow .report-table .allow {
             display: none;
         }
 
-        .report-hide-invalid .report-table .invalid {
+        .report-hide-deny .report-table .deny {
             display: none;
         }
 
@@ -125,14 +126,14 @@
     <div class="collapse navbar-collapse" id="navbarReport">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link" href="#config">Config</a>
+                <a class="nav-link" href="/report#config">Config</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link disabled">Reports</a>
                 <ul class="navbar-nav">
                     {{range $ReportName, $report := .Report}}
                     <li class="nav-item">
-                        <a class="nav-link" href="#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
+                        <a class="nav-link" href="/report?report={{ $ReportName }}#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
                         </a>
                     </li>
                     {{end}}
@@ -142,15 +143,15 @@
             <li class="nav-item nav-item-settings settings">
                 <a class="nav-link disabled">Settings</a>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" checked id="showValid" data-body-class="report-hide-valid">
+                    <input class="form-check-input" type="checkbox" value="1" checked id="showValid" data-body-class="report-hide-allow">
                     <label class="form-check-label" for="showValid">
-                        Show valid
+                        Show allow
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" checked id="showInvalid" checked data-body-class="report-hide-invalid">
+                    <input class="form-check-input" type="checkbox" value="1" checked id="showInvalid" checked data-body-class="report-hide-deny">
                     <label class="form-check-label" for="showInvalid">
-                        Show invalid
+                        Show deny
                     </label>
                 </div>
             </li>
@@ -171,6 +172,7 @@
         </div>
 
         {{range $ReportName, $report := .Report}}
+        {{ if eq $ReportName $root.RequestReport }}
         <div class="mb-3 row">
             <h3 id="{{ $ReportName }}">{{ $ReportName }} report</h3>
 
@@ -184,16 +186,9 @@
                 </thead>
                 <tbody>
                 {{range $report.Lines}}
-                <tr class="{{ if .Status }} valid {{else}} invalid {{end}}">
+                <tr class="{{ if .Status }} allow {{else}} deny {{end}}">
                     <td class="status">{{ if .Status }}&#9989; {{else}} &#10060; {{end}}</td>
-                    <td>
-                        <dl>
-                            {{range $fieldName, $fieldValue := .Resource}}
-                            <dt>{{ $fieldName }}:</dt>
-                            <dd>{{ $fieldValue }}</dd>
-                            {{end}}
-                        </dl>
-                    </td>
+                    <td><pre>{{ .Resource | toYaml }}</pre></td>
                     <td>{{ .RuleID }}</td>
                 </tr>
                 {{end}}
@@ -201,7 +196,8 @@
                 </tbody>
             </table>
         </div>
-        {{end}}
+        {{ end }}
+        {{ end }}
     </div>
 </main>
 

@@ -105,6 +105,7 @@ func initArgparser() {
 
 // start and handle prometheus handler
 func startHttpServer() {
+
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
@@ -113,7 +114,15 @@ func startHttpServer() {
 	})
 
 	// report
-	reportTmpl := template.Must(template.ParseFiles("./templates/report.html"))
+	reportTmpl, err := template.New("report").Funcs(template.FuncMap{
+		"toYaml": func(obj interface{}) string {
+			out, _ := yaml.Marshal(obj)
+			return string(out)
+		},
+	}).ParseGlob("./templates/report.html")
+	if err != nil {
+		log.Panic(err)
+	}
 	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
@@ -135,16 +144,18 @@ func startHttpServer() {
 		}
 
 		templatePayload := struct {
-			Nonce  string
-			Config string
-			Report map[string]*auditor.AzureAuditorReport
+			Nonce         string
+			Config        string
+			Report        map[string]*auditor.AzureAuditorReport
+			RequestReport string
 		}{
-			Nonce:  cspNonce,
-			Config: string(content),
-			Report: audit.GetReport(),
+			Nonce:         cspNonce,
+			Config:        string(content),
+			Report:        audit.GetReport(),
+			RequestReport: r.URL.Query().Get("report"),
 		}
 
-		if err := reportTmpl.Execute(w, templatePayload); err != nil {
+		if err := reportTmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
 			log.Error(err)
 		}
 	})

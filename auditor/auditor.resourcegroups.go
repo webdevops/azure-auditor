@@ -2,7 +2,6 @@ package auditor
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
@@ -19,12 +18,10 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, subscripti
 	for _, row := range list {
 		matchingRuleId, status := auditor.config.ResourceGroups.Validate(row)
 
-		tagString, _ := json.MarshalIndent(row.Tags, "", "  ")
-
-		report.Add(map[string]string{
+		report.Add(map[string]interface{}{
 			"resourceID": row.ResourceID,
 			"location":   row.Location,
-			"tags":       string(tagString),
+			"tags":       row.Tags,
 		}, matchingRuleId, status)
 
 		if status {
