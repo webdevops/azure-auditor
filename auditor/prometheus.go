@@ -42,7 +42,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
-			"name",
+			"resourceGroup",
 			"location",
 		},
 	)
@@ -68,7 +68,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		[]string{
 			"subscriptionID",
 			"providerNamespace",
-			"feature",
+			"providerFeature",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.resourceProviderFeature)

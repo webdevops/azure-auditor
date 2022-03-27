@@ -10,6 +10,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/google/uuid v1.3.0
+	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/microsoft/kiota/authentication/go/azure v0.0.0-20220309144454-31e5897b295c
 	github.com/microsoftgraph/msgraph-sdk-go v0.13.0

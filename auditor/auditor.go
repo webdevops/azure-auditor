@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/Azure/go-autorest/autorest/to"
 	a "github.com/microsoft/kiota/authentication/go/azure"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/patrickmn/go-cache"
@@ -175,7 +176,7 @@ func (auditor *AzureAuditor) Run() {
 	}()
 }
 
-func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), resetCallback func()) {
+func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), resetCallback func()) {
 	contextLogger := auditor.logger.WithFields(log.Fields{
 		"report": name,
 	})
@@ -200,7 +201,11 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 					wg.Add(1)
 					go func(subscription subscriptions.Subscription) {
 						defer wg.Done()
-						callback(ctx, &subscription, report, metricCallbackChannel)
+						callLogger := contextLogger.WithFields(log.Fields{
+							"subscriptionID":   to.String(subscription.SubscriptionID),
+							"subscriptionName": to.String(subscription.DisplayName),
+						})
+						callback(ctx, callLogger, &subscription, report, metricCallbackChannel)
 					}(subscription)
 				}
 
@@ -343,11 +348,11 @@ func (report *AzureAuditorReport) Clear() {
 	report.Lines = []*AzureAuditorReportLine{}
 }
 
-func (report *AzureAuditorReport) Add(resource map[string]interface{}, ruleID string, status bool) {
+func (report *AzureAuditorReport) Add(resource *AzureObject, ruleID string, status bool) {
 	report.Lines = append(
 		report.Lines,
 		&AzureAuditorReportLine{
-			Resource: resource,
+			Resource: *resource,
 			RuleID:   ruleID,
 			Status:   status,
 		},

@@ -8,55 +8,55 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 )
 
-func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
-	list := auditor.fetchResourceProviders(ctx, subscription)
+func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+	list := auditor.fetchResourceProviders(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
 
-	for _, row := range list {
-		matchingRuleId, status := auditor.config.ResourceProviders.Validate(row)
+	for _, object := range list {
+		matchingRuleId, status := auditor.config.ResourceProviders.Validate(object)
+		report.Add(object, matchingRuleId, status)
 
-		report.Add(map[string]interface{}{
-			"resourceID": row.ResourceID,
-			"namespace":  row.Namespace,
-		}, matchingRuleId, status)
-
-		if status {
+		if !status {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":    to.String(subscription.SubscriptionID),
-				"providerNamespace": row.Namespace,
+				"providerNamespace": object.ToPrometheusLabel("provider.namespace"),
 			})
 		}
 	}
 
 	callback <- func() {
-		auditor.logger.WithField("subscription", *subscription.SubscriptionID).Infof("found %v illegal ResourceProviders", len(violationMetric.GetList()))
+		logger.Infof("found %v illegal ResourceProviders", len(violationMetric.GetList()))
 		violationMetric.GaugeSet(auditor.prometheus.resourceProvider)
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, subscription *subscriptions.Subscription) (list []AzureResourceProvider) {
+func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*AzureObject) {
 	client := resources.NewProvidersClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
 	result, err := client.ListComplete(ctx, nil, "")
 	if err != nil {
-		auditor.logger.Panic(err)
+		logger.Panic(err)
 	}
 
 	for _, item := range *result.Response().Value {
 		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
 			list = append(
 				list,
-				AzureResourceProvider{
-					AzureBaseObject: &AzureBaseObject{
-						ResourceID: stringPtrToStringLower(item.ID),
+				newAzureObject(
+					map[string]interface{}{
+						"resourceID":        stringPtrToStringLower(item.ID),
+						"subscription.ID":   to.String(subscription.SubscriptionID),
+						"subscription.name": to.String(subscription.DisplayName),
+
+						"provider.namespace": stringPtrToStringLower(item.Namespace),
 					},
-					Namespace: stringPtrToStringLower(item.Namespace),
-				},
+				),
 			)
 		}
 	}

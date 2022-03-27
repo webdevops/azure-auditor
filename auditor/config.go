@@ -11,11 +11,11 @@ import (
 
 type (
 	AuditConfig struct {
-		RoleAssignments          *AuditConfigRoleAssignments          `yaml:"roleAssignments"`
-		ResourceGroups           *AuditConfigResourceGroups           `yaml:"resourceGroups"`
-		ResourceProviders        *AuditConfigResourceProviders        `yaml:"resourceProviders"`
-		ResourceProviderFeatures *AuditConfigResourceProviderFeatures `yaml:"resourceProviderFeatures"`
-		KeyvaultAccessPolicies   *AuditConfigKeyvaultAccessPolicies   `yaml:"keyvaultAccessPolicies"`
+		RoleAssignments          *AuditConfigValidation `yaml:"roleAssignments"`
+		ResourceGroups           *AuditConfigValidation `yaml:"resourceGroups"`
+		ResourceProviders        *AuditConfigValidation `yaml:"resourceProviders"`
+		ResourceProviderFeatures *AuditConfigValidation `yaml:"resourceProviderFeatures"`
+		KeyvaultAccessPolicies   *AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
 	}
 
 	AuditConfigBaseRule struct {

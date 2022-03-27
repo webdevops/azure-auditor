@@ -1,6 +1,7 @@
 package auditor
 
 import (
+	"strings"
 	"time"
 )
 
@@ -8,6 +9,8 @@ type (
 	AzureBaseObject struct {
 		ResourceID string
 	}
+
+	AzureObject map[string]interface{}
 
 	AzureKeyvaultAccessPolicy struct {
 		*AzureBaseObject
@@ -66,3 +69,23 @@ type (
 		Age          time.Duration
 	}
 )
+
+func (o *AzureObject) ResourceID() string {
+	if val, ok := (*o)["resourceID"].(string); ok {
+		return val
+	}
+	return ""
+}
+
+func (o *AzureObject) ToPrometheusLabel(name string) string {
+	if val, ok := (*o)[name]; ok {
+		switch v := val.(type) {
+		case string:
+			return v
+		case []string:
+			return strings.Join(v, ",")
+		}
+	}
+
+	return ""
+}
