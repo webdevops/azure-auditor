@@ -46,15 +46,6 @@ func (auditor *AzureAuditor) ParseConfig(path string) {
 	}
 }
 
-func (rule *AuditConfigBaseRule) handleRuleStatus(object *AzureBaseObject, status bool) bool {
-	log.WithFields(log.Fields{
-		"resourceID":       object.ResourceID,
-		"rule":             rule.id(),
-		"validationStatus": status,
-	}).Debugf("validation status: \"%v\"", status)
-	return status
-}
-
 func (rule *AuditConfigBaseRule) id() string {
 	if rule.RuleID == "" {
 		if val, err := uuid.NewV4(); err == nil {

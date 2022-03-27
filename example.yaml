@@ -3,44 +3,42 @@ roleAssignments:
 
   rules:
     - rule: foobar
-      principalType:
+      principal.type:
         match: null
         regexp: null
-      principalDisplayName:
+      principal.displayName:
         match: null
         regexp: null
-      principalApplicationID:
+      principal.applicationID:
         match: null
         regexp: null
-      principalObjectID:
+      principal.objectID:
         match: null
         regexp: null
-      roleDefinitionName: "Network Contributor"
+      role.name: "Network Contributor"
       scope: { regexp: "/subscriptions/.+" }
-    - roleDefinitionName: "Contributor"
-    - roleDefinitionName: "Owner"
-    - roleDefinitionName: "Reader"
-    - roleDefinitionName: "Emergency Access"
-      age: 24h
+    - role.name: "Contributor"
+    - role.name: "Owner"
+    - role.name: "Reader"
+    - rule: foobar
+      age: {maxDuration: "24h"}
 
 resourceGroups:
   enabled: true
   rules:
     ## validate location but continue with next rules
     - rule: westeurope
-      location: { regexp: "westeurope" }
+      resourcegroup.location: { regexp: "westeurope" }
       action: continue
 
     - rule: no-tag-owner-devteam0
-      tags:
-        owner:
+      resourcegroup.tag.owner:
           mode: optional
           value: devteam0
       action: deny
 
     - rule: require-owner-tag
-      tags:
-        owner:
+      resourcegroup.tag.owner:
           mode: required
           value: { regexp: "[a-z][-_a-z0-9]+" }
       action: continue
@@ -53,79 +51,79 @@ keyvaultAccessPolicies:
   scopeRules:
     "/subscriptions/d86bcf13-ddf7-45ea-82f1-6f656767a318/":
       - rule: barfoo
-        keyvault: { regexp: ".*" }
-        foobar: barfoo
-        permissions:
-          certificates: [ Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers ]
+        keyvault.name: { regexp: ".*" }
+        permissions.certificates: [ Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers ]
 
   rules:
     - rule: foobarasd123
-      foobar: "asdasdasd"
-      keyvault:
+      keyvault.name:
         match: null
         regexp: null
-      principalType:
+      principal.type:
         match: null
         regexp: null
-      principalDisplayName:
+      principal.displayName:
         match: null
         regexp: null
-      principalApplicationID:
+      principal.applicationID:
         match: null
         regexp: null
-      principalObjectID:
+      principal.objectID:
         match: null
         regexp: null
-      permissions:
-        certificates: [ "Get","List" ]
-        secrets: { list: null }
-        keys: { list: null }
-        storage: { list: null }
+      permissions.certificates: [ "Get","List" ]
+      permissions.secrets: [ "Get","List" ]
+      permissions.keys: [ "Get","List" ]
+      permissions.storage: [ "Get","List" ]
 
 
 resourceProviders:
   enabled: true
   rules:
-    - namespace: Microsoft.ADHybridHealthService
-    - namespace: Microsoft.Advisor
-    - namespace: Microsoft.AlertsManagement
-    - namespace: Microsoft.Authorization
-    - namespace: Microsoft.Billing
-    - namespace: Microsoft.Cache
-    - namespace: Microsoft.ClassicSubscription
-    - namespace: Microsoft.Commerce
-    - namespace: Microsoft.Compute
-    - namespace: Microsoft.Consumption
-    - namespace: Microsoft.ContainerRegistry
-    - namespace: Microsoft.ContainerService
-    - namespace: Microsoft.CostManagement
-    - namespace: Microsoft.DevTestLab
-    - namespace: Microsoft.EventHub
-    - namespace: Microsoft.Features
-    - namespace: Microsoft.GuestConfiguration
-    - namespace: Microsoft.KeyVault
-    - namespace: Microsoft.ManagedIdentity
-    - namespace: Microsoft.MarketplaceNotifications
-    - namespace: Microsoft.MarketplaceOrdering
-    - namespace: Microsoft.Network
-    - namespace: Microsoft.OperationalInsights
-    - namespace: Microsoft.OperationsManagement
-    - namespace: Microsoft.PolicyInsights
-    - namespace: Microsoft.Portal
-    - namespace: Microsoft.ResourceGraph
-    - namespace: Microsoft.ResourceHealth
-    - namespace: Microsoft.Resources
-    - namespace: Microsoft.Security
-    - namespace: Microsoft.SecurityInsights
-    - namespace: Microsoft.SerialConsole
-    - namespace: Microsoft.Storage
-    - namespace: Microsoft.StorageCache
-    - namespace: Microsoft.StorageSync
-    - namespace: microsoft.insights
-    - namespace: microsoft.support
+    - provider.namespace: Microsoft.ADHybridHealthService
+    - provider.namespace: Microsoft.Advisor
+    - provider.namespace: Microsoft.AlertsManagement
+    - provider.namespace: Microsoft.Authorization
+    - provider.namespace: Microsoft.Billing
+    - provider.namespace: Microsoft.Cache
+    - provider.namespace: Microsoft.ClassicSubscription
+    - provider.namespace: Microsoft.Commerce
+    - provider.namespace: Microsoft.Compute
+    - provider.namespace: Microsoft.Consumption
+    - provider.namespace: Microsoft.ContainerRegistry
+    - provider.namespace: Microsoft.ContainerService
+    - provider.namespace: Microsoft.CostManagement
+    - provider.namespace: Microsoft.DevTestLab
+    - provider.namespace: Microsoft.EventHub
+    - provider.namespace: Microsoft.Features
+    - provider.namespace: Microsoft.GuestConfiguration
+    - provider.namespace: Microsoft.KeyVault
+    - provider.namespace: Microsoft.ManagedIdentity
+    - provider.namespace: Microsoft.MarketplaceNotifications
+    - provider.namespace: Microsoft.MarketplaceOrdering
+    - provider.namespace: Microsoft.Network
+    - provider.namespace: Microsoft.OperationalInsights
+    - provider.namespace: Microsoft.OperationsManagement
+    - provider.namespace: Microsoft.PolicyInsights
+    - provider.namespace: Microsoft.Portal
+    - provider.namespace: Microsoft.ResourceGraph
+    - provider.namespace: Microsoft.ResourceHealth
+    - provider.namespace: Microsoft.Resources
+    - provider.namespace: Microsoft.Security
+    - provider.namespace: Microsoft.SecurityInsights
+    - provider.namespace: Microsoft.SerialConsole
+    - provider.namespace: Microsoft.Storage
+    - provider.namespace: Microsoft.StorageCache
+    - provider.namespace: Microsoft.StorageSync
+    - provider.namespace: microsoft.insights
+    - provider.namespace: microsoft.support
 
 resourceProviderFeatures:
   enabled: true
   rules:
-    - namespace: microsoft.ContainerService
-      feature: CustomNodeConfigPreview
+    - rule: microsoft.ContainerService/CustomNodeConfigPreview
+      provider.namespace: microsoft.ContainerService
+      provider.feature: CustomNodeConfigPreview
+    - rule: microsoft.security/governance
+      provider.feature: governance
+      provider.namespace: microsoft.security

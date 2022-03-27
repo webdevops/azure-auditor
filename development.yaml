@@ -1,0 +1,6 @@
+roleAssignments:
+  enabled: true
+
+  rules:
+    - rule: foobar
+      age: {minDuration: 200h, maxDuration: "430h"}

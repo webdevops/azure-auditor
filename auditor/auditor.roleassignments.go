@@ -18,7 +18,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 	violationMetric := prometheusCommon.NewMetricsList()
 
 	for _, object := range list {
-		matchingRuleId, status := auditor.config.ResourceProviders.Validate(object)
+		matchingRuleId, status := auditor.config.RoleAssignments.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
 		if !status {
@@ -63,30 +63,31 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	for response.NotDone() {
 		roleAssignment := response.Value()
 
-		roleDefinitionName := ""
-		if val, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
-			roleDefinitionName = val
-		}
-
-		list[to.String(roleAssignment.Name)] = newAzureObject(
+		obj := newAzureObject(
 			map[string]interface{}{
 				"resourceID":        stringPtrToStringLower(roleAssignment.ID),
 				"subscription.ID":   to.String(subscription.SubscriptionID),
 				"subscription.name": to.String(subscription.DisplayName),
 
-				"roleAssignment.type":        stringPtrToStringLower(roleAssignment.Type),
-				"roleAssignment.description": to.String(roleAssignment.Description),
-				"roleAssignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
+				"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
+				"roleassignment.description": to.String(roleAssignment.Description),
+				"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
 
 				"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
 
-				"role.ID":   stringPtrToStringLower(roleAssignment.RoleDefinitionID),
-				"role.name": roleDefinitionName,
+				"role.ID": stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 
 				"creationTime": roleAssignment.CreatedOn.Time,
 				"age":          time.Since(roleAssignment.CreatedOn.Time),
 			},
 		)
+
+		if roleDefinition, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
+			(*obj)["role.name"] = stringPtrToStringLower(roleDefinition.RoleName)
+			(*obj)["role.type"] = stringPtrToStringLower(roleDefinition.RoleType)
+		}
+
+		list[to.String(roleAssignment.Name)] = obj
 
 		if response.NextWithContext(ctx) != nil {
 			break
@@ -120,7 +121,7 @@ func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context,
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]string {
+func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]authorization.RoleDefinition {
 	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -130,13 +131,13 @@ func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger
 		logger.Panic(err)
 	}
 
-	roleDefinitionList := map[string]string{}
+	roleDefinitionList := map[string]authorization.RoleDefinition{}
 
 	for response.NotDone() {
 		roleDefinition := response.Value()
 
 		roleDefinitionID := stringPtrToStringLower(roleDefinition.ID)
-		roleDefinitionList[roleDefinitionID] = stringPtrToStringLower(roleDefinition.RoleName)
+		roleDefinitionList[roleDefinitionID] = roleDefinition
 
 		if response.NextWithContext(ctx) != nil {
 			break

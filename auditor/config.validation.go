@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/gofrs/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type (
@@ -25,19 +27,69 @@ type (
 
 	AuditConfigValidationRuleField struct {
 		Required bool           `yaml:"required,omitempty"`
-		Match    string         `yaml:"match,omitempty"`
-		List     []string       `yaml:"list,omitempty,flow"`
-		Regexp   string         `yaml:"regexp,omitempty"`
+		Match    *string        `yaml:"match,omitempty"`
+		List     *[]string      `yaml:"list,omitempty,flow"`
+		Regexp   *string        `yaml:"regexp,omitempty"`
 		regexp   *regexp.Regexp `yaml:"-"`
+
+		Min *float64 `yaml:"min,omitempty"`
+		Max *float64 `yaml:"max,omitempty"`
+
+		MinDuration *time.Duration `yaml:"minDuration,omitempty"`
+		MaxDuration *time.Duration `yaml:"maxDuration,omitempty"`
 	}
 )
 
-func (conf *AuditConfigValidation) IsEnabled() bool {
-	if conf != nil && conf.Enabled {
+func (validation *AuditConfigValidation) IsEnabled() bool {
+	if validation != nil && validation.Enabled {
 		return true
 	}
 
 	return false
+}
+
+func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, bool) {
+	resourceID := object.ResourceID()
+
+	if validation.Rules != nil {
+		for _, rule := range *validation.Rules {
+			if rule.IsActionContinue() {
+				if rule.IsMatching(object) {
+					// valid object, proceed with next rule
+					continue
+				} else {
+					// valid is not valid, returning here
+					return rule.Rule, rule.handleRuleStatus(object, false)
+				}
+			}
+
+			if rule.IsMatching(object) {
+				return rule.Rule, rule.handleRuleStatus(object, *rule.ValidationStatus())
+			}
+		}
+	}
+
+	for scopePrefix, rules := range validation.ScopeRules {
+		if strings.HasPrefix(resourceID, scopePrefix) {
+			for _, rule := range rules {
+				if rule.IsActionContinue() {
+					if rule.IsMatching(object) {
+						// valid object, proceed with next rule
+						continue
+					} else {
+						// valid is not valid, returning here
+						return rule.Rule, rule.handleRuleStatus(object, false)
+					}
+				}
+
+				if rule.IsMatching(object) {
+					return rule.Rule, rule.handleRuleStatus(object, *rule.ValidationStatus())
+				}
+			}
+		}
+	}
+
+	return "", false
 }
 
 func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -58,12 +110,12 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 				case string:
 					matcher.Fields[name] = AuditConfigValidationRuleField{
 						Required: true,
-						Match:    v,
+						Match:    &v,
 					}
 				case []string:
 					matcher.Fields[name] = AuditConfigValidationRuleField{
 						Required: true,
-						List:     v,
+						List:     &v,
 					}
 				case []interface{}:
 					list := []string{}
@@ -74,7 +126,7 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 					}
 					matcher.Fields[name] = AuditConfigValidationRuleField{
 						Required: true,
-						List:     list,
+						List:     &list,
 					}
 				case map[string]interface{}:
 					ruleField := AuditConfigValidationRuleField{
@@ -85,16 +137,39 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 					}
 
 					if x, ok := v["match"].(string); ok {
-						ruleField.Match = x
+						ruleField.Match = &x
 					}
 
 					if x, ok := v["list"].([]string); ok {
-						ruleField.List = x
+						ruleField.List = &x
 					}
 
 					if x, ok := v["regexp"].(string); ok {
-						ruleField.Regexp = x
+						ruleField.Regexp = &x
 						ruleField.regexp = regexp.MustCompile(x)
+					}
+
+					if x, ok := v["min"].(float64); ok {
+						ruleField.Min = &x
+					}
+
+					if x, ok := v["max"].(float64); ok {
+						ruleField.Max = &x
+					}
+
+					if x, ok := v["minDuration"].(string); ok {
+						if dur, err := time.ParseDuration(x); err == nil {
+							ruleField.MinDuration = &dur
+						} else {
+							panic(fmt.Sprintf("unable to parse minDuration value \"%v\"", x))
+						}
+					}
+					if x, ok := v["maxDuration"].(string); ok {
+						if dur, err := time.ParseDuration(x); err == nil {
+							ruleField.MaxDuration = &dur
+						} else {
+							panic(fmt.Sprintf("unable to parse maxDuration value \"%v\"", x))
+						}
 					}
 
 					matcher.Fields[name] = ruleField
@@ -118,48 +193,13 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 	return nil
 }
 
-func (matcher *AuditConfigValidation) Validate(object *AzureObject) (string, bool) {
-	resourceID := object.ResourceID()
-
-	if matcher.Rules != nil {
-		for _, rule := range *matcher.Rules {
-			if rule.IsActionContinue() {
-				if rule.IsMatching(object) {
-					// valid object, proceed with next rule
-					continue
-				} else {
-					// valid is not valid, returning here
-					return rule.Rule, false
-				}
-			}
-
-			if rule.IsMatching(object) {
-				return rule.Rule, *rule.ValidationStatus()
-			}
-		}
-	}
-
-	for scopePrefix, rules := range matcher.ScopeRules {
-		if strings.HasPrefix(resourceID, scopePrefix) {
-			for _, rule := range rules {
-				if rule.IsActionContinue() {
-					if rule.IsMatching(object) {
-						// valid object, proceed with next rule
-						continue
-					} else {
-						// valid is not valid, returning here
-						return rule.Rule, false
-					}
-				}
-
-				if rule.IsMatching(object) {
-					return rule.Rule, *rule.ValidationStatus()
-				}
-			}
-		}
-	}
-
-	return "", false
+func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, status bool) bool {
+	log.WithFields(log.Fields{
+		"resourceID":       object.ResourceID(),
+		"rule":             rule.Rule,
+		"validationStatus": status,
+	}).Debugf("validation status: \"%v\"", status)
+	return status
 }
 
 func (matcher *AuditConfigValidationRule) IsActionContinue() bool {
@@ -180,30 +220,82 @@ func (matcher *AuditConfigValidationRule) ValidationStatus() *bool {
 
 func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
 	for fieldName, fieldValidator := range matcher.Fields {
-		var fieldValue *string
+		if v, exists := (*object)[fieldName]; exists {
+			switch fieldValue := v.(type) {
+			case string:
+				if fieldValidator.Required && fieldValue == "" {
+					// required, but empty
+					return false
+				}
 
-		if val, ok := (*object)[fieldName].(string); ok && val != "" {
-			fieldValue = &val
-		}
+				if fieldValue == "" {
+					// optional, but empty
+					continue
+				}
 
-		if fieldValidator.Required && fieldValue == nil {
-			// required, but empty
-			return false
-		}
+				if fieldValidator.regexp != nil {
+					// validate with regexp
+					if !fieldValidator.regexp.MatchString(fieldValue) {
+						return false
+					}
+				} else if fieldValidator.Match != nil {
+					// validate with direct matching
+					if !strings.EqualFold(*fieldValidator.Match, fieldValue) {
+						return false
+					}
+				}
+			case []string:
+				if fieldValidator.Required && len(fieldValue) == 0 {
+					// required, but empty
+					return false
+				}
 
-		if fieldValue == nil {
-			// optional, but empty
-			continue
-		}
+				if len(fieldValue) == 0 {
+					// optional, but empty
+					continue
+				}
 
-		if fieldValidator.regexp != nil {
-			// validate with regexp
-			if !fieldValidator.regexp.MatchString(*fieldValue) {
+				if fieldValidator.regexp != nil {
+					// validate with regexp
+					for _, fieldValueItem := range fieldValue {
+						if !fieldValidator.regexp.MatchString(fieldValueItem) {
+							return false
+						}
+					}
+				} else if fieldValidator.Match != nil {
+					// validate with direct matching
+					for _, fieldValueItem := range fieldValue {
+						if !strings.EqualFold(*fieldValidator.Match, fieldValueItem) {
+							return false
+						}
+					}
+				} else if fieldValidator.List != nil && len(*fieldValidator.List) > 0 {
+					// validate with list
+				fieldValidationLoop:
+					for _, fieldValidationItem := range *fieldValidator.List {
+						for _, fieldValueItem := range fieldValue {
+							if strings.EqualFold(fieldValidationItem, fieldValueItem) {
+								continue fieldValidationLoop
+							}
+						}
+						return false
+					}
+				}
+
+			case time.Duration:
+				if fieldValidator.MinDuration != nil && fieldValue.Seconds() < fieldValidator.MinDuration.Seconds() {
+					return false
+				}
+
+				if fieldValidator.MaxDuration != nil && fieldValue.Seconds() > fieldValidator.MaxDuration.Seconds() {
+					return false
+				}
+			default:
 				return false
 			}
-		} else if fieldValidator.Match != "" {
-			// validate with direct matching
-			if !strings.EqualFold(fieldValidator.Match, *fieldValue) {
+		} else {
+			if fieldValidator.Required {
+				// required, but empty
 				return false
 			}
 		}

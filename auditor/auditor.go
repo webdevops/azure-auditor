@@ -55,7 +55,8 @@ type (
 		cache       *cache.Cache
 		cacheExpiry time.Duration
 
-		report map[string]*AzureAuditorReport
+		report           map[string]*AzureAuditorReport
+		reportUncommited map[string]*AzureAuditorReport
 
 		prometheus auditorPrometheus
 	}
@@ -81,6 +82,7 @@ func NewAzureAuditor() *AzureAuditor {
 	auditor := AzureAuditor{}
 	auditor.logger = log.WithFields(log.Fields{})
 	auditor.report = map[string]*AzureAuditorReport{}
+	auditor.reportUncommited = map[string]*AzureAuditorReport{}
 	return &auditor
 }
 
@@ -227,6 +229,8 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 				}
 			}
 
+			auditor.commitReport(name)
+
 			reportDuration := time.Since(startTime)
 			contextLogger.WithFields(log.Fields{
 				"duration": reportDuration.Seconds(),
@@ -338,10 +342,14 @@ func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
 }
 
 func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
-	auditor.report[name] = &AzureAuditorReport{}
-	auditor.report[name].Summary = &AzureAuditorReportSummary{}
-	auditor.report[name].Lines = []*AzureAuditorReportLine{}
-	return auditor.report[name]
+	auditor.reportUncommited[name] = &AzureAuditorReport{}
+	auditor.reportUncommited[name].Summary = &AzureAuditorReportSummary{}
+	auditor.reportUncommited[name].Lines = []*AzureAuditorReportLine{}
+	return auditor.reportUncommited[name]
+}
+
+func (auditor *AzureAuditor) commitReport(name string) {
+	auditor.report[name] = auditor.reportUncommited[name]
 }
 
 func (report *AzureAuditorReport) Clear() {

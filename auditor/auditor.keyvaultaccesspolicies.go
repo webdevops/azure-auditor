@@ -83,9 +83,6 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 							"keyvault.name":          azureResource.ResourceName,
 							"keyvault.resourceGroup": azureResource.ResourceGroup,
 
-							"subscriptionID":   azureResource.Subscription,
-							"subscriptionName": to.String(subscription.DisplayName),
-
 							"principal.applicationID": applicationId,
 							"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
 
