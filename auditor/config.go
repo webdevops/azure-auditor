@@ -1,10 +1,8 @@
 package auditor
 
 import (
-	"fmt"
 	"io/ioutil"
 
-	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -17,14 +15,6 @@ type (
 		ResourceProviderFeatures *AuditConfigValidation `yaml:"resourceProviderFeatures"`
 		KeyvaultAccessPolicies   *AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
 	}
-
-	AuditConfigBaseRule struct {
-		RuleID string `yaml:"rule"`
-	}
-)
-
-var (
-	RuleIdCounter = 0
 )
 
 func (auditor *AzureAuditor) ParseConfig(path string) {
@@ -44,16 +34,4 @@ func (auditor *AzureAuditor) ParseConfig(path string) {
 	if err := yaml.Unmarshal(configRaw, &auditor.config); err != nil {
 		auditor.logger.Panic(err)
 	}
-}
-
-func (rule *AuditConfigBaseRule) id() string {
-	if rule.RuleID == "" {
-		if val, err := uuid.NewV4(); err == nil {
-			rule.RuleID = fmt.Sprintf("<rule:%v>", val)
-		} else {
-			log.Panic(err)
-		}
-	}
-
-	return rule.RuleID
 }
