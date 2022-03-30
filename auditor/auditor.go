@@ -57,24 +57,9 @@ type (
 
 		report           map[string]*AzureAuditorReport
 		reportUncommited map[string]*AzureAuditorReport
+		reportLock       *sync.Mutex
 
 		prometheus auditorPrometheus
-	}
-
-	AzureAuditorReport struct {
-		Summary *AzureAuditorReportSummary
-		Lines   []*AzureAuditorReportLine
-	}
-
-	AzureAuditorReportSummary struct {
-		Ok     int64
-		Failed int64
-	}
-
-	AzureAuditorReportLine struct {
-		Resource map[string]interface{}
-		RuleID   string
-		Status   bool
 	}
 )
 
@@ -83,6 +68,7 @@ func NewAzureAuditor() *AzureAuditor {
 	auditor.logger = log.WithFields(log.Fields{})
 	auditor.report = map[string]*AzureAuditorReport{}
 	auditor.reportUncommited = map[string]*AzureAuditorReport{}
+	auditor.reportLock = &sync.Mutex{}
 	return &auditor
 }
 
@@ -342,33 +328,16 @@ func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
 }
 
 func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
-	auditor.reportUncommited[name] = &AzureAuditorReport{}
-	auditor.reportUncommited[name].Summary = &AzureAuditorReportSummary{}
-	auditor.reportUncommited[name].Lines = []*AzureAuditorReportLine{}
+	auditor.reportLock.Lock()
+	defer auditor.reportLock.Unlock()
+
+	auditor.reportUncommited[name] = NewAzureAuditorReport()
 	return auditor.reportUncommited[name]
 }
 
 func (auditor *AzureAuditor) commitReport(name string) {
+	auditor.reportLock.Lock()
+	defer auditor.reportLock.Unlock()
+
 	auditor.report[name] = auditor.reportUncommited[name]
-}
-
-func (report *AzureAuditorReport) Clear() {
-	report.Lines = []*AzureAuditorReportLine{}
-}
-
-func (report *AzureAuditorReport) Add(resource *AzureObject, ruleID string, status bool) {
-	report.Lines = append(
-		report.Lines,
-		&AzureAuditorReportLine{
-			Resource: *resource,
-			RuleID:   ruleID,
-			Status:   status,
-		},
-	)
-
-	if status {
-		report.Summary.Ok++
-	} else {
-		report.Summary.Failed++
-	}
 }
