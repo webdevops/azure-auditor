@@ -2,6 +2,7 @@ package auditor
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
@@ -10,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
+	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
 
 func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
@@ -27,6 +29,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 				"roleAssignmentID": object.ToPrometheusLabel("resourceID"),
 
 				"scope":         object.ToPrometheusLabel("roleAssignment.scope"),
+				"scopeType":     object.ToPrometheusLabel("roleAssignment.scopeType"),
 				"resourceGroup": object.ToPrometheusLabel("resourceGroup"),
 
 				"principalType":          object.ToPrometheusLabel("principal.type"),
@@ -63,6 +66,21 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	for response.NotDone() {
 		roleAssignment := response.Value()
 
+		scopeResourceId := strings.ToLower(*roleAssignment.Scope)
+
+		scopeType := ""
+		if azureInfo, err := prometheusAzure.ParseResourceId(scopeResourceId); err == nil {
+			if azureInfo.ResourceName != "" {
+				scopeType = "resource"
+			} else if azureInfo.ResourceGroup != "" {
+				scopeType = "resourcegroup"
+			} else if azureInfo.Subscription != "" {
+				scopeType = "subscription"
+			}
+		} else if strings.HasPrefix(scopeResourceId, "/providers/microsoft.management/managementgroups/") {
+			scopeType = "managementgroup"
+		}
+
 		obj := newAzureObject(
 			map[string]interface{}{
 				"resourceID":        stringPtrToStringLower(roleAssignment.ID),
@@ -72,6 +90,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 				"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
 				"roleassignment.description": to.String(roleAssignment.Description),
 				"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
+				"roleassignment.scopetype":   scopeType,
 
 				"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
 

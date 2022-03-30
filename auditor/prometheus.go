@@ -24,6 +24,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 			"subscriptionID",
 			"roleAssignmentID",
 			"scope",
+			"scopeType",
 			"resourceGroup",
 			"principalType",
 			"principalObjectID",
