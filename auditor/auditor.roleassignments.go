@@ -91,13 +91,12 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 				"roleassignment.description": to.String(roleAssignment.Description),
 				"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
 				"roleassignment.scopetype":   scopeType,
+				"roleassignment.createdAt":   roleAssignment.CreatedOn.Time,
+				"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
 
 				"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
 
 				"role.ID": stringPtrToStringLower(roleAssignment.RoleDefinitionID),
-
-				"creationTime": roleAssignment.CreatedOn.Time,
-				"age":          time.Since(roleAssignment.CreatedOn.Time),
 			},
 		)
 
