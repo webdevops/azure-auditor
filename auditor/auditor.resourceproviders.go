@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -35,7 +37,7 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, logger 
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*AzureObject) {
+func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := resources.NewProvidersClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -46,18 +48,15 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger 
 
 	for _, item := range *result.Response().Value {
 		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
-			list = append(
-				list,
-				newAzureObject(
-					map[string]interface{}{
-						"resourceID":        stringPtrToStringLower(item.ID),
-						"subscription.ID":   to.String(subscription.SubscriptionID),
-						"subscription.name": to.String(subscription.DisplayName),
+			obj := map[string]interface{}{
+				"resourceID":        stringPtrToStringLower(item.ID),
+				"subscription.ID":   to.String(subscription.SubscriptionID),
+				"subscription.name": to.String(subscription.DisplayName),
 
-						"provider.namespace": stringPtrToStringLower(item.Namespace),
-					},
-				),
-			)
+				"provider.namespace": stringPtrToStringLower(item.Namespace),
+			}
+
+			list = append(list, validator.NewAzureObject(obj))
 		}
 	}
 

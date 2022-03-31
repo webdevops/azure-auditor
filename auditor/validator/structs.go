@@ -1,4 +1,4 @@
-package auditor
+package validator
 
 import (
 	"strings"
@@ -26,4 +26,15 @@ func (o *AzureObject) ToPrometheusLabel(name string) string {
 	}
 
 	return ""
+}
+
+func NewAzureObject(data map[string]interface{}) *AzureObject {
+	obj := AzureObject{}
+
+	dataFlat, _ := flattenMap(data)
+	for name, val := range dataFlat {
+		obj[name] = val
+	}
+
+	return &obj
 }

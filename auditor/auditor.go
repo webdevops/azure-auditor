@@ -47,7 +47,8 @@ type (
 		}
 
 		locks struct {
-			subscriptions sync.Mutex
+			subscriptions  sync.Mutex
+			resourceGroups sync.Mutex
 		}
 
 		cron *cron.Cron
@@ -227,45 +228,6 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
-}
-
-func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list []subscriptions.Subscription) {
-	auditor.locks.subscriptions.Lock()
-	defer auditor.locks.subscriptions.Unlock()
-
-	list = []subscriptions.Subscription{}
-
-	if val, ok := auditor.cache.Get("subscriptions"); ok {
-		// fetched from cache
-		list = val.([]subscriptions.Subscription)
-		return
-	}
-
-	client := subscriptions.NewClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
-
-	if len(auditor.Opts.Azure.Subscription) == 0 {
-		listResult, err := client.List(ctx)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-		list = listResult.Values()
-	} else {
-		for _, subId := range auditor.Opts.Azure.Subscription {
-			result, err := client.Get(ctx, subId)
-			if err != nil {
-				auditor.logger.Panic(err)
-			}
-			list = append(list, result)
-		}
-	}
-
-	auditor.logger.Infof("found %v Azure Subscriptions (cache update)", len(list))
-
-	// save to cache
-	_ = auditor.cache.Add("subscriptions", list, auditor.cacheExpiry)
-
-	return
 }
 
 func (auditor *AzureAuditor) initAzure() {

@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
+
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 )
 
 func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
@@ -49,10 +51,11 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list map[string]*AzureObject) {
-	list = map[string]*AzureObject{}
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list map[string]*validator.AzureObject) {
+	list = map[string]*validator.AzureObject{}
 
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
+	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 
 	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
@@ -68,44 +71,48 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 
 		scopeResourceId := strings.ToLower(*roleAssignment.Scope)
 
+		azureScope, _ := prometheusAzure.ParseResourceId(scopeResourceId)
+
 		scopeType := ""
-		if azureInfo, err := prometheusAzure.ParseResourceId(scopeResourceId); err == nil {
-			if azureInfo.ResourceName != "" {
-				scopeType = "resource"
-			} else if azureInfo.ResourceGroup != "" {
-				scopeType = "resourcegroup"
-			} else if azureInfo.Subscription != "" {
-				scopeType = "subscription"
-			}
+		if azureScope.ResourceName != "" {
+			scopeType = "resource"
+		} else if azureScope.ResourceGroup != "" {
+			scopeType = "resourcegroup"
+		} else if azureScope.Subscription != "" {
+			scopeType = "subscription"
 		} else if strings.HasPrefix(scopeResourceId, "/providers/microsoft.management/managementgroups/") {
 			scopeType = "managementgroup"
 		}
 
-		obj := newAzureObject(
-			map[string]interface{}{
-				"resourceID":        stringPtrToStringLower(roleAssignment.ID),
-				"subscription.ID":   to.String(subscription.SubscriptionID),
-				"subscription.name": to.String(subscription.DisplayName),
+		obj := map[string]interface{}{
+			"resourceID":        stringPtrToStringLower(roleAssignment.ID),
+			"subscription.ID":   to.String(subscription.SubscriptionID),
+			"subscription.name": to.String(subscription.DisplayName),
 
-				"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
-				"roleassignment.description": to.String(roleAssignment.Description),
-				"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
-				"roleassignment.scopetype":   scopeType,
-				"roleassignment.createdAt":   roleAssignment.CreatedOn.Time,
-				"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
+			"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
+			"roleassignment.description": to.String(roleAssignment.Description),
+			"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
+			"roleassignment.scopetype":   scopeType,
+			"roleassignment.createdAt":   roleAssignment.CreatedOn.Time,
+			"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
 
-				"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
+			"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
 
-				"role.ID": stringPtrToStringLower(roleAssignment.RoleDefinitionID),
-			},
-		)
-
-		if roleDefinition, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
-			(*obj)["role.name"] = stringPtrToStringLower(roleDefinition.RoleName)
-			(*obj)["role.type"] = stringPtrToStringLower(roleDefinition.RoleType)
+			"role.ID": stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 		}
 
-		list[to.String(roleAssignment.Name)] = obj
+		if roleDefinition, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
+			obj["role.name"] = stringPtrToStringLower(roleDefinition.RoleName)
+			obj["role.type"] = stringPtrToStringLower(roleDefinition.RoleType)
+		}
+
+		if resourceGroup, ok := resourceGroupList[azureScope.ResourceGroup]; ok {
+			obj["resourcegroup.name"] = to.String(resourceGroup.Name)
+			obj["resourcegroup.location"] = to.String(resourceGroup.Location)
+			obj["resourcegroup.tags"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+		}
+
+		list[to.String(roleAssignment.Name)] = validator.NewAzureObject(obj)
 
 		if response.NextWithContext(ctx) != nil {
 			break
@@ -117,7 +124,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	return
 }
 
-func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, logger *log.Entry, list *map[string]*AzureObject) {
+func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, logger *log.Entry, list *map[string]*validator.AzureObject) {
 	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
 	for _, row := range *list {
 		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {

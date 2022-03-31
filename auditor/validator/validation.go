@@ -1,4 +1,4 @@
-package auditor
+package validator
 
 import (
 	"errors"
@@ -26,16 +26,27 @@ type (
 	}
 
 	AuditConfigValidationRuleField struct {
-		Required bool           `yaml:"required,omitempty"`
-		Match    *string        `yaml:"match,omitempty"`
-		AllOf    *[]string      `yaml:"allOf,omitempty,flow"`
-		AnyOf    *[]string      `yaml:"anyOf,omitempty,flow"`
-		Regexp   *string        `yaml:"regexp,omitempty"`
-		regexp   *regexp.Regexp `yaml:"-"`
+		// general
+		Not      bool `yaml:"bool,omitempty"`
+		Required bool `yaml:"required,omitempty"`
 
+		// CAST
+		ParseAs *string `yaml:"castTo,omitempty"`
+
+		// STRING type
+		Match  *string        `yaml:"match,omitempty"`
+		Regexp *string        `yaml:"regexp,omitempty"`
+		regexp *regexp.Regexp `yaml:"-"`
+
+		// STRINGLIST type
+		AllOf *[]string `yaml:"allOf,omitempty,flow"`
+		AnyOf *[]string `yaml:"anyOf,omitempty,flow"`
+
+		// NUMERIC
 		Min *float64 `yaml:"min,omitempty"`
 		Max *float64 `yaml:"max,omitempty"`
 
+		// DURATION
 		MinDuration *time.Duration `yaml:"minDuration,omitempty"`
 		MaxDuration *time.Duration `yaml:"maxDuration,omitempty"`
 	}
@@ -130,22 +141,47 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 						AllOf:    &list,
 					}
 				case map[string]interface{}:
+					// normalize map
+					tmp := map[string]interface{}{}
+					for tmpName, tmpValue := range v {
+						tmpName = strings.ToLower(tmpName)
+						tmp[tmpName] = tmpValue
+					}
+					v = tmp
+
 					ruleField := AuditConfigValidationRuleField{
 						Required: true,
 					}
+
+					if x, ok := v["not"].(bool); ok {
+						ruleField.Not = x
+					}
+
 					if x, ok := v["required"].(bool); ok {
 						ruleField.Required = x
+					}
+					if x, ok := v["parseas"].(string); ok {
+						switch x {
+						case "duration":
+							ruleField.ParseAs = to.StringPtr("duration")
+						case "timesince":
+							ruleField.ParseAs = to.StringPtr("timesince")
+						default:
+							panic(fmt.Sprintf("parseAs value \"%v\" is not allowed", x))
+						}
 					}
 
 					if x, ok := v["match"].(string); ok {
 						ruleField.Match = &x
 					}
 
-					if x, ok := v["allOf"].([]string); ok {
+					if x, ok := v["allof"].([]interface{}); ok {
+						x := interfaceListToStringList(x)
 						ruleField.AllOf = &x
 					}
 
-					if x, ok := v["anyOf"].([]string); ok {
+					if x, ok := v["anyof"].([]interface{}); ok {
+						x := interfaceListToStringList(x)
 						ruleField.AnyOf = &x
 					}
 
@@ -162,14 +198,14 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 						ruleField.Max = &x
 					}
 
-					if x, ok := v["minDuration"].(string); ok {
+					if x, ok := v["minduration"].(string); ok {
 						if dur, err := time.ParseDuration(x); err == nil {
 							ruleField.MinDuration = &dur
 						} else {
 							panic(fmt.Sprintf("unable to parse minDuration value \"%v\"", x))
 						}
 					}
-					if x, ok := v["maxDuration"].(string); ok {
+					if x, ok := v["maxduration"].(string); ok {
 						if dur, err := time.ParseDuration(x); err == nil {
 							ruleField.MaxDuration = &dur
 						} else {
@@ -179,7 +215,6 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 
 					matcher.Fields[name] = ruleField
 				default:
-					fmt.Println(name)
 					panic(v)
 				}
 			}
@@ -224,103 +259,130 @@ func (matcher *AuditConfigValidationRule) ValidationStatus() *bool {
 }
 
 func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
-	for fieldName, fieldValidator := range matcher.Fields {
+	for fieldName, field := range matcher.Fields {
 		if v, exists := (*object)[fieldName]; exists {
-			switch fieldValue := v.(type) {
-			case string:
-				if fieldValidator.Required && fieldValue == "" {
-					// required, but empty
-					return false
-				}
+			status, skipField := field.IsMatching(v)
 
-				if fieldValue == "" {
-					// optional, but empty
+			// check if field is a continue field (eg. status cannot be applied)
+			if skipField {
+				continue
+			}
+
+			// check if status should be inverted (not)
+			if field.Not {
+				if status {
+					return false
+				} else {
 					continue
 				}
+			}
 
-				if fieldValidator.regexp != nil {
-					// validate with regexp
-					if !fieldValidator.regexp.MatchString(fieldValue) {
-						return false
-					}
-				} else if fieldValidator.Match != nil {
-					// validate with direct matching
-					if !strings.EqualFold(*fieldValidator.Match, fieldValue) {
-						return false
-					}
-				}
-			case []string:
-				if fieldValidator.Required && len(fieldValue) == 0 {
-					// required, but empty
-					return false
-				}
-
-				if len(fieldValue) == 0 {
-					// optional, but empty
-					continue
-				}
-
-				if fieldValidator.regexp != nil {
-					// validate with regexp
-					for _, fieldValueItem := range fieldValue {
-						if !fieldValidator.regexp.MatchString(fieldValueItem) {
-							return false
-						}
-					}
-				} else if fieldValidator.Match != nil {
-					// validate with direct matching
-					for _, fieldValueItem := range fieldValue {
-						if !strings.EqualFold(*fieldValidator.Match, fieldValueItem) {
-							return false
-						}
-					}
-				} else if fieldValidator.AllOf != nil && len(*fieldValidator.AllOf) > 0 {
-					return stringListIsMatchingAllOf(fieldValue, *fieldValidator.AllOf)
-				} else if fieldValidator.AnyOf != nil && len(*fieldValidator.AnyOf) > 0 {
-					return stringListIsMatchingAnyOf(fieldValue, *fieldValidator.AnyOf)
-				}
-
-			case time.Duration:
-				if fieldValidator.MinDuration != nil && fieldValue.Seconds() < fieldValidator.MinDuration.Seconds() {
-					return false
-				}
-
-				if fieldValidator.MaxDuration != nil && fieldValue.Seconds() > fieldValidator.MaxDuration.Seconds() {
-					return false
-				}
-			default:
+			// field is not matching, object is not matching
+			if !status {
 				return false
 			}
 		} else {
-			if fieldValidator.Required {
-				// required, but empty
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func stringListIsMatchingAllOf(list, matcherList []string) bool {
-	matchCount := int(0)
-	for _, match := range matcherList {
-		for _, val := range list {
-			if strings.EqualFold(val, match) {
-				matchCount++
-			}
-		}
-	}
-	return matchCount == len(list)
-}
-
-func stringListIsMatchingAnyOf(list, matcherList []string) bool {
-	for _, match := range matcherList {
-		for _, val := range list {
-			if !strings.EqualFold(val, match) {
+			if field.Required {
+				// required, but empty -> field is not matching, object is not matching
 				return false
 			}
 		}
 	}
 
+	// if all fields are matching, object is matching
 	return true
+}
+
+func (field *AuditConfigValidationRuleField) IsMatching(v interface{}) (bool, bool) {
+	switch fieldValue := v.(type) {
+	// STRING type
+	case string:
+		if field.Required && fieldValue == "" {
+			// required, but empty
+			return false, false
+		}
+
+		if fieldValue == "" {
+			// optional, but empty
+			return false, true
+		}
+
+		if field.ParseAs != nil {
+			switch *field.ParseAs {
+			case "duration":
+				if dur, err := time.ParseDuration(fieldValue); err == nil {
+					return field.IsMatching(dur)
+				} else {
+					// parse failed, not matching
+					return false, false
+				}
+			case "timesince":
+				if fieldTime := parseTime(fieldValue); fieldTime != nil {
+					return field.IsMatching(time.Since(*fieldTime))
+				} else {
+					// parse failed, not matching
+					return false, false
+				}
+			}
+		}
+
+		if field.regexp != nil {
+			// validate with regexp
+			if !field.regexp.MatchString(fieldValue) {
+				return false, false
+			}
+		} else if field.Match != nil {
+			// validate with direct matching
+			if !strings.EqualFold(*field.Match, fieldValue) {
+				return false, false
+			}
+		}
+	// STRING LIST type
+	case []string:
+		if field.Required && len(fieldValue) == 0 {
+			// required, but empty
+			return false, false
+		}
+
+		if len(fieldValue) == 0 {
+			// optional, but empty
+			return false, true
+		}
+
+		if field.regexp != nil {
+			// validate with regexp
+			for _, fieldValueItem := range fieldValue {
+				if !field.regexp.MatchString(fieldValueItem) {
+					return false, false
+				}
+			}
+		} else if field.Match != nil {
+			// validate with direct matching
+			for _, fieldValueItem := range fieldValue {
+				if !strings.EqualFold(*field.Match, fieldValueItem) {
+					return false, false
+				}
+			}
+		} else if field.AllOf != nil && len(*field.AllOf) > 0 {
+			return stringListIsMatchingAllOf(fieldValue, *field.AllOf), false
+		} else if field.AnyOf != nil && len(*field.AnyOf) > 0 {
+			return stringListIsMatchingAnyOf(fieldValue, *field.AnyOf), false
+		}
+
+	// DURATION type
+	case time.Duration:
+		if field.MinDuration != nil && fieldValue.Seconds() < field.MinDuration.Seconds() {
+			return false, false
+		}
+
+		if field.MaxDuration != nil && fieldValue.Seconds() > field.MaxDuration.Seconds() {
+			return false, false
+		}
+
+	// UNKNOWN type
+	default:
+		return false, false
+	}
+
+	return true, false
 }

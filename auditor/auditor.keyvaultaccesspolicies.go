@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 )
@@ -47,7 +48,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*AzureObject) {
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -55,6 +56,8 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 	if err != nil {
 		logger.Panic(err)
 	}
+
+	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 
 	for _, item := range *result.Response().Value {
 		resourceInfo, _ := azure.ParseResourceID(to.String(item.ID))
@@ -72,27 +75,30 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 
 				azureResource, _ := prometheusAzure.ParseResourceId(*item.ID)
 
-				list = append(
-					list,
-					newAzureObject(
-						map[string]interface{}{
-							"resourceID":        stringPtrToStringLower(item.ID),
-							"subscription.ID":   to.String(subscription.SubscriptionID),
-							"subscription.name": to.String(subscription.DisplayName),
+				obj := map[string]interface{}{
+					"resourceID":        stringPtrToStringLower(item.ID),
+					"subscription.ID":   to.String(subscription.SubscriptionID),
+					"subscription.name": to.String(subscription.DisplayName),
 
-							"keyvault.name":          azureResource.ResourceName,
-							"keyvault.resourceGroup": azureResource.ResourceGroup,
+					"keyvault.name":          azureResource.ResourceName,
+					"keyvault.resourceGroup": azureResource.ResourceGroup,
 
-							"principal.applicationID": applicationId,
-							"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
+					"principal.applicationID": applicationId,
+					"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
 
-							"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
-							"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
-							"permissions.keys":         keyvaultKeyPermissionsToStringList(accessPolicy.Permissions.Keys),
-							"permissions.storage":      keyvaultStoragePermissionsToStringList(accessPolicy.Permissions.Storage),
-						},
-					),
-				)
+					"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
+					"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
+					"permissions.keys":         keyvaultKeyPermissionsToStringList(accessPolicy.Permissions.Keys),
+					"permissions.storage":      keyvaultStoragePermissionsToStringList(accessPolicy.Permissions.Storage),
+				}
+
+				if resourceGroup, ok := resourceGroupList[azureResource.ResourceGroup]; ok {
+					obj["resourcegroup.name"] = to.String(resourceGroup.Name)
+					obj["resourcegroup.location"] = to.String(resourceGroup.Location)
+					obj["resourcegroup.tags"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+				}
+
+				list = append(list, validator.NewAzureObject(obj))
 			}
 		}
 	}
@@ -102,7 +108,7 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 	return
 }
 
-func (auditor *AzureAuditor) lookupKeyvaultAccessPolicyPrincipals(ctx context.Context, list *[]*AzureObject) {
+func (auditor *AzureAuditor) lookupKeyvaultAccessPolicyPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
 	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
 	for _, row := range *list {
 		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/features"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -35,7 +37,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*AzureObject) {
+func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := features.NewClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -51,19 +53,16 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 			nameParts := strings.SplitN(stringPtrToStringLower(item.Name), "/", 2)
 
 			if len(nameParts) >= 2 {
-				list = append(
-					list,
-					newAzureObject(
-						map[string]interface{}{
-							"resourceID":        stringPtrToStringLower(item.ID),
-							"subscription.ID":   to.String(subscription.SubscriptionID),
-							"subscription.name": to.String(subscription.DisplayName),
+				obj := map[string]interface{}{
+					"resourceID":        stringPtrToStringLower(item.ID),
+					"subscription.ID":   to.String(subscription.SubscriptionID),
+					"subscription.name": to.String(subscription.DisplayName),
 
-							"provider.namespace": nameParts[0],
-							"provider.feature":   nameParts[1],
-						},
-					),
-				)
+					"provider.namespace": nameParts[0],
+					"provider.feature":   nameParts[1],
+				}
+
+				list = append(list, validator.NewAzureObject(obj))
 			}
 		}
 

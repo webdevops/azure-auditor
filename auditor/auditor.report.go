@@ -2,6 +2,8 @@ package auditor
 
 import (
 	"sync"
+
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 )
 
 type (
@@ -38,7 +40,7 @@ func (report *AzureAuditorReport) Clear() {
 	report.Lines = []*AzureAuditorReportLine{}
 }
 
-func (report *AzureAuditorReport) Add(resource *AzureObject, ruleID string, status bool) {
+func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID string, status bool) {
 	report.lock.Lock()
 	defer report.lock.Unlock()
 

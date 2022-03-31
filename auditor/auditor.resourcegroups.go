@@ -3,6 +3,8 @@ package auditor
 import (
 	"context"
 
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -35,7 +37,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*AzureObject) {
+func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := resources.NewGroupsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
 
@@ -45,25 +47,17 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *lo
 	}
 
 	for _, item := range *result.Response().Value {
-		tags := map[string]interface{}{}
-		for tagName, tagValue := range to.StringMap(item.Tags) {
-			tags[tagName] = tagValue
+		obj := map[string]interface{}{
+			"resourceID":        stringPtrToStringLower(item.ID),
+			"subscription.ID":   to.String(subscription.SubscriptionID),
+			"subscription.name": to.String(subscription.DisplayName),
+
+			"resourcegroup.name":     stringPtrToStringLower(item.Name),
+			"resourcegroup.location": stringPtrToStringLower(item.Location),
+			"resourcegroup.tag":      azureTagsToAzureObjectField(item.Tags),
 		}
 
-		list = append(
-			list,
-			newAzureObject(
-				map[string]interface{}{
-					"resourceID":        stringPtrToStringLower(item.ID),
-					"subscription.ID":   to.String(subscription.SubscriptionID),
-					"subscription.name": to.String(subscription.DisplayName),
-
-					"resourcegroup.name":     stringPtrToStringLower(item.Name),
-					"resourcegroup.location": stringPtrToStringLower(item.Location),
-					"resourcegroup.tag":      tags,
-				},
-			),
-		)
+		list = append(list, validator.NewAzureObject(obj))
 	}
 
 	return

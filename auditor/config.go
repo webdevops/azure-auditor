@@ -4,16 +4,17 @@ import (
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 	"gopkg.in/yaml.v3"
 )
 
 type (
 	AuditConfig struct {
-		RoleAssignments          *AuditConfigValidation `yaml:"roleAssignments"`
-		ResourceGroups           *AuditConfigValidation `yaml:"resourceGroups"`
-		ResourceProviders        *AuditConfigValidation `yaml:"resourceProviders"`
-		ResourceProviderFeatures *AuditConfigValidation `yaml:"resourceProviderFeatures"`
-		KeyvaultAccessPolicies   *AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
+		RoleAssignments          *validator.AuditConfigValidation `yaml:"roleAssignments"`
+		ResourceGroups           *validator.AuditConfigValidation `yaml:"resourceGroups"`
+		ResourceProviders        *validator.AuditConfigValidation `yaml:"resourceProviders"`
+		ResourceProviderFeatures *validator.AuditConfigValidation `yaml:"resourceProviderFeatures"`
+		KeyvaultAccessPolicies   *validator.AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
 	}
 )
 
