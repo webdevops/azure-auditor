@@ -28,7 +28,8 @@ type (
 	AuditConfigValidationRuleField struct {
 		Required bool           `yaml:"required,omitempty"`
 		Match    *string        `yaml:"match,omitempty"`
-		List     *[]string      `yaml:"list,omitempty,flow"`
+		AllOf    *[]string      `yaml:"allOf,omitempty,flow"`
+		AnyOf    *[]string      `yaml:"anyOf,omitempty,flow"`
 		Regexp   *string        `yaml:"regexp,omitempty"`
 		regexp   *regexp.Regexp `yaml:"-"`
 
@@ -115,7 +116,7 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 				case []string:
 					matcher.Fields[name] = AuditConfigValidationRuleField{
 						Required: true,
-						List:     &v,
+						AllOf:    &v,
 					}
 				case []interface{}:
 					list := []string{}
@@ -126,7 +127,7 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 					}
 					matcher.Fields[name] = AuditConfigValidationRuleField{
 						Required: true,
-						List:     &list,
+						AllOf:    &list,
 					}
 				case map[string]interface{}:
 					ruleField := AuditConfigValidationRuleField{
@@ -140,8 +141,12 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 						ruleField.Match = &x
 					}
 
-					if x, ok := v["list"].([]string); ok {
-						ruleField.List = &x
+					if x, ok := v["allOf"].([]string); ok {
+						ruleField.AllOf = &x
+					}
+
+					if x, ok := v["anyOf"].([]string); ok {
+						ruleField.AnyOf = &x
 					}
 
 					if x, ok := v["regexp"].(string); ok {
@@ -269,17 +274,10 @@ func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
 							return false
 						}
 					}
-				} else if fieldValidator.List != nil && len(*fieldValidator.List) > 0 {
-					// validate with list
-				fieldValidationLoop:
-					for _, fieldValidationItem := range *fieldValidator.List {
-						for _, fieldValueItem := range fieldValue {
-							if strings.EqualFold(fieldValidationItem, fieldValueItem) {
-								continue fieldValidationLoop
-							}
-						}
-						return false
-					}
+				} else if fieldValidator.AllOf != nil && len(*fieldValidator.AllOf) > 0 {
+					return stringListIsMatchingAllOf(fieldValue, *fieldValidator.AllOf)
+				} else if fieldValidator.AnyOf != nil && len(*fieldValidator.AnyOf) > 0 {
+					return stringListIsMatchingAnyOf(fieldValue, *fieldValidator.AnyOf)
 				}
 
 			case time.Duration:
@@ -300,5 +298,29 @@ func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
 			}
 		}
 	}
+	return true
+}
+
+func stringListIsMatchingAllOf(list, matcherList []string) bool {
+	matchCount := int(0)
+	for _, match := range matcherList {
+		for _, val := range list {
+			if strings.EqualFold(val, match) {
+				matchCount++
+			}
+		}
+	}
+	return matchCount == len(list)
+}
+
+func stringListIsMatchingAnyOf(list, matcherList []string) bool {
+	for _, match := range matcherList {
+		for _, val := range list {
+			if !strings.EqualFold(val, match) {
+				return false
+			}
+		}
+	}
+
 	return true
 }
