@@ -129,9 +129,9 @@ func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context,
 	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
 
 	for key, row := range *list {
+		(*(*list)[key])["principal.type"] = "unknown"
 		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
 			if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
-				(*(*list)[key])["principal.type"] = directoryObjectInfo.Type
 				(*(*list)[key])["principal.displayName"] = directoryObjectInfo.DisplayName
 				(*(*list)[key])["principal.applicationID"] = directoryObjectInfo.ApplicationId
 				(*(*list)[key])["principal.objectID"] = directoryObjectInfo.ObjectId
