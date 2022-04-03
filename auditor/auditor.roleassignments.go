@@ -109,7 +109,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		if resourceGroup, ok := resourceGroupList[azureScope.ResourceGroup]; ok {
 			obj["resourcegroup.name"] = to.String(resourceGroup.Name)
 			obj["resourcegroup.location"] = to.String(resourceGroup.Location)
-			obj["resourcegroup.tags"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+			obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
 		}
 
 		list[to.String(roleAssignment.Name)] = validator.NewAzureObject(obj)

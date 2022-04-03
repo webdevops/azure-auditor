@@ -10,9 +10,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
+
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 )
 
 func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
@@ -95,7 +96,7 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 				if resourceGroup, ok := resourceGroupList[azureResource.ResourceGroup]; ok {
 					obj["resourcegroup.name"] = to.String(resourceGroup.Name)
 					obj["resourcegroup.location"] = to.String(resourceGroup.Location)
-					obj["resourcegroup.tags"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+					obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
 				}
 
 				list = append(list, validator.NewAzureObject(obj))

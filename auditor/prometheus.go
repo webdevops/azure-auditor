@@ -32,6 +32,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 			"principalDisplayName",
 			"roleDefinitionID",
 			"roleDefinitionName",
+			"rule",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.roleAssignment)
@@ -45,6 +46,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 			"subscriptionID",
 			"resourceGroup",
 			"location",
+			"rule",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.resourceGroup)
@@ -57,6 +59,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		[]string{
 			"subscriptionID",
 			"providerNamespace",
+			"rule",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.resourceProvider)
@@ -70,6 +73,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 			"subscriptionID",
 			"providerNamespace",
 			"providerFeature",
+			"rule",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.resourceProviderFeature)
@@ -91,6 +95,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 			"permissionsSecrets",
 			"permissionsKeys",
 			"permissionsStorage",
+			"rule",
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.keyvaultAccessPolicies)
