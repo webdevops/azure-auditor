@@ -27,6 +27,7 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, logger 
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":    to.String(subscription.SubscriptionID),
 				"providerNamespace": object.ToPrometheusLabel("provider.namespace"),
+				"rule":              matchingRuleId,
 			})
 		}
 	}

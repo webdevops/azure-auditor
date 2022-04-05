@@ -39,6 +39,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 				"permissionsSecrets":      object.ToPrometheusLabel("permissions.secrets"),
 				"permissionsKeys":         object.ToPrometheusLabel("permissions.keys"),
 				"permissionsStorage":      object.ToPrometheusLabel("permissions.storage"),
+				"rule":                    matchingRuleId,
 			})
 		}
 	}

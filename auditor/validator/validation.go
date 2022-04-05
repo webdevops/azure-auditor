@@ -7,6 +7,8 @@ import (
 type (
 	AuditConfigValidation struct {
 		Enabled    bool                                    `yaml:"enabled"`
+		Name       *string                                 `yaml:"name"`
+		Query      *string                                 `yaml:"query"`
 		Rules      *[]AuditConfigValidationRule            `yaml:"rules"`
 		ScopeRules map[string][]*AuditConfigValidationRule `yaml:"scopeRules"`
 	}

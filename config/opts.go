@@ -27,6 +27,7 @@ type (
 			ResourceGroups         string `long:"cron.resourcegroups"          env:"CRON_RESOURCEGROUPS"           description:"Cronjob for ResourceGroups report"          default:"*/30 * * * *"`
 			ResourceProvider       string `long:"cron.resourceproviders"       env:"CRON_RESOURCEPROVIDERS"        description:"Cronjob for ResourceProviders report"       default:"0 * * * *"`
 			RoleAssignments        string `long:"cron.roleassignments"         env:"CRON_ROLEASSIGNMENTS"          description:"Cronjob for RoleAssignments report"         default:"*/5 * * * *"`
+			ResourceGraph          string `long:"cron.resourcegraph"           env:"CRON_RESOURCEGRAPH"            description:"Cronjob for ResourceGraph report"           default:"15 * * * *"`
 		}
 
 		Config string `long:"config"  env:"CONFIG"   description:"Config file path"     required:"true"`

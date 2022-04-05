@@ -27,6 +27,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 				"subscriptionID": to.String(subscription.SubscriptionID),
 				"resourceGroup":  object.ToPrometheusLabel("resourcegroup.name"),
 				"location":       object.ToPrometheusLabel("resourcegroup.location"),
+				"rule":           matchingRuleId,
 			})
 		}
 	}

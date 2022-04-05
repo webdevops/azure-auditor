@@ -27,6 +27,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 				"subscriptionID":    to.String(subscription.SubscriptionID),
 				"providerNamespace": object.ToPrometheusLabel("provider.namespace"),
 				"providerFeature":   object.ToPrometheusLabel("provider.feature"),
+				"rule":              matchingRuleId,
 			})
 		}
 	}

@@ -1,11 +1,13 @@
 package auditor
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 	"gopkg.in/yaml.v3"
+
+	"github.com/webdevops/azure-audit-exporter/auditor/validator"
 )
 
 type (
@@ -15,6 +17,12 @@ type (
 		ResourceProviders        *validator.AuditConfigValidation `yaml:"resourceProviders"`
 		ResourceProviderFeatures *validator.AuditConfigValidation `yaml:"resourceProviderFeatures"`
 		KeyvaultAccessPolicies   *validator.AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
+		ResourceGraph            *AuditConfigResourceGraph        `yaml:"resourceGraph"`
+	}
+
+	AuditConfigResourceGraph struct {
+		Enabled bool                               `yaml:"enabled"`
+		Queries []*validator.AuditConfigValidation `yaml:"queries"`
 	}
 )
 
@@ -35,4 +43,9 @@ func (auditor *AzureAuditor) ParseConfig(path string) {
 	if err := yaml.Unmarshal(configRaw, &auditor.config); err != nil {
 		auditor.logger.Panic(err)
 	}
+}
+
+func (configResourceGraph *AuditConfigResourceGraph) IsEnabled() bool {
+	fmt.Println(configResourceGraph)
+	return configResourceGraph != nil && configResourceGraph.Enabled && len(configResourceGraph.Queries) >= 1
 }

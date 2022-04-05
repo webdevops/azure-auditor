@@ -41,6 +41,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 
 				"roleDefinitionID":   object.ToPrometheusLabel("role.ID"),
 				"roleDefinitionName": object.ToPrometheusLabel("role.name"),
+				"rule":               matchingRuleId,
 			})
 		}
 	}

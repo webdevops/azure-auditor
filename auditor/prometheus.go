@@ -11,6 +11,7 @@ type (
 		resourceProvider        *prometheus.GaugeVec
 		resourceProviderFeature *prometheus.GaugeVec
 		keyvaultAccessPolicies  *prometheus.GaugeVec
+		resourceGraph           *prometheus.GaugeVec
 	}
 )
 
@@ -99,4 +100,18 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 	)
 	prometheus.MustRegister(auditor.prometheus.keyvaultAccessPolicies)
+
+	auditor.prometheus.resourceGraph = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "azurerm_audit_violation_resourcegraph",
+			Help: "Azure ResourceManager audit ResourceGraph violation",
+		},
+		[]string{
+			"subscriptionID",
+			"queryName",
+			"resourceID",
+			"rule",
+		},
+	)
+	prometheus.MustRegister(auditor.prometheus.resourceGraph)
 }

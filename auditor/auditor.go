@@ -2,6 +2,7 @@ package auditor
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ const (
 	ReportResourceProviderFeatures = "ResourceProviderFeatures"
 	ReportResourceGroups           = "ResourceGroups"
 	ReportRoleAssignments          = "RoleAssignments"
+	ReportResourceGraph            = "ResourceGraph:%v"
 )
 
 type (
@@ -144,6 +146,22 @@ func (auditor *AzureAuditor) Run() {
 				auditor.prometheus.resourceProviderFeature.Reset()
 			},
 		)
+	}
+
+	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceGraph) && auditor.config.ResourceGraph.IsEnabled() {
+		for _, config := range auditor.config.ResourceGraph.Queries {
+			resourceGraphConfig := config
+			auditor.addCronjob(
+				fmt.Sprintf(ReportResourceGraph, to.String(resourceGraphConfig.Name)),
+				auditor.Opts.Cronjobs.ResourceGraph,
+				func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+					auditor.auditResourceGraph(ctx, logger, subscription, resourceGraphConfig, report, callback)
+				},
+				func() {
+					auditor.prometheus.resourceGraph.Reset()
+				},
+			)
+		}
 	}
 
 	//

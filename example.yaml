@@ -1,3 +1,13 @@
+resourceGraph:
+  enabled: true
+
+  queries:
+    - name: resoruces
+      query: |-
+        resources
+
+    rules: []
+
 roleAssignments:
   enabled: true
 
