@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/webdevops/go-prometheus-common/azuretracing"
 
-	"github.com/webdevops/azure-audit-exporter/config"
+	"github.com/webdevops/azure-auditor/config"
 )
 
 const (

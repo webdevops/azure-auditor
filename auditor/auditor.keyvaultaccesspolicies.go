@@ -13,7 +13,7 @@ import (
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
 
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {

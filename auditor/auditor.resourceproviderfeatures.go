@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/features"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"

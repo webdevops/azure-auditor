@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-prometheus-common"
 
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 const (

@@ -133,7 +133,7 @@
 <body>
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
     <h1>
-        <a class="navbar-brand" href>Azure Audit exporter</a>
+        <a class="navbar-brand" href>Azure Auditor</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarReport"
                 aria-controls="navbarReport" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -186,7 +186,7 @@
 <main class="container-xxl">
     <div class="bg-light p-5 rounded">
         <h1>
-            Azure Audit report
+            Azure Auditor
         </h1>
 
         <div class="mb-3 row audit-config hide-print">
@@ -227,7 +227,7 @@
 <script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
-    let settingKey = "azureAuditExporterSettings";
+    let settingKey = "azureAuditorPreferences";
 
     // restore settings
     try {

@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 type (

@@ -1,4 +1,4 @@
-module github.com/webdevops/azure-audit-exporter
+module github.com/webdevops/azure-auditor
 
 go 1.17
 

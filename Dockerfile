@@ -3,21 +3,21 @@ FROM golang:1.17-alpine as build
 RUN apk upgrade --no-cache --force
 RUN apk add --update build-base make git
 
-WORKDIR /go/src/github.com/webdevops/azure-audit-exporter
+WORKDIR /go/src/github.com/webdevops/azure-auditor
 
 # Compile
-COPY ./ /go/src/github.com/webdevops/azure-audit-exporter
+COPY ./ /go/src/github.com/webdevops/azure-auditor
 RUN make dependencies
 #RUN make test
 RUN make build
-RUN ./azure-audit-exporter --help
+RUN ./azure-auditor --help
 
 #############################################
 # FINAL IMAGE
 #############################################
 FROM gcr.io/distroless/static
 ENV LOG_JSON=1
-COPY --from=build /go/src/github.com/webdevops/azure-audit-exporter/azure-audit-exporter /
-COPY --from=build /go/src/github.com/webdevops/azure-audit-exporter/templates/ /templates/
+COPY --from=build /go/src/github.com/webdevops/azure-auditor/azure-auditor /
+COPY --from=build /go/src/github.com/webdevops/azure-auditor/templates/ /templates/
 USER 1000:1000
-ENTRYPOINT ["/azure-audit-exporter"]
+ENTRYPOINT ["/azure-auditor"]

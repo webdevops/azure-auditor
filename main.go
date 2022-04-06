@@ -17,14 +17,14 @@ import (
 	"github.com/webdevops/go-prometheus-common/azuretracing"
 	"gopkg.in/yaml.v3"
 
-	auditor "github.com/webdevops/azure-audit-exporter/auditor"
-	"github.com/webdevops/azure-audit-exporter/config"
+	auditor "github.com/webdevops/azure-auditor/auditor"
+	"github.com/webdevops/azure-auditor/config"
 )
 
 const (
 	Author = "webdevops.io"
 
-	UserAgent = "azure-audit-exporter/"
+	UserAgent = "azure-auditor/"
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 func main() {
 	initArgparser()
 
-	log.Infof("starting azure-audit-exporter v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
+	log.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
 	log.Info(string(opts.GetJson()))
 
 	log.Infof("starting audit")

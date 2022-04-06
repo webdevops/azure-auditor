@@ -3,7 +3,7 @@ package auditor
 import (
 	"sync"
 
-	"github.com/webdevops/azure-audit-exporter/auditor/validator"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 type (

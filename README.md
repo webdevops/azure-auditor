@@ -1,11 +1,11 @@
-# Azure Audit exporter
+# Azure Auditor
 
-[![license](https://img.shields.io/github/license/webdevops/azure-audit-exporter.svg)](https://github.com/webdevops/azure-audit-exporter/blob/master/LICENSE)
-[![DockerHub](https://img.shields.io/badge/DockerHub-webdevops%2Fazure--audit--exporter-blue)](https://hub.docker.com/r/webdevops/azure-audit-exporter/)
-[![Quay.io](https://img.shields.io/badge/Quay.io-webdevops%2Fazure--audit--exporter-blue)](https://quay.io/repository/webdevops/azure-audit-exporter)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/azure-audit-exporter)](https://artifacthub.io/packages/search?repo=azure-audit-exporter)
+[![license](https://img.shields.io/github/license/webdevops/azure-auditor.svg)](https://github.com/webdevops/azure-auditor/blob/master/LICENSE)
+[![DockerHub](https://img.shields.io/badge/DockerHub-webdevops%2Fazure--auditor-blue)](https://hub.docker.com/r/webdevops/azure-auditor/)
+[![Quay.io](https://img.shields.io/badge/Quay.io-webdevops%2Fazure--auditor-blue)](https://quay.io/repository/webdevops/azure-auditor)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/azure-auditor)](https://artifacthub.io/packages/search?repo=azure-auditor)
 
-Prometheus exporter for Azure Audit reporting
+Auditor for Azure resources and settings with Prometheus metrics (violations) for alerting
 
 Audit reports:
 
@@ -14,12 +14,13 @@ Audit reports:
 - ResourceProviders
 - ResourceProviderFeatures
 - Keyvault AccessPolicies
+- ResourceGraph queries
 
 ## Usage
 
 ```
 Usage:
-  azure-audit-exporter [OPTIONS]
+  azure-auditor [OPTIONS]
 
 Application Options:
       --debug                         debug mode [$DEBUG]
