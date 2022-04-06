@@ -10,8 +10,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	prometheusCommon "github.com/webdevops/go-prometheus-common"
-	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
+	azureCommon "github.com/webdevops/go-common/azure"
+	prometheusCommon "github.com/webdevops/go-common/prometheus"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -75,7 +75,7 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 					applicationId = accessPolicy.ApplicationID.String()
 				}
 
-				azureResource, _ := prometheusAzure.ParseResourceId(*item.ID)
+				azureResource, _ := azureCommon.ParseResourceId(*item.ID)
 
 				obj := map[string]interface{}{
 					"resourceID":        stringPtrToStringLower(item.ID),

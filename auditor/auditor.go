@@ -18,7 +18,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/go-prometheus-common/azuretracing"
+	"github.com/webdevops/go-common/prometheus/azuretracing"
 
 	"github.com/webdevops/azure-auditor/config"
 )

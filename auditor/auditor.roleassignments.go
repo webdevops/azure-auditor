@@ -10,8 +10,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	prometheusCommon "github.com/webdevops/go-prometheus-common"
-	prometheusAzure "github.com/webdevops/go-prometheus-common/azure"
+	azureCommon "github.com/webdevops/go-common/azure"
+	prometheusCommon "github.com/webdevops/go-common/prometheus"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -72,7 +72,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 
 		scopeResourceId := strings.ToLower(*roleAssignment.Scope)
 
-		azureScope, _ := prometheusAzure.ParseResourceId(scopeResourceId)
+		azureScope, _ := azureCommon.ParseResourceId(scopeResourceId)
 
 		scopeType := ""
 		if azureScope.ResourceName != "" {

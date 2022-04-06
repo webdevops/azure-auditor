@@ -3,7 +3,7 @@ module github.com/webdevops/azure-auditor
 go 1.17
 
 require (
-	github.com/Azure/azure-sdk-for-go v62.1.0+incompatible
+	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.13.2
 	github.com/Azure/go-autorest/autorest v0.11.24
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/webdevops/go-prometheus-common v0.0.0-20220320154332-65dd393b5fb6
+	github.com/webdevops/go-common v0.0.0-20220406110653-237539a358b2
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
