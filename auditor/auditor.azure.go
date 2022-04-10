@@ -21,8 +21,8 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list []su
 		return
 	}
 
-	client := subscriptions.NewClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+	client := subscriptions.NewClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	if len(auditor.Opts.Azure.Subscription) == 0 {
 		listResult, err := client.List(ctx)
@@ -61,8 +61,8 @@ func (auditor *AzureAuditor) getResourceGroupList(ctx context.Context, subscript
 		return
 	}
 
-	client := resources.NewGroupsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+	client := resources.NewGroupsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	listResult, err := client.ListComplete(ctx, "", nil)
 	if err != nil {

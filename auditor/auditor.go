@@ -10,15 +10,13 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 	a "github.com/microsoft/kiota/authentication/go/azure"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/go-common/prometheus/azuretracing"
+	azureCommon "github.com/webdevops/go-common/azure"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -42,9 +40,7 @@ type (
 		config AuditConfig
 
 		azure struct {
-			authorizer  autorest.Authorizer
-			environment azure.Environment
-
+			client  *azureCommon.Client
 			msGraph *msgraphsdk.GraphServiceClient
 		}
 
@@ -250,17 +246,11 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-
-	// azure authorizer
-	auditor.azure.authorizer, err = auth.NewAuthorizerFromEnvironment()
+	auditor.azure.client, err = azureCommon.NewClientFromEnvironment(*auditor.Opts.Azure.Environment)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
-
-	auditor.azure.environment, err = azure.EnvironmentFromName(*auditor.Opts.Azure.Environment)
-	if err != nil {
-		auditor.logger.Panic(err)
-	}
+	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
@@ -295,12 +285,7 @@ func (auditor *AzureAuditor) initCron() {
 }
 
 func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {
-	client.Authorizer = authorizer
-	if err := client.AddToUserAgent(auditor.UserAgent); err != nil {
-		auditor.logger.Panic(err)
-	}
-
-	azuretracing.DecorateAzureAutoRestClient(client)
+	auditor.azure.client.DecorateAzureAutorestWithAuthorizer(client, authorizer)
 }
 
 func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {

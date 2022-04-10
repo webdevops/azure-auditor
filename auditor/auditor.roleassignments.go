@@ -58,8 +58,8 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 
-	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	response, err := client.ListComplete(ctx, "", "")
 
@@ -148,8 +148,8 @@ func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context,
 }
 
 func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]authorization.RoleDefinition {
-	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	response, err := client.ListComplete(ctx, *subscription.ID, "")
 

@@ -51,8 +51,8 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 }
 
 func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
-	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.authorizer)
+	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	result, err := client.ListComplete(ctx, nil)
 	if err != nil {

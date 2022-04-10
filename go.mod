@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/webdevops/go-common v0.0.0-20220406110653-237539a358b2
+	github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 

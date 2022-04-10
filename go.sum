@@ -297,6 +297,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/webdevops/go-common v0.0.0-20220406110653-237539a358b2 h1:ZK31iWMbk0TkSCof5C8ukGmbJ86HbvN41mJilpROL20=
 github.com/webdevops/go-common v0.0.0-20220406110653-237539a358b2/go.mod h1:SqjH91aPqrsvnigkx6+XyuX9TYN7+ymaIcV9OJy5DhA=
+github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d h1:sRNKrXc+aGxoDAAjQr+rQCqGN4K8bio7qSQzXbDPgRM=
+github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d/go.mod h1:EGb6BMDxY+CD/bphCq6xcQKCFLI1e/8U770aqYr4kJM=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.0.2/go.mod h1:1WAq6h33pAW+iRreB34OORO2Nf7qel3VV3fjBj+hCSs=
 github.com/xdg-go/stringprep v1.0.2/go.mod h1:8F9zXuvzgwmyT5DUm4GUfZGDdT3W+LCvS6+da4O5kxM=
