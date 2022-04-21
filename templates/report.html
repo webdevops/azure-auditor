@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" integrity="sha512-GQGU0fMMi238uA+a/bdWJfpUGKUkBdgfFdgBm72SUQ6BeyWjoY/ton0tEjH+OSH9iP4Dfh+7HM0I9f5eR0L/4w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.1/css/tabulator_bootstrap5.min.css" integrity="sha512-kNv5re/V2f7H6sT+T+obgrc4LlHx4UowzfyRh63p9aXd0CZip8qRIpeRKTZC1h9MaQWRIRSGeKeAS8Z+LuDgPA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style nonce="{{ .Nonce }}">
         body {
             padding-top: 90px
@@ -47,13 +48,13 @@
 
         .hide-config .audit-config { display: none; }
 
-        .report-hide-allow .report-table .allow { display: none; }
-        .report-table .allow { background-color: rgba(0,128,0,0.1); }
+        .tabulator-cell { font-size: 0.8rem; }
+        .tabulator-print-table td { vertical-align: top; }
 
-        .report-hide-deny .report-table .deny { display: none; }
-        .report-table .deny { background-color: rgba(255,0,0,0.1); }
+        h3 { position: relative; }
+        #print-report { position: absolute; right: 0; }
 
-        .report-table .status { text-align: center }
+        .container-xxl { max-width: 100% !important; }
 
         @media (min-width: 768px) {
             .navbar.fixed-left {
@@ -110,10 +111,6 @@
             opacity: 0.5;
         }
 
-        table td {
-            font-size: 0.8rem;
-        }
-
         @media print {
             body {
                 margin: 0 !important;
@@ -160,21 +157,9 @@
             <li class="nav-item nav-item-settings settings">
                 <a class="nav-link disabled">Settings</a>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" checked id="showConfig" data-body-class="hide-config">
+                    <input class="form-check-input" type="checkbox" value="0" id="showConfig" data-body-class="hide-config">
                     <label class="form-check-label" for="showConfig">
                         Show config
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" checked id="showValid" data-body-class="report-hide-allow">
-                    <label class="form-check-label" for="showValid">
-                        Show allow
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" checked id="showInvalid" checked data-body-class="report-hide-deny">
-                    <label class="form-check-label" for="showInvalid">
-                        Show deny
                     </label>
                 </div>
             </li>
@@ -197,27 +182,8 @@
         {{range $ReportName, $report := .Report}}
         {{ if eq $ReportName $root.RequestReport }}
         <div class="mb-3 row">
-            <h3 id="{{ $ReportName }}">{{ $ReportName }} report</h3>
-
-            <table class="table table-sm table-striped table-hover report-table">
-                <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>ResourceID</th>
-                    <th>Matching Rule</th>
-                </tr>
-                </thead>
-                <tbody>
-                {{range $report.Lines}}
-                <tr class="{{ if .Status }} allow {{else}} deny {{end}}">
-                    <td class="status">{{ if .Status }}&#9989; {{else}} &#10060; {{end}}</td>
-                    <td><pre>{{ .Resource | toYaml }}</pre></td>
-                    <td>{{ if .RuleID }}{{ .RuleID }}{{ else }}<i>-none-</i>{{ end }}</td>
-                </tr>
-                {{end}}
-
-                </tbody>
-            </table>
+            <h3 id="{{ $ReportName }}">{{ $ReportName }} report <button type="button" class="btn btn-secondary" id="print-report">Print</button></h3>
+            <div id="report-table"></div>
         </div>
         {{ end }}
         {{ end }}
@@ -225,6 +191,86 @@
 </main>
 
 <script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.1/js/tabulator.min.js" integrity="sha512-KVEiSNZy9jUhBsKDO6j/c2GSRBrwrBzAFFVdvpwA/p0gRka5YOZQROCoFSS3sv1jA9+zqKTxPjTlJ8nQ2LLkug==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script nonce="{{ .Nonce }}">
+jQuery( document ).ready(function($) {
+    let repotData = {};
+
+    {{range $ReportName, $report := .Report}}
+    {{ if eq $ReportName $root.RequestReport }}
+    repotData = JSON.parse({{ $report.Lines | toJson }})
+    {{ end }}
+    {{ end }}
+
+    Tabulator.extendModule("persistence", "writers", {
+        example:function(id, type, data){
+            localStorage.setItem(id + "-" + type, JSON.stringify(data));
+        },
+    });
+
+    Tabulator.extendModule("persistence", "readers", {
+        example:function(id, type){
+            var data = localStorage.getItem(id + "-" + type);
+            return data ? JSON.parse(data) : false;
+        },
+    });
+
+    let statusFilter = (headerValue, rowValue, rowData, filterParams) => {
+        if (!headerValue) {
+            return true;
+        }
+
+        switch (headerValue.toLowerCase()) {
+            case "deny":
+            case "false":
+            case "0":
+                return rowData.Status === false
+            case "allow":
+            case "true":
+            case "1":
+                return rowData.Status === true
+        }
+
+        return false;
+    }
+
+    let table = new Tabulator("#report-table", {
+        data: repotData,
+        layout:"fitDataFill",
+        pagination: true,
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
+        printRowRange: "active",
+        printAsHtml: true,
+        persistence:{
+            sort: true,
+            filter: true,
+            group: true,
+            page: false,
+            columns: true,
+        },
+        groupBy: "Status",
+        groupHeader: function(value, count, data, group){
+            let headerName = "allow";
+            if (!value) {
+                headerName = "deny";
+            }
+            return headerName + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>";
+        },
+        columns:[
+            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter},
+            {title:"Resource", field:"Resource", formatter:"textarea", headerFilter:"input"},
+            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input"},
+        ]
+    });
+
+    $(document).on("click", "#print-report", function() {
+        table.print();
+    })
+});
+</script>
+
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
     let settingKey = "azureAuditorPreferences";

@@ -6,16 +6,16 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path"
 	"runtime"
 	"strings"
 
+	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/google/uuid"
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/webdevops/go-common/prometheus/azuretracing"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
 	"github.com/webdevops/azure-auditor/config"
@@ -40,6 +40,7 @@ var (
 
 func main() {
 	initArgparser()
+	initLogger()
 
 	log.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
 	log.Info(string(opts.GetJson()))
@@ -64,40 +65,41 @@ func initArgparser() {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			os.Exit(0)
 		} else {
-			fmt.Println(err)
 			fmt.Println()
 			argparser.WriteHelp(os.Stdout)
 			os.Exit(1)
 		}
 	}
+}
 
+func initLogger() {
 	// verbose level
-	if opts.Logger.Verbose {
+	if opts.Logger.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	// debug level
-	if opts.Logger.Debug {
+	// trace level
+	if opts.Logger.Trace {
 		log.SetReportCaller(true)
 		log.SetLevel(log.TraceLevel)
 		log.SetFormatter(&log.TextFormatter{
 			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-				s := strings.Split(f.Function, ".")
+				s := strings.Split(f.Function, "/")
 				funcName := s[len(s)-1]
-				return funcName, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
+				return funcName, fmt.Sprintf("%s:%d", f.File, f.Line)
 			},
 		})
 	}
 
 	// json log format
-	if opts.Logger.LogJson {
+	if opts.Logger.Json {
 		log.SetReportCaller(true)
 		log.SetFormatter(&log.JSONFormatter{
 			DisableTimestamp: true,
 			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-				s := strings.Split(f.Function, ".")
+				s := strings.Split(f.Function, "/")
 				funcName := s[len(s)-1]
-				return funcName, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
+				return funcName, fmt.Sprintf("%s:%d", f.File, f.Line)
 			},
 		})
 	}
@@ -105,9 +107,15 @@ func initArgparser() {
 
 // start and handle prometheus handler
 func startHttpServer() {
-
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		if _, err := fmt.Fprint(w, "Ok"); err != nil {
+			log.Error(err)
+		}
+	})
+
+	// readyz
+	http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			log.Error(err)
 		}
@@ -119,7 +127,7 @@ func startHttpServer() {
 			out, _ := yaml.Marshal(obj)
 			return string(out)
 		},
-	}).ParseGlob("./templates/report.html")
+	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/report.html")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -133,7 +141,7 @@ func startHttpServer() {
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 		w.Header().Add("Content-Security-Policy",
 			fmt.Sprintf(
-				"default-src 'self'; script-src-elem 'nonce-%[1]s'; style-src 'nonce-%[1]s'; img-src 'self' data:",
+				"default-src 'self'; script-src-elem 'nonce-%[1]s'; style-src 'nonce-%[1]s' unsafe-inline; img-src 'self' data:",
 				cspNonce,
 			),
 		)

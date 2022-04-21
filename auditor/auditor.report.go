@@ -1,7 +1,10 @@
 package auditor
 
 import (
+	"encoding/json"
 	"sync"
+
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -31,6 +34,17 @@ func NewAzureAuditorReport() *AzureAuditorReport {
 	report.Summary = &AzureAuditorReportSummary{}
 	report.Lines = []*AzureAuditorReportLine{}
 	return report
+}
+
+func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
+	data := map[string]interface{}{}
+
+	resourceInfo, _ := yaml.Marshal(reportLine.Resource)
+	data["Resource"] = string(resourceInfo)
+	data["RuleID"] = reportLine.RuleID
+	data["Status"] = reportLine.Status
+
+	return json.Marshal(data)
 }
 
 func (report *AzureAuditorReport) Clear() {
