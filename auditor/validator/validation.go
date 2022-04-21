@@ -7,6 +7,7 @@ import (
 type (
 	AuditConfigValidation struct {
 		Enabled    bool                                    `yaml:"enabled"`
+		Metrics    *bool                                   `yaml:"metrics"`
 		Name       *string                                 `yaml:"name"`
 		Query      *string                                 `yaml:"query"`
 		Rules      *[]AuditConfigValidationRule            `yaml:"rules"`
@@ -20,6 +21,14 @@ func (validation *AuditConfigValidation) IsEnabled() bool {
 	}
 
 	return false
+}
+
+func (validation *AuditConfigValidation) IsMetricsEnabled() bool {
+	if validation.Metrics == nil {
+		return true
+	}
+
+	return *validation.Metrics
 }
 
 func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, bool) {

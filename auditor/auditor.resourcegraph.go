@@ -23,10 +23,10 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 	violationMetric := prometheusCommon.NewMetricsList()
 
 	for _, object := range list {
-		matchingRuleId, status := auditor.config.ResourceGroups.Validate(object)
+		matchingRuleId, status := config.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status {
+		if !status && config.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID": to.String(subscription.SubscriptionID),
 				"queryName":      to.String(config.Name),

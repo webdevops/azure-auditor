@@ -25,7 +25,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status {
+		if !status && auditor.config.RoleAssignments.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID":   to.String(subscription.SubscriptionID),
 				"roleAssignmentID": object.ToPrometheusLabel("resourceID"),
@@ -142,6 +142,7 @@ func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context,
 				(*(*list)[key])["principal.displayName"] = directoryObjectInfo.DisplayName
 				(*(*list)[key])["principal.applicationID"] = directoryObjectInfo.ApplicationId
 				(*(*list)[key])["principal.objectID"] = directoryObjectInfo.ObjectId
+				(*(*list)[key])["principal.type"] = directoryObjectInfo.Type
 			}
 		}
 	}

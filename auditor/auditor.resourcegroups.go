@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 		matchingRuleId, status := auditor.config.ResourceGroups.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status {
+		if !status && auditor.config.ResourceGroups.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
 				"subscriptionID": to.String(subscription.SubscriptionID),
 				"resourceGroup":  object.ToPrometheusLabel("resourcegroup.name"),
