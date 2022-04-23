@@ -52,8 +52,8 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list map[string]*validator.AzureObject) {
-	list = map[string]*validator.AzureObject{}
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
+	list = []*validator.AzureObject{}
 
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
@@ -113,39 +113,16 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 			obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
 		}
 
-		list[to.String(roleAssignment.Name)] = validator.NewAzureObject(obj)
+		list = append(list, validator.NewAzureObject(obj))
 
 		if response.NextWithContext(ctx) != nil {
 			break
 		}
 	}
 
-	auditor.lookupRoleAssignmentPrincipals(ctx, logger, &list)
+	auditor.enrichWithMsGraphPrincipals(ctx, &list)
 
 	return
-}
-
-func (auditor *AzureAuditor) lookupRoleAssignmentPrincipals(ctx context.Context, logger *log.Entry, list *map[string]*validator.AzureObject) {
-	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
-	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			principalObjectIDMap[principalObjectID] = nil
-		}
-	}
-
-	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
-
-	for key, row := range *list {
-		(*(*list)[key])["principal.type"] = "unknown"
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
-				(*(*list)[key])["principal.displayName"] = directoryObjectInfo.DisplayName
-				(*(*list)[key])["principal.applicationID"] = directoryObjectInfo.ApplicationId
-				(*(*list)[key])["principal.objectID"] = directoryObjectInfo.ObjectId
-				(*(*list)[key])["principal.type"] = directoryObjectInfo.Type
-			}
-		}
-	}
 }
 
 func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]authorization.RoleDefinition {

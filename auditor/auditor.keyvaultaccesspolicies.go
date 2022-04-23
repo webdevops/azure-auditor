@@ -105,32 +105,9 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 		}
 	}
 
-	auditor.lookupKeyvaultAccessPolicyPrincipals(ctx, &list)
+	auditor.enrichWithMsGraphPrincipals(ctx, &list)
 
 	return
-}
-
-func (auditor *AzureAuditor) lookupKeyvaultAccessPolicyPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
-	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
-	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			principalObjectIDMap[principalObjectID] = nil
-		}
-	}
-
-	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
-
-	for key, row := range *list {
-		(*(*list)[key])["principal.type"] = "unknown"
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
-				(*(*list)[key])["principal.type"] = directoryObjectInfo.Type
-				(*(*list)[key])["principal.displayName"] = directoryObjectInfo.DisplayName
-				(*(*list)[key])["principal.applicationID"] = directoryObjectInfo.ApplicationId
-				(*(*list)[key])["principal.objectID"] = directoryObjectInfo.ObjectId
-			}
-		}
-	}
 }
 
 func keyvaultCertificatePermissionsToStringList(val *[]keyvault.CertificatePermissions) (list []string) {
