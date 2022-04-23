@@ -55,7 +55,7 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 
 			if len(nameParts) >= 2 {
 				obj := map[string]interface{}{
-					"resourceID":      stringPtrToStringLower(item.ID),
+					"resource.ID":     stringPtrToStringLower(item.ID),
 					"subscription.ID": to.String(subscription.SubscriptionID),
 
 					"provider.namespace": nameParts[0],

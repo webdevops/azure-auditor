@@ -75,14 +75,13 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 				azureResource, _ := azureCommon.ParseResourceId(*item.ID)
 
 				obj := map[string]interface{}{
-					"resourceID":              stringPtrToStringLower(item.ID),
+					"resource.ID":             stringPtrToStringLower(item.ID),
 					"subscription.ID":         to.String(subscription.SubscriptionID),
 					"resourcegroup.name":      azureResource.ResourceGroup,
 					"principal.applicationID": applicationId,
 					"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
 
-					"keyvault.name":          azureResource.ResourceName,
-					"keyvault.resourceGroup": azureResource.ResourceGroup,
+					"keyvault.name": azureResource.ResourceName,
 
 					"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
 					"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),

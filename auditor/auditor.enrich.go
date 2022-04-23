@@ -16,6 +16,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 	for key, row := range *list {
 		obj := (*(*list)[key])
 
+		// enrich with subscription information
 		if subscriptionID, ok := (*row)["subscription.ID"].(string); ok && subscriptionID != "" {
 			if subscription, ok := subscriptionList[subscriptionID]; ok {
 				obj["subscription.name"] = to.String(subscription.DisplayName)
@@ -28,6 +29,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 
 		}
 
+		// enrich with resourcegroup information
 		if resourceGroupName, ok := (*row)["resourcegroup.name"].(string); ok && resourceGroupName != "" {
 			if resourceGroup, ok := resourceGroupList[resourceGroupName]; ok {
 				obj["resourcegroup.name"] = to.String(resourceGroup.Name)
@@ -38,6 +40,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 
 	}
 
+	// enrich with principal information
 	auditor.enrichAzureObjectsWithMsGraphPrincipals(ctx, list)
 }
 

@@ -85,7 +85,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		}
 
 		obj := map[string]interface{}{
-			"resourceID":         stringPtrToStringLower(roleAssignment.ID),
+			"resource.ID":        stringPtrToStringLower(roleAssignment.ID),
 			"subscription.ID":    to.String(subscription.SubscriptionID),
 			"role.ID":            stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 			"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),

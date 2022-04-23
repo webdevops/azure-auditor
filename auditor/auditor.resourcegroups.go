@@ -49,7 +49,7 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *lo
 
 	for _, item := range *result.Response().Value {
 		obj := map[string]interface{}{
-			"resourceID":        stringPtrToStringLower(item.ID),
+			"resource.ID":       stringPtrToStringLower(item.ID),
 			"subscription.ID":   to.String(subscription.SubscriptionID),
 			"subscription.name": to.String(subscription.DisplayName),
 

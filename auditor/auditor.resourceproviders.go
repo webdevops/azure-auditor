@@ -50,7 +50,7 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger 
 	for _, item := range *result.Response().Value {
 		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
 			obj := map[string]interface{}{
-				"resourceID":      stringPtrToStringLower(item.ID),
+				"resource.ID":     stringPtrToStringLower(item.ID),
 				"subscription.ID": to.String(subscription.SubscriptionID),
 
 				"provider.namespace": stringPtrToStringLower(item.Namespace),
