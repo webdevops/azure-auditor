@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -127,6 +128,9 @@ func startHttpServer() {
 			out, _ := yaml.Marshal(obj)
 			return string(out)
 		},
+		"raw": func(val string) template.HTML {
+			return template.HTML(val)
+		},
 	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/report.html")
 	if err != nil {
 		log.Panic(err)
@@ -165,6 +169,24 @@ func startHttpServer() {
 
 		if err := reportTmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
 			log.Error(err)
+		}
+	})
+
+	http.HandleFunc("/report/data", func(w http.ResponseWriter, r *http.Request) {
+		if reportName := r.URL.Query().Get("report"); reportName != "" {
+			reportList := audit.GetReport()
+			if report, ok := reportList[reportName]; ok {
+				data, err := json.Marshal(report.Lines)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+				}
+
+				w.Header().Add("Content-Type", "application/json")
+				w.Write(data)
+			}
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	})
 

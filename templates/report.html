@@ -52,7 +52,8 @@
         .tabulator-print-table td { vertical-align: top; }
 
         h3 { position: relative; }
-        #print-report { position: absolute; right: 0; }
+        .toolbar { position: absolute; right: 0; display: inline-block; }
+        .toolbar button { margin-right: 0.5rem; }
 
         .container-xxl { max-width: 100% !important; }
 
@@ -182,7 +183,7 @@
         {{range $ReportName, $report := .Report}}
         {{ if eq $ReportName $root.RequestReport }}
         <div class="mb-3 row">
-            <h3 id="{{ $ReportName }}">{{ $ReportName }} report <button type="button" class="btn btn-secondary" id="print-report">Print</button></h3>
+            <h3 id="{{ $ReportName }}">{{ $ReportName }} report <div class="toolbar"><button type="button" class="btn btn-secondary" id="reload-report">Reload</button><button type="button" class="btn btn-secondary" id="print-report">Print</button></div></h3>
             <div id="report-table"></div>
         </div>
         {{ end }}
@@ -195,13 +196,7 @@
 
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
-    let repotData = {};
-
-    {{range $ReportName, $report := .Report}}
-    {{ if eq $ReportName $root.RequestReport }}
-    repotData = JSON.parse({{ $report.Lines | toJson }})
-    {{ end }}
-    {{ end }}
+    let reportName = "{{ $root.RequestReport }}";
 
     Tabulator.extendModule("persistence", "writers", {
         example:function(id, type, data){
@@ -236,13 +231,30 @@ jQuery( document ).ready(function($) {
     }
 
     let table = new Tabulator("#report-table", {
-        data: repotData,
-        layout:"fitDataFill",
+        ajaxURL: "/report/data",
+        ajaxParams: {report:reportName},
+        ajaxContentType: "json",
+
+        columns:[
+            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter},
+            {title:"Resource", field:"Resource", formatter:"textarea", headerFilter:"input"},
+            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input"},
+        ],
+
+        initialHeaderFilter:[
+            {field:"Status", value:"deny"}
+        ],
+
+        height: "800px",
+        layout: "fitDataFill",
+
         pagination: true,
         paginationSize: 10,
         paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
+
         printRowRange: "active",
         printAsHtml: true,
+
         persistence:{
             sort: true,
             filter: true,
@@ -250,6 +262,7 @@ jQuery( document ).ready(function($) {
             page: false,
             columns: true,
         },
+
         groupBy: "Status",
         groupHeader: function(value, count, data, group){
             let headerName = "allow";
@@ -257,16 +270,17 @@ jQuery( document ).ready(function($) {
                 headerName = "deny";
             }
             return headerName + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>";
-        },
-        columns:[
-            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter},
-            {title:"Resource", field:"Resource", formatter:"textarea", headerFilter:"input"},
-            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input"},
-        ]
+        }
     });
+
+    table.setData();
 
     $(document).on("click", "#print-report", function() {
         table.print();
+    })
+
+    $(document).on("click", "#reload-report", function() {
+        table.setData();
     })
 });
 </script>
