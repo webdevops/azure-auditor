@@ -1,7 +1,6 @@
 package auditor
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
@@ -26,26 +25,27 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) ParseConfig(path string) {
+func (auditor *AzureAuditor) ParseConfig(configPaths ...string) {
 	var configRaw []byte
 
 	auditor.config = AuditConfig{}
 
-	auditor.logger.Infof("reading configuration from file %v", path)
-	/* #nosec */
-	if data, err := ioutil.ReadFile(path); err == nil {
-		configRaw = data
-	} else {
-		auditor.logger.Panic(err)
-	}
+	for _, path := range configPaths {
+		auditor.logger.Infof("reading configuration from file %v", path)
+		/* #nosec */
+		if data, err := ioutil.ReadFile(path); err == nil {
+			configRaw = data
+		} else {
+			auditor.logger.Panic(err)
+		}
 
-	log.WithField("path", path).Info("parsing configuration")
-	if err := yaml.Unmarshal(configRaw, &auditor.config); err != nil {
-		auditor.logger.Panic(err)
+		log.WithField("path", path).Info("parsing configuration")
+		if err := yaml.Unmarshal(configRaw, &auditor.config); err != nil {
+			auditor.logger.Panic(err)
+		}
 	}
 }
 
 func (configResourceGraph *AuditConfigResourceGraph) IsEnabled() bool {
-	fmt.Println(configResourceGraph)
 	return configResourceGraph != nil && configResourceGraph.Enabled && len(configResourceGraph.Queries) >= 1
 }
