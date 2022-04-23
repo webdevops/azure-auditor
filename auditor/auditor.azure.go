@@ -9,15 +9,15 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
-func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list []subscriptions.Subscription) {
+func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[string]subscriptions.Subscription) {
 	auditor.locks.subscriptions.Lock()
 	defer auditor.locks.subscriptions.Unlock()
 
-	list = []subscriptions.Subscription{}
+	list = map[string]subscriptions.Subscription{}
 
 	if val, ok := auditor.cache.Get("subscriptions"); ok {
 		// fetched from cache
-		list = val.([]subscriptions.Subscription)
+		list = val.(map[string]subscriptions.Subscription)
 		return
 	}
 
@@ -25,18 +25,25 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list []su
 	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
 
 	if len(auditor.Opts.Azure.Subscription) == 0 {
-		listResult, err := client.List(ctx)
+		result, err := client.ListComplete(ctx)
 		if err != nil {
 			auditor.logger.Panic(err)
 		}
-		list = listResult.Values()
+
+		for result.NotDone() {
+			subscription := result.Value()
+			list[to.String(subscription.SubscriptionID)] = subscription
+			if result.NextWithContext(ctx) != nil {
+				break
+			}
+		}
 	} else {
 		for _, subId := range auditor.Opts.Azure.Subscription {
 			result, err := client.Get(ctx, subId)
 			if err != nil {
 				auditor.logger.Panic(err)
 			}
-			list = append(list, result)
+			list[to.String(result.SubscriptionID)] = result
 		}
 	}
 

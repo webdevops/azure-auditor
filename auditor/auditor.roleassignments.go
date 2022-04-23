@@ -56,7 +56,6 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	list = []*validator.AzureObject{}
 
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
-	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 
 	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
@@ -86,9 +85,11 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		}
 
 		obj := map[string]interface{}{
-			"resourceID":        stringPtrToStringLower(roleAssignment.ID),
-			"subscription.ID":   to.String(subscription.SubscriptionID),
-			"subscription.name": to.String(subscription.DisplayName),
+			"resourceID":         stringPtrToStringLower(roleAssignment.ID),
+			"subscription.ID":    to.String(subscription.SubscriptionID),
+			"role.ID":            stringPtrToStringLower(roleAssignment.RoleDefinitionID),
+			"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
+			"resourcegroup.name": azureScope.ResourceGroup,
 
 			"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
 			"roleassignment.description": to.String(roleAssignment.Description),
@@ -96,21 +97,12 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 			"roleassignment.scopetype":   scopeType,
 			"roleassignment.createdAt":   roleAssignment.CreatedOn.Time,
 			"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
-
-			"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
-
-			"role.ID": stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 		}
 
 		if roleDefinition, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
 			obj["role.name"] = stringPtrToStringLower(roleDefinition.RoleName)
 			obj["role.type"] = stringPtrToStringLower(roleDefinition.RoleType)
-		}
-
-		if resourceGroup, ok := resourceGroupList[azureScope.ResourceGroup]; ok {
-			obj["resourcegroup.name"] = to.String(resourceGroup.Name)
-			obj["resourcegroup.location"] = to.String(resourceGroup.Location)
-			obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+			obj["role.description"] = stringPtrToStringLower(roleDefinition.Description)
 		}
 
 		list = append(list, validator.NewAzureObject(obj))
@@ -120,7 +112,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		}
 	}
 
-	auditor.enrichWithMsGraphPrincipals(ctx, &list)
+	auditor.enrichAzureObjects(ctx, subscription, &list)
 
 	return
 }

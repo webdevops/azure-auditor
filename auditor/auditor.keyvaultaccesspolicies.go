@@ -58,9 +58,6 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 	if err != nil {
 		logger.Panic(err)
 	}
-
-	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
-
 	for _, item := range *result.Response().Value {
 		resourceInfo, _ := azure.ParseResourceID(to.String(item.ID))
 		keyvaultResource, err := client.Get(ctx, resourceInfo.ResourceGroup, to.String(item.Name))
@@ -78,15 +75,14 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 				azureResource, _ := azureCommon.ParseResourceId(*item.ID)
 
 				obj := map[string]interface{}{
-					"resourceID":        stringPtrToStringLower(item.ID),
-					"subscription.ID":   to.String(subscription.SubscriptionID),
-					"subscription.name": to.String(subscription.DisplayName),
+					"resourceID":              stringPtrToStringLower(item.ID),
+					"subscription.ID":         to.String(subscription.SubscriptionID),
+					"resourcegroup.name":      azureResource.ResourceGroup,
+					"principal.applicationID": applicationId,
+					"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
 
 					"keyvault.name":          azureResource.ResourceName,
 					"keyvault.resourceGroup": azureResource.ResourceGroup,
-
-					"principal.applicationID": applicationId,
-					"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
 
 					"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
 					"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
@@ -94,18 +90,12 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 					"permissions.storage":      keyvaultStoragePermissionsToStringList(accessPolicy.Permissions.Storage),
 				}
 
-				if resourceGroup, ok := resourceGroupList[azureResource.ResourceGroup]; ok {
-					obj["resourcegroup.name"] = to.String(resourceGroup.Name)
-					obj["resourcegroup.location"] = to.String(resourceGroup.Location)
-					obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
-				}
-
 				list = append(list, validator.NewAzureObject(obj))
 			}
 		}
 	}
 
-	auditor.enrichWithMsGraphPrincipals(ctx, &list)
+	auditor.enrichAzureObjects(ctx, subscription, &list)
 
 	return
 }

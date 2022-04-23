@@ -55,9 +55,8 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 
 			if len(nameParts) >= 2 {
 				obj := map[string]interface{}{
-					"resourceID":        stringPtrToStringLower(item.ID),
-					"subscription.ID":   to.String(subscription.SubscriptionID),
-					"subscription.name": to.String(subscription.DisplayName),
+					"resourceID":      stringPtrToStringLower(item.ID),
+					"subscription.ID": to.String(subscription.SubscriptionID),
 
 					"provider.namespace": nameParts[0],
 					"provider.feature":   nameParts[1],
@@ -71,6 +70,8 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 			break
 		}
 	}
+
+	auditor.enrichAzureObjects(ctx, subscription, &list)
 
 	return
 }

@@ -50,9 +50,8 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger 
 	for _, item := range *result.Response().Value {
 		if strings.EqualFold(to.String(item.RegistrationState), "Registered") {
 			obj := map[string]interface{}{
-				"resourceID":        stringPtrToStringLower(item.ID),
-				"subscription.ID":   to.String(subscription.SubscriptionID),
-				"subscription.name": to.String(subscription.DisplayName),
+				"resourceID":      stringPtrToStringLower(item.ID),
+				"subscription.ID": to.String(subscription.SubscriptionID),
 
 				"provider.namespace": stringPtrToStringLower(item.Namespace),
 			}
@@ -60,6 +59,8 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger 
 			list = append(list, validator.NewAzureObject(obj))
 		}
 	}
+
+	auditor.enrichAzureObjects(ctx, subscription, &list)
 
 	return
 }

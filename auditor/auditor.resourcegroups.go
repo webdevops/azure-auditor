@@ -61,5 +61,7 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *lo
 		list = append(list, validator.NewAzureObject(obj))
 	}
 
+	auditor.enrichAzureObjects(ctx, subscription, &list)
+
 	return
 }

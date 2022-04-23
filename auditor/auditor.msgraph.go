@@ -38,26 +38,6 @@ func (aadobj *MsGraphDirectoryObjectInfo) AddToAzureObject(row *validator.AzureO
 	return row
 }
 
-func (auditor *AzureAuditor) enrichWithMsGraphPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
-	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
-	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			principalObjectIDMap[principalObjectID] = nil
-		}
-	}
-
-	auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
-
-	for key, row := range *list {
-		(*(*list)[key])["principal.type"] = "unknown"
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
-			if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
-				(*list)[key] = directoryObjectInfo.AddToAzureObject((*list)[key])
-			}
-		}
-	}
-}
-
 func (auditor *AzureAuditor) lookupPrincipalIdMap(ctx context.Context, principalObjectIDMap *map[string]*MsGraphDirectoryObjectInfo) {
 	// inject cached entries
 	for objectId, row := range *principalObjectIDMap {
