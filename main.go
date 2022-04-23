@@ -129,7 +129,7 @@ func startHttpServer() {
 			return string(out)
 		},
 		"raw": func(val string) template.HTML {
-			return template.HTML(val)
+			return template.HTML(val) // #nosec G203 this template function is for returning unescaped html
 		},
 	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/report.html")
 	if err != nil {
@@ -179,11 +179,13 @@ func startHttpServer() {
 				data, err := json.Marshal(report.Lines)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					/* #nosec G104 */
+					w.Write([]byte(err.Error())) // nolint:errcheck
 				}
 
 				w.Header().Add("Content-Type", "application/json")
-				w.Write(data)
+				/* #nosec G104 */
+				w.Write(data) // nolint:errcheck
 			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)

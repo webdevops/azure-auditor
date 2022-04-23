@@ -17,6 +17,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.13.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
+	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d
@@ -66,4 +67,5 @@ require (
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )

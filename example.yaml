@@ -12,6 +12,15 @@ roleAssignments:
   enabled: true
 
   rules:
+    # javscript func example
+    - rule: unknown-identity
+      func: |-
+        if (obj["principal.type"] === "unknown") {
+          result = true;
+        } else {
+          result = false;
+        }
+      action: deny
     - rule: foobar
       principal.type:
         match: null

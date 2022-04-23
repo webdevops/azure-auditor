@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/gofrs/uuid"
+	"github.com/robertkrimen/otto"
+	_ "github.com/robertkrimen/otto/underscore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,7 +20,16 @@ type (
 		Rule   string `yaml:"rule"`
 		Fields map[string]AuditConfigValidationRuleField
 		Action string `yaml:"action"`
+
+		// FUNC
+		CustomFunction *string `yaml:"func,omitempty"`
+		customFunction *otto.Script
 	}
+)
+
+var (
+	vm     = otto.New()
+	vmLock = sync.Mutex{}
 )
 
 func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -33,6 +45,14 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 				matcher.Rule = interfaceToString(val)
 			case "action":
 				matcher.Action = interfaceToString(val)
+			case "func":
+				funcString := interfaceToString(val)
+				matcher.CustomFunction = &funcString
+				if funcCall, err := vm.Compile("", funcString); err == nil {
+					matcher.customFunction = funcCall
+				} else {
+					return fmt.Errorf("unable to parse func: %v\n\n%v", err.Error(), funcString)
+				}
 			default:
 				switch v := val.(type) {
 				case string:
@@ -175,6 +195,10 @@ func (matcher *AuditConfigValidationRule) ValidationStatus() *bool {
 }
 
 func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
+	if matcher.customFunction != nil {
+		return matcher.runFunc(object)
+	}
+
 	for fieldName, field := range matcher.Fields {
 		if v, exists := (*object)[fieldName]; exists {
 			status, skipField := field.IsMatching(v)
@@ -207,4 +231,24 @@ func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {
 
 	// if all fields are matching, object is matching
 	return true
+}
+
+func (matcher *AuditConfigValidationRule) runFunc(object *AzureObject) bool {
+	vmLock.Lock()
+	defer vmLock.Unlock()
+
+	if err := vm.Set("obj", *object); err != nil {
+		log.Panic(err)
+	}
+
+	result, err := vm.Run(matcher.customFunction)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	status, err := result.ToBoolean()
+	if err != nil {
+		log.Panic(err)
+	}
+	return status
 }
