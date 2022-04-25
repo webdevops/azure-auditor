@@ -9,7 +9,7 @@ type (
 )
 
 func (o *AzureObject) ResourceID() string {
-	if val, ok := (*o)["resourceID"].(string); ok {
+	if val, ok := (*o)["resource.ID"].(string); ok {
 		return val
 	}
 	return ""
