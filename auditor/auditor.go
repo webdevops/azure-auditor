@@ -47,6 +47,7 @@ type (
 		locks struct {
 			subscriptions  sync.Mutex
 			resourceGroups sync.Mutex
+			resources      sync.Mutex
 		}
 
 		cron *cron.Cron

@@ -3,15 +3,18 @@ package auditor
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
+
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
 	subscriptionList := auditor.getSubscriptionList(ctx)
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
+	resourcesList := auditor.getResourceList(ctx, subscription)
 
 	for key, row := range *list {
 		obj := (*(*list)[key])
@@ -34,10 +37,41 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 			if resourceGroup, ok := resourceGroupList[resourceGroupName]; ok {
 				obj["resourcegroup.name"] = to.String(resourceGroup.Name)
 				obj["resourcegroup.location"] = to.String(resourceGroup.Location)
-				obj["resourcegroup.tag"] = azureTagsToAzureObjectField(resourceGroup.Tags)
+
+				for tagName, tagValue := range resourceGroup.Tags {
+					valKey := fmt.Sprintf("resourcegroup.tag.%v", tagName)
+					obj[valKey] = to.String(tagValue)
+				}
 			}
 		}
 
+		// enrich with resource information
+		if resourceID, ok := (*row)["resource.ID"].(string); ok && resourceID != "" {
+			resourceID := strings.ToLower(resourceID)
+			if resource, ok := resourcesList[resourceID]; ok {
+				obj["resource.type"] = to.String(resource.Type)
+				obj["resource.location"] = to.String(resource.Location)
+
+				for tagName, tagValue := range resource.Tags {
+					valKey := fmt.Sprintf("resource.tag.%v", tagName)
+					obj[valKey] = to.String(tagValue)
+				}
+			}
+		}
+
+		// enrich with resource information
+		if resourceID, ok := (*row)["roleassignment.scope"].(string); ok && resourceID != "" {
+			resourceID := strings.ToLower(resourceID)
+			if resource, ok := resourcesList[resourceID]; ok {
+				obj["resource.type"] = to.String(resource.Type)
+				obj["resource.location"] = to.String(resource.Location)
+
+				for tagName, tagValue := range resource.Tags {
+					valKey := fmt.Sprintf("resource.tag.%v", tagName)
+					obj[valKey] = to.String(tagValue)
+				}
+			}
+		}
 	}
 
 	// enrich with principal information

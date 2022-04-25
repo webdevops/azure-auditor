@@ -88,3 +88,37 @@ func (auditor *AzureAuditor) getResourceGroupList(ctx context.Context, subscript
 
 	return
 }
+
+func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *subscriptions.Subscription) (list map[string]resources.GenericResourceExpanded) {
+	auditor.locks.resources.Lock()
+	defer auditor.locks.resources.Unlock()
+
+	list = map[string]resources.GenericResourceExpanded{}
+
+	cacheKey := "resources:" + *subscription.SubscriptionID
+	if val, ok := auditor.cache.Get(cacheKey); ok {
+		// fetched from cache
+		list = val.(map[string]resources.GenericResourceExpanded)
+		return
+	}
+
+	client := resources.NewClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+
+	listResult, err := client.ListComplete(ctx, "", "", nil)
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	for _, item := range *listResult.Response().Value {
+		resourceID := strings.ToLower(to.String(item.ID))
+		list[resourceID] = item
+	}
+
+	auditor.logger.Infof("found %v Azure Resoures for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
+
+	// save to cache
+	_ = auditor.cache.Add(cacheKey, list, auditor.cacheExpiry)
+
+	return
+}
