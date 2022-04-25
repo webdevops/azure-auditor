@@ -77,6 +77,13 @@ func (field *AuditConfigValidationRuleField) IsMatching(v interface{}) (bool, bo
 			if !strings.EqualFold(*field.Match, fieldValue) {
 				return false, false
 			}
+		} else if field.AnyOf != nil {
+			for _, match := range *field.AnyOf {
+				if strings.EqualFold(match, fieldValue) {
+					return true, true
+				}
+			}
+			return false, false
 		}
 	// STRING LIST type
 	case []string:
