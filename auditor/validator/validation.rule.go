@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
@@ -24,6 +25,12 @@ type (
 		// FUNC
 		CustomFunction *string `yaml:"func,omitempty"`
 		customFunction *otto.Script
+
+		Stats AuditConfigValidationRuleStats `yaml:"stats,flow"`
+	}
+
+	AuditConfigValidationRuleStats struct {
+		Matches int64 `yaml:"matches"`
 	}
 )
 
@@ -166,10 +173,13 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 		matcher.Rule = fmt.Sprintf("<rule:%s>", ruleId)
 	}
 
+	matcher.Stats = AuditConfigValidationRuleStats{Matches: 0}
+
 	return nil
 }
 
 func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, status bool) bool {
+	atomic.AddInt64(&rule.Stats.Matches, 1)
 	log.WithFields(log.Fields{
 		"resourceID":       object.ResourceID(),
 		"rule":             rule.Rule,

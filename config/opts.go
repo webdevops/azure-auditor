@@ -34,7 +34,8 @@ type (
 		DryRun bool     `long:"dry-run"  env:"DRYRUN"  description:"Dry Run (report only)"`
 
 		// general options
-		ServerBind string `long:"bind" env:"SERVER_BIND"   description:"Server address"     default:":8080"`
+		ServerBind       string `long:"bind" env:"SERVER_BIND"   description:"Server address" env-delim:":" default:":8080"`
+		ServerPathReport string `long:"server.path.report" env:"SERVER_PATH_REPORT"   description:"Server path for report"     default:"/report"`
 	}
 )
 

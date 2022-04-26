@@ -135,7 +135,7 @@ func startHttpServer() {
 	if err != nil {
 		log.Panic(err)
 	}
-	http.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(opts.ServerPathReport, func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
 		w.Header().Add("Content-Type", "text/html")
@@ -149,22 +149,18 @@ func startHttpServer() {
 				cspNonce,
 			),
 		)
-
-		content, err := yaml.Marshal(audit.GetConfig())
-		if err != nil {
-			log.Error(err)
-		}
-
 		templatePayload := struct {
-			Nonce         string
-			Config        string
-			Report        map[string]*auditor.AzureAuditorReport
-			RequestReport string
+			Nonce            string
+			Config           auditor.AuditConfig
+			Report           map[string]*auditor.AzureAuditorReport
+			ServerPathReport string
+			RequestReport    string
 		}{
-			Nonce:         cspNonce,
-			Config:        string(content),
-			Report:        audit.GetReport(),
-			RequestReport: r.URL.Query().Get("report"),
+			Nonce:            cspNonce,
+			Config:           audit.GetConfig(),
+			Report:           audit.GetReport(),
+			ServerPathReport: opts.ServerPathReport,
+			RequestReport:    r.URL.Query().Get("report"),
 		}
 
 		if err := reportTmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
@@ -172,7 +168,7 @@ func startHttpServer() {
 		}
 	})
 
-	http.HandleFunc("/report/data", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(opts.ServerPathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
 			reportList := audit.GetReport()
 			if report, ok := reportList[reportName]; ok {

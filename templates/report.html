@@ -9,20 +9,14 @@
     <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.2/css/tabulator_bootstrap5.min.css" integrity="sha512-fGdx4vu4yINFZYmq5B5wvLccITwpVfHhElyZWzLS2nbiEWOTtlKcB3DXYxjsITgrOYfuaSb5HK5uTRbWcZaYdw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style nonce="{{ .Nonce }}">
-        body {
-            padding-top: 90px
+        body { padding-top: 90px }
+
+        @media (min-width: 768px) {
+            body { padding-top: 0 }
         }
 
         @media (min-width: 768px) {
-            body {
-                padding-top: 0
-            }
-        }
-
-        @media (min-width: 768px) {
-            body {
-                margin-left: 290px
-            }
+            body { margin-left: 290px }
         }
 
         .navbar h1 {
@@ -51,6 +45,9 @@
 
         .tabulator-cell { font-size: 0.8rem; }
         .tabulator-print-table td { vertical-align: top; }
+
+
+        pre { font-size: 0.8rem; padding: 0.2rem; 0.5rem; background-color: lightgoldenrodyellow; max-height: 800px; overflow-y: scroll; border: 1px solid #aaa; }
 
         h1,h2,h3 { position: relative; }
         .toolbar { position: absolute; right: 0; display: inline-block; }
@@ -116,22 +113,13 @@
         }
 
         @media print {
-            body {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            nav.navbar {
-                display: none
-            }
-
-            .hide-print {
-                display: none
-            }
+            body { margin: 0 !important; padding: 0 !important; }
+            nav.navbar { display: none}
+            .hide-print { display: none }
         }
     </style>
 </head>
-<body>
+<body class="hide-config">
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
     <h1>
         <a class="navbar-brand" href>Azure Auditor</a>
@@ -144,14 +132,11 @@
     <div class="collapse navbar-collapse" id="navbarReport">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link" href="/report#config">Config</a>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link disabled">Reports</a>
                 <ul class="navbar-nav">
                     {{range $ReportName, $report := .Report}}
                     <li class="nav-item">
-                        <a class="nav-link" href="/report?report={{ $ReportName }}#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
+                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
                         </a>
                     </li>
                     {{end}}
@@ -175,18 +160,43 @@
 <main class="container-xxl">
     <div class="bg-light p-5 rounded">
         <h1>
-            Azure Auditor :: {{ $root.RequestReport }}
+            {{if $root.RequestReport}}
+                Azure Auditor :: {{ $root.RequestReport }}
             <div class="toolbar"><button type="button" class="btn btn-secondary" id="reload-report">Reload</button><button type="button" class="btn btn-secondary" id="print-report">Print</button></div>
+            {{else}}
+                Azure Auditor
+            {{end}}
         </h1>
 
+        {{if $root.RequestReport}}
         <div class="mb-3 row audit-config hide-print">
             <h3 id="config">Config</h3>
-            <pre>{{ .Config }}</pre>
-        </div>
 
+            {{if hasPrefix $root.RequestReport "RoleAssignments"}}<pre>{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
+            {{if hasPrefix $root.RequestReport "ResourceGroups"}}<pre>{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
+            {{if hasPrefix $root.RequestReport "ResourceProviders"}}<pre>{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
+            {{if hasPrefix $root.RequestReport "ResourceProviderFeatures"}}<pre>{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
+            {{if hasPrefix $root.RequestReport "KeyvaultAccessPolicies"}}<pre>{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
+            {{if hasPrefix $root.RequestReport "ResourceGraph"}}<pre>{{ .Config.ResourceGraph | toYaml }}</pre>{{end}}
+        </div>
+        {{else}}
+        <div class="mb-3 row audit-full-config hide-print">
+            <h3 id="config">Config</h3>
+            <pre>{{ .Config | toYaml }}</pre>
+        </div>
+        {{end}}
+
+        {{if $root.RequestReport}}
         <div class="mb-3 row">
             <div id="report-table"></div>
         </div>
+        {{else}}
+        <div class="mb-3 row">
+            <div class="alert alert-warning" role="alert">
+                No report selected
+            </div>
+        </div>
+        {{end}}
 
     </div>
 </main>
@@ -197,6 +207,10 @@
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
     let reportName = "{{ $root.RequestReport }}";
+
+    if (!reportName) {
+        return;
+    }
 
     Tabulator.extendModule("persistence", "writers", {
         example:function(id, type, data){
@@ -231,14 +245,14 @@ jQuery( document ).ready(function($) {
     }
 
     let table = new Tabulator("#report-table", {
-        ajaxURL: "/report/data",
+        ajaxURL: "{{ $root.ServerPathReport }}/data",
         ajaxParams: {report:reportName},
         ajaxContentType: "json",
 
         columns:[
-            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter},
+            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter, width:115},
             {title:"Resource", field:"Resource", formatter:"textarea", headerFilter:"input"},
-            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input"},
+            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input", width:300},
         ],
 
         initialHeaderFilter:[
@@ -246,7 +260,7 @@ jQuery( document ).ready(function($) {
         ],
 
         height: "800px",
-        layout: "fitDataFill",
+        layout: "fitColumns",
 
         pagination: true,
         paginationSize: 10,

@@ -94,8 +94,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjob(
 			ReportResourceGroups,
 			auditor.Opts.Cronjobs.ResourceGroups,
+			func(ctx context.Context, logger *log.Entry) {
+				auditor.config.ResourceGroups.Reset()
+			},
 			auditor.auditResourceGroups,
-			func() {
+			func(ctx context.Context, logger *log.Entry) {
 				auditor.prometheus.resourceGroup.Reset()
 			},
 		)
@@ -105,8 +108,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjob(
 			ReportRoleAssignments,
 			auditor.Opts.Cronjobs.RoleAssignments,
+			func(ctx context.Context, logger *log.Entry) {
+				auditor.config.RoleAssignments.Reset()
+			},
 			auditor.auditRoleAssignments,
-			func() {
+			func(ctx context.Context, logger *log.Entry) {
 				auditor.prometheus.roleAssignment.Reset()
 			},
 		)
@@ -116,8 +122,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjob(
 			ReportKeyvaultAccessPolicies,
 			auditor.Opts.Cronjobs.KeyvaultAccessPolicies,
+			func(ctx context.Context, logger *log.Entry) {
+				auditor.config.KeyvaultAccessPolicies.Reset()
+			},
 			auditor.auditKeyvaultAccessPolicies,
-			func() {
+			func(ctx context.Context, logger *log.Entry) {
 				auditor.prometheus.keyvaultAccessPolicies.Reset()
 			},
 		)
@@ -127,8 +136,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjob(
 			ReportResourceProviders,
 			auditor.Opts.Cronjobs.ResourceProvider,
+			func(ctx context.Context, logger *log.Entry) {
+				auditor.config.ResourceProviders.Reset()
+			},
 			auditor.auditResourceProviders,
-			func() {
+			func(ctx context.Context, logger *log.Entry) {
 				auditor.prometheus.resourceProvider.Reset()
 			},
 		)
@@ -138,8 +150,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjob(
 			ReportResourceProviderFeatures,
 			auditor.Opts.Cronjobs.ResourceProvider,
+			func(ctx context.Context, logger *log.Entry) {
+				auditor.config.ResourceProviderFeatures.Reset()
+			},
 			auditor.auditResourceProviderFeatures,
-			func() {
+			func(ctx context.Context, logger *log.Entry) {
 				auditor.prometheus.resourceProviderFeature.Reset()
 			},
 		)
@@ -151,10 +166,15 @@ func (auditor *AzureAuditor) Run() {
 			auditor.addCronjob(
 				fmt.Sprintf(ReportResourceGraph, to.String(resourceGraphConfig.Name)),
 				auditor.Opts.Cronjobs.ResourceGraph,
+				func(ctx context.Context, logger *log.Entry) {
+					for _, queryConfig := range auditor.config.ResourceGraph.Queries {
+						queryConfig.Reset()
+					}
+				},
 				func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 					auditor.auditResourceGraph(ctx, logger, subscription, resourceGraphConfig, report, callback)
 				},
-				func() {
+				func(ctx context.Context, logger *log.Entry) {
 					auditor.prometheus.resourceGraph.Reset()
 				},
 			)
@@ -180,7 +200,7 @@ func (auditor *AzureAuditor) Run() {
 	}()
 }
 
-func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), resetCallback func()) {
+func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
 	contextLogger := auditor.logger.WithFields(log.Fields{
 		"report": name,
 	})
@@ -195,6 +215,8 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 			contextLogger.Infof("starting %v audit report", name)
 
 			metricCallbackChannel := make(chan func())
+
+			startupCallback(ctx, contextLogger)
 
 			go func() {
 				subscriptionList := auditor.getSubscriptionList(ctx)
@@ -225,7 +247,7 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, callback f
 
 			// apply/commit metrics (only if not dry run)
 			if !auditor.Opts.DryRun {
-				resetCallback()
+				finishCallback(ctx, contextLogger)
 				for _, metricCallback := range metricCallbackList {
 					metricCallback()
 				}
