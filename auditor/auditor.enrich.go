@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
+	azureCommon "github.com/webdevops/go-common/azure"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -45,35 +46,41 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 			}
 		}
 
-		// enrich with resource information
-		if resourceID, ok := (*row)["resource.ID"].(string); ok && resourceID != "" {
-			resourceID := strings.ToLower(resourceID)
-			if resource, ok := resourcesList[resourceID]; ok {
-				obj["resource.name"] = to.String(resource.Name)
-				obj["resource.type"] = to.String(resource.Type)
-				obj["resource.location"] = to.String(resource.Location)
+		// enrich with resource information (if resource is detected)
+		resourceID := ""
+		if val, ok := (*row)["roleassignment.scope"].(string); ok && val != "" {
+			resourceID = val
+		} else if val, ok := (*row)["resource.ID"].(string); ok && val != "" {
+			resourceID = val
+		}
 
-				for tagName, tagValue := range resource.Tags {
-					valKey := fmt.Sprintf("resource.tag.%v", tagName)
-					obj[valKey] = to.String(tagValue)
+		if resourceID != "" {
+			if resourceInfo, err := azureCommon.ParseResourceId(resourceID); err == nil && resourceInfo.ResourceName != "" {
+				resourceID := resourceInfo.ResourceId()
+
+				obj["resource.name"] = resourceInfo.ResourceName
+				obj["resource.type"] = resourceInfo.ResourceType
+
+				if resourceInfo.ResourceSubPath != "" {
+					obj["resource.extension.path"] = resourceInfo.ResourceSubPath
+					subPathInfo := strings.SplitN(strings.Trim(resourceInfo.ResourceSubPath, "/"), "/", 2)
+					if len(subPathInfo) >= 2 {
+						obj["resource.extension.type"] = subPathInfo[0]
+						obj["resource.extension.name"] = subPathInfo[1]
+					}
+				}
+
+				if resource, ok := resourcesList[resourceID]; ok {
+					obj["resource.location"] = to.String(resource.Location)
+
+					for tagName, tagValue := range resource.Tags {
+						valKey := fmt.Sprintf("resource.tag.%v", tagName)
+						obj[valKey] = to.String(tagValue)
+					}
 				}
 			}
 		}
 
-		// enrich with resource information
-		if resourceID, ok := (*row)["roleassignment.scope"].(string); ok && resourceID != "" {
-			resourceID := strings.ToLower(resourceID)
-			if resource, ok := resourcesList[resourceID]; ok {
-				obj["resource.name"] = to.String(resource.Name)
-				obj["resource.type"] = to.String(resource.Type)
-				obj["resource.location"] = to.String(resource.Location)
-
-				for tagName, tagValue := range resource.Tags {
-					valKey := fmt.Sprintf("resource.tag.%v", tagName)
-					obj[valKey] = to.String(tagValue)
-				}
-			}
-		}
 	}
 
 	// enrich with principal information
@@ -92,10 +99,30 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context
 		auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
 
 		for key, row := range *list {
-			(*(*list)[key])["principal.type"] = "unknown"
+			obj := (*(*list)[key])
+
+			obj["principal.type"] = "unknown"
 			if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
 				if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
-					(*list)[key] = directoryObjectInfo.AddToAzureObject((*list)[key])
+
+					obj["principal.objectID"] = directoryObjectInfo.ObjectId
+					obj["principal.type"] = directoryObjectInfo.Type
+
+					if directoryObjectInfo.DisplayName != "" {
+						obj["principal.displayName"] = directoryObjectInfo.DisplayName
+					}
+
+					if directoryObjectInfo.ApplicationId != "" {
+						obj["principal.applicationID"] = directoryObjectInfo.ApplicationId
+					}
+
+					if directoryObjectInfo.ServicePrincipalType != "" {
+						obj["principal.serviceprincipaltype"] = directoryObjectInfo.ServicePrincipalType
+					}
+
+					if directoryObjectInfo.ManagedIdentity != "" {
+						obj["principal.managedidentity"] = directoryObjectInfo.ManagedIdentity
+					}
 				}
 			}
 		}

@@ -7,7 +7,6 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
 	"github.com/microsoftgraph/msgraph-sdk-go/directoryobjects/getbyids"
-	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 type (
@@ -20,23 +19,6 @@ type (
 		ApplicationId        string
 	}
 )
-
-func (aadobj *MsGraphDirectoryObjectInfo) AddToAzureObject(row *validator.AzureObject) *validator.AzureObject {
-	(*row)["principal.displayName"] = aadobj.DisplayName
-	(*row)["principal.applicationID"] = aadobj.ApplicationId
-	(*row)["principal.objectID"] = aadobj.ObjectId
-	(*row)["principal.type"] = aadobj.Type
-
-	if aadobj.ServicePrincipalType != "" {
-		(*row)["principal.serviceprincipaltype"] = aadobj.ServicePrincipalType
-	}
-
-	if aadobj.ManagedIdentity != "" {
-		(*row)["principal.managedidentity"] = aadobj.ManagedIdentity
-	}
-
-	return row
-}
 
 func (auditor *AzureAuditor) lookupPrincipalIdMap(ctx context.Context, principalObjectIDMap *map[string]*MsGraphDirectoryObjectInfo) {
 	// inject cached entries
