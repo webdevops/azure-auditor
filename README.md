@@ -23,8 +23,8 @@ Usage:
   azure-auditor [OPTIONS]
 
 Application Options:
-      --debug                         debug mode [$DEBUG]
-  -v, --verbose                       verbose mode [$VERBOSE]
+      --log.debug                     debug mode [$LOG_DEBUG]
+      --log.trace                     trace mode [$LOG_TRACE]
       --log.json                      Switch log output to json format [$LOG_JSON]
       --azure.environment=            Azure environment name (default: AZUREPUBLICCLOUD) [$AZURE_ENVIRONMENT]
       --azure.subscription=           Azure subscription ID [$AZURE_SUBSCRIPTION_ID]
@@ -32,8 +32,11 @@ Application Options:
       --cron.resourcegroups=          Cronjob for ResourceGroups report (default: */30 * * * *) [$CRON_RESOURCEGROUPS]
       --cron.resourceproviders=       Cronjob for ResourceProviders report (default: 0 * * * *) [$CRON_RESOURCEPROVIDERS]
       --cron.roleassignments=         Cronjob for RoleAssignments report (default: */5 * * * *) [$CRON_ROLEASSIGNMENTS]
+      --cron.resourcegraph=           Cronjob for ResourceGraph report (default: 15 * * * *) [$CRON_RESOURCEGRAPH]
       --config=                       Config file path [$CONFIG]
+      --dry-run                       Dry Run (report only) [$DRYRUN]
       --bind=                         Server address (default: :8080) [$SERVER_BIND]
+      --server.path.report=           Server path for report (default: /report) [$SERVER_PATH_REPORT]
 
 Help Options:
   -h, --help                          Show this help message
