@@ -49,6 +49,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		if resourceID, ok := (*row)["resource.ID"].(string); ok && resourceID != "" {
 			resourceID := strings.ToLower(resourceID)
 			if resource, ok := resourcesList[resourceID]; ok {
+				obj["resource.name"] = to.String(resource.Name)
 				obj["resource.type"] = to.String(resource.Type)
 				obj["resource.location"] = to.String(resource.Location)
 
@@ -63,6 +64,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		if resourceID, ok := (*row)["roleassignment.scope"].(string); ok && resourceID != "" {
 			resourceID := strings.ToLower(resourceID)
 			if resource, ok := resourcesList[resourceID]; ok {
+				obj["resource.name"] = to.String(resource.Name)
 				obj["resource.type"] = to.String(resource.Type)
 				obj["resource.location"] = to.String(resource.Location)
 
