@@ -47,7 +47,7 @@
         .tabulator-print-table td { vertical-align: top; }
 
 
-        pre { font-size: 0.8rem; padding: 0.2rem; 0.5rem; background-color: lightgoldenrodyellow; max-height: 800px; overflow-y: scroll; border: 1px solid #aaa; }
+        .audit-config pre { font-size: 0.8rem; padding: 0.2rem; 0.5rem; background-color: lightgoldenrodyellow; max-height: 800px; overflow-y: scroll; border: 1px solid #aaa; }
 
         h1,h2,h3 { position: relative; }
         .toolbar { position: absolute; right: 0; display: inline-block; }
@@ -171,7 +171,6 @@
         {{if $root.RequestReport}}
         <div class="mb-3 row audit-config hide-print">
             <h3 id="config">Config</h3>
-
             {{if hasPrefix $root.RequestReport "RoleAssignments"}}<pre>{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
             {{if hasPrefix $root.RequestReport "ResourceGroups"}}<pre>{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
             {{if hasPrefix $root.RequestReport "ResourceProviders"}}<pre>{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
@@ -244,18 +243,27 @@ jQuery( document ).ready(function($) {
         return false;
     }
 
+    const yamlLine = new RegExp('^([^:\n]+):([^\n]*)$', 'gim');
+    var yamlFormatter = function(cell, formatterParams) {
+        let val = cell.getValue();
+        try {
+            val = val.replaceAll(yamlLine, "<b>$1:</b>$2");
+        } catch (e) {}
+        return "<pre>"+val+"</pre>";
+    }
+
     let table = new Tabulator("#report-table", {
         ajaxURL: "{{ $root.ServerPathReport }}/data",
         ajaxParams: {report:reportName},
         ajaxContentType: "json",
 
-        columns:[
+        columns: [
             {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter, width:115},
-            {title:"Resource", field:"Resource", formatter:"textarea", headerFilter:"input"},
+            {title:"Resource", field:"Resource", formatter:yamlFormatter, formatterPrint:yamlFormatter, headerFilter:"input" },
             {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input", width:300},
         ],
 
-        initialHeaderFilter:[
+        initialHeaderFilter: [
             {field:"Status", value:"deny"}
         ],
 
@@ -269,12 +277,12 @@ jQuery( document ).ready(function($) {
         printRowRange: "active",
         printAsHtml: true,
 
-        persistence:{
+        persistence: {
             sort: true,
             filter: true,
-            group: true,
+            group: false,
             page: false,
-            columns: true,
+            columns: false,
         },
 
         groupBy: "Status",
