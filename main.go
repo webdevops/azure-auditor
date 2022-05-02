@@ -108,6 +108,8 @@ func initLogger() {
 
 // start and handle prometheus handler
 func startHttpServer() {
+	var err error
+
 	// healthz
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
@@ -123,7 +125,9 @@ func startHttpServer() {
 	})
 
 	// report
-	reportTmpl, err := template.New("report").Funcs(template.FuncMap{
+	tmpl := template.New("report")
+
+	tmpl, err = tmpl.Funcs(template.FuncMap{
 		"toYaml": func(obj interface{}) string {
 			out, _ := yaml.Marshal(obj)
 			return string(out)
@@ -131,10 +135,32 @@ func startHttpServer() {
 		"raw": func(val string) template.HTML {
 			return template.HTML(val) // #nosec G203 this template function is for returning unescaped html
 		},
-	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/report.html")
+		"rawHtml": func(val string) template.HTML {
+			return template.HTML(val) // #nosec G203 this template function is for returning unescaped html
+		},
+		"rawCss": func(val string) template.CSS {
+			val = strings.ReplaceAll(val, "\n", " ")
+			return template.CSS(val) // #nosec G203 this template function is for returning unescaped html
+		},
+		"rawJs": func(val string) template.JS {
+			return template.JS(val) // #nosec G203 this template function is for returning unescaped html
+		},
+		"include": func(name string, data interface{}) string {
+			var buf strings.Builder
+			err := tmpl.ExecuteTemplate(&buf, name, data)
+			if err != nil {
+				log.Panic(err.Error())
+			}
+			return buf.String()
+		},
+		"version": func() string {
+			return gitTag
+		},
+	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/*")
 	if err != nil {
 		log.Panic(err)
 	}
+
 	http.HandleFunc(opts.ServerPathReport, func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
@@ -145,7 +171,7 @@ func startHttpServer() {
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 		w.Header().Add("Content-Security-Policy",
 			fmt.Sprintf(
-				"default-src 'self'; script-src-elem 'nonce-%[1]s'; style-src 'nonce-%[1]s' 'unsafe-inline' 'unsafe-hashes'; img-src 'self' data:",
+				"default-src 'self'; script-src 'nonce-%[1]s'; style-src 'nonce-%[1]s' 'unsafe-inline' 'unsafe-hashes'; img-src 'self' data:",
 				cspNonce,
 			),
 		)
@@ -163,7 +189,7 @@ func startHttpServer() {
 			RequestReport:    r.URL.Query().Get("report"),
 		}
 
-		if err := reportTmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
+		if err := tmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
 			log.Error(err)
 		}
 	})

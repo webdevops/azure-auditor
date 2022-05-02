@@ -78,7 +78,16 @@ func (field *AuditConfigValidationRuleField) IsMatching(v interface{}) (bool, bo
 				return false, false
 			}
 		} else if field.AnyOf != nil {
+			// validate list
 			for _, match := range *field.AnyOf {
+				if strings.EqualFold(match, fieldValue) {
+					return true, true
+				}
+			}
+			return false, false
+		} else if field.AllOf != nil {
+			// validate list
+			for _, match := range *field.AllOf {
 				if strings.EqualFold(match, fieldValue) {
 					return true, true
 				}

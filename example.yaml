@@ -2,11 +2,11 @@ resourceGraph:
   enabled: true
 
   queries:
-    - name: resoruces
+    - name: resources
       query: |-
         resources
 
-    rules: []
+      rules: []
 
 roleAssignments:
   enabled: true
