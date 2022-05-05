@@ -27,19 +27,21 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 
 		if !status && auditor.config.RoleAssignments.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":   to.String(subscription.SubscriptionID),
-				"roleAssignmentID": object.ToPrometheusLabel("resourceID"),
+				"subscriptionID":   object.ToPrometheusLabel("subscription.id"),
+				"subscriptionName": object.ToPrometheusLabel("subscription.name"),
 
-				"scope":         object.ToPrometheusLabel("roleAssignment.scope"),
-				"scopeType":     object.ToPrometheusLabel("roleAssignment.scopeType"),
-				"resourceGroup": object.ToPrometheusLabel("resourceGroup"),
+				"roleAssignmentID": object.ToPrometheusLabel("resource.id"),
+
+				"scope":         object.ToPrometheusLabel("roleassignment.scope"),
+				"scopeType":     object.ToPrometheusLabel("roleassignment.scopetype"),
+				"resourceGroup": object.ToPrometheusLabel("resourcegroup.name"),
 
 				"principalType":          object.ToPrometheusLabel("principal.type"),
-				"principalObjectID":      object.ToPrometheusLabel("principal.objectID"),
-				"principalApplicationID": object.ToPrometheusLabel("principal.applicationID"),
+				"principalObjectID":      object.ToPrometheusLabel("principal.objectid"),
+				"principalApplicationID": object.ToPrometheusLabel("principal.applicationid"),
 				"principalDisplayName":   object.ToPrometheusLabel("principal.displayName"),
 
-				"roleDefinitionID":   object.ToPrometheusLabel("role.ID"),
+				"roleDefinitionID":   object.ToPrometheusLabel("role.id"),
 				"roleDefinitionName": object.ToPrometheusLabel("role.name"),
 				"rule":               matchingRuleId,
 			})
@@ -85,17 +87,17 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		}
 
 		obj := map[string]interface{}{
-			"resource.ID":        stringPtrToStringLower(roleAssignment.ID),
-			"subscription.ID":    to.String(subscription.SubscriptionID),
-			"role.ID":            stringPtrToStringLower(roleAssignment.RoleDefinitionID),
-			"principal.objectID": stringPtrToStringLower(roleAssignment.PrincipalID),
+			"resource.id":        stringPtrToStringLower(roleAssignment.ID),
+			"subscription.id":    to.String(subscription.SubscriptionID),
+			"role.id":            stringPtrToStringLower(roleAssignment.RoleDefinitionID),
+			"principal.objectid": stringPtrToStringLower(roleAssignment.PrincipalID),
 			"resourcegroup.name": azureScope.ResourceGroup,
 
 			"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
 			"roleassignment.description": to.String(roleAssignment.Description),
 			"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
 			"roleassignment.scopetype":   scopeType,
-			"roleassignment.createdAt":   roleAssignment.CreatedOn.Time,
+			"roleassignment.createdon":   roleAssignment.CreatedOn.Time,
 			"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
 		}
 

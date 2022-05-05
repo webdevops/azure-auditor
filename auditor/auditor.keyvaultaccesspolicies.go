@@ -26,14 +26,16 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 
 		if !status && auditor.config.KeyvaultAccessPolicies.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID": to.String(subscription.SubscriptionID),
-				"keyvault":       object.ToPrometheusLabel("keyvault.name"),
-				"resourceGroup":  object.ToPrometheusLabel("keyvault.resourceGroup"),
+				"subscriptionID":   object.ToPrometheusLabel("subscription.id"),
+				"subscriptionName": object.ToPrometheusLabel("subscription.name"),
+
+				"keyvault":      object.ToPrometheusLabel("keyvault.name"),
+				"resourceGroup": object.ToPrometheusLabel("resourcegroup.name"),
 
 				"principalType":          object.ToPrometheusLabel("principal.type"),
 				"principalDisplayName":   object.ToPrometheusLabel("principal.displayName"),
-				"principalObjectID":      object.ToPrometheusLabel("principal.objectID"),
-				"principalApplicationID": object.ToPrometheusLabel("principal.applicationID"),
+				"principalObjectID":      object.ToPrometheusLabel("principal.objectid"),
+				"principalApplicationID": object.ToPrometheusLabel("principal.applicationid"),
 
 				"permissionsCertificates": object.ToPrometheusLabel("permissions.certificates"),
 				"permissionsSecrets":      object.ToPrometheusLabel("permissions.secrets"),
@@ -75,11 +77,11 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 				azureResource, _ := azureCommon.ParseResourceId(*item.ID)
 
 				obj := map[string]interface{}{
-					"resource.ID":             stringPtrToStringLower(item.ID),
-					"subscription.ID":         to.String(subscription.SubscriptionID),
+					"resource.id":             stringPtrToStringLower(item.ID),
+					"subscription.id":         to.String(subscription.SubscriptionID),
 					"resourcegroup.name":      azureResource.ResourceGroup,
-					"principal.applicationID": applicationId,
-					"principal.objectID":      stringPtrToStringLower(accessPolicy.ObjectID),
+					"principal.applicationid": applicationId,
+					"principal.objectid":      stringPtrToStringLower(accessPolicy.ObjectID),
 
 					"keyvault.name": azureResource.ResourceName,
 

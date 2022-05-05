@@ -28,10 +28,11 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 
 		if !status && config.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID": to.String(subscription.SubscriptionID),
-				"queryName":      to.String(config.Name),
-				"resourceID":     object.ToPrometheusLabel("id"),
-				"rule":           matchingRuleId,
+				"subscriptionID":   to.String(subscription.SubscriptionID),
+				"subscriptionName": to.String(subscription.DisplayName),
+				"queryName":        to.String(config.Name),
+				"resourceID":       object.ToPrometheusLabel("id"),
+				"rule":             matchingRuleId,
 			})
 		}
 	}

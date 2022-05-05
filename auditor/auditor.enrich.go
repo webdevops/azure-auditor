@@ -21,7 +21,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		obj := (*(*list)[key])
 
 		// enrich with subscription information
-		if subscriptionID, ok := (*row)["subscription.ID"].(string); ok && subscriptionID != "" {
+		if subscriptionID, ok := (*row)["subscription.id"].(string); ok && subscriptionID != "" {
 			if subscription, ok := subscriptionList[subscriptionID]; ok {
 				obj["subscription.name"] = to.String(subscription.DisplayName)
 
@@ -50,7 +50,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		resourceID := ""
 		if val, ok := (*row)["roleassignment.scope"].(string); ok && val != "" {
 			resourceID = val
-		} else if val, ok := (*row)["resource.ID"].(string); ok && val != "" {
+		} else if val, ok := (*row)["resource.id"].(string); ok && val != "" {
 			resourceID = val
 		}
 
@@ -90,7 +90,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
 	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
 	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
+		if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
 			principalObjectIDMap[principalObjectID] = nil
 		}
 	}
@@ -102,18 +102,18 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context
 			obj := (*(*list)[key])
 
 			obj["principal.type"] = "unknown"
-			if principalObjectID, ok := (*row)["principal.objectID"].(string); ok && principalObjectID != "" {
+			if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
 				if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
 
-					obj["principal.objectID"] = directoryObjectInfo.ObjectId
+					obj["principal.objectid"] = directoryObjectInfo.ObjectId
 					obj["principal.type"] = directoryObjectInfo.Type
 
 					if directoryObjectInfo.DisplayName != "" {
-						obj["principal.displayName"] = directoryObjectInfo.DisplayName
+						obj["principal.displayname"] = directoryObjectInfo.DisplayName
 					}
 
 					if directoryObjectInfo.ApplicationId != "" {
-						obj["principal.applicationID"] = directoryObjectInfo.ApplicationId
+						obj["principal.applicationid"] = directoryObjectInfo.ApplicationId
 					}
 
 					if directoryObjectInfo.ServicePrincipalType != "" {

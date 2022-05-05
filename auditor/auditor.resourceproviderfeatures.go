@@ -24,7 +24,8 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 
 		if !status && auditor.config.ResourceProviderFeatures.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":    to.String(subscription.SubscriptionID),
+				"subscriptionID":    object.ToPrometheusLabel("subscription.id"),
+				"subscriptionName":  object.ToPrometheusLabel("subscription.name"),
 				"providerNamespace": object.ToPrometheusLabel("provider.namespace"),
 				"providerFeature":   object.ToPrometheusLabel("provider.feature"),
 				"rule":              matchingRuleId,
@@ -55,8 +56,8 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 
 			if len(nameParts) >= 2 {
 				obj := map[string]interface{}{
-					"resource.ID":     stringPtrToStringLower(item.ID),
-					"subscription.ID": to.String(subscription.SubscriptionID),
+					"resource.id":     stringPtrToStringLower(item.ID),
+					"subscription.id": to.String(subscription.SubscriptionID),
 
 					"provider.namespace": nameParts[0],
 					"provider.feature":   nameParts[1],

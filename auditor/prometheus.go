@@ -23,6 +23,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"roleAssignmentID",
 			"scope",
 			"scopeType",
@@ -45,6 +46,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"resourceGroup",
 			"location",
 			"rule",
@@ -59,6 +61,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"providerNamespace",
 			"rule",
 		},
@@ -72,6 +75,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"providerNamespace",
 			"providerFeature",
 			"rule",
@@ -86,6 +90,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"keyvault",
 			"resourceGroup",
 			"principalType",
@@ -108,6 +113,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 		},
 		[]string{
 			"subscriptionID",
+			"subscriptionName",
 			"queryName",
 			"resourceID",
 			"rule",

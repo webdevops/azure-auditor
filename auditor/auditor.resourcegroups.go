@@ -24,10 +24,11 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 
 		if !status && auditor.config.ResourceGroups.IsMetricsEnabled() {
 			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID": to.String(subscription.SubscriptionID),
-				"resourceGroup":  object.ToPrometheusLabel("resourcegroup.name"),
-				"location":       object.ToPrometheusLabel("resourcegroup.location"),
-				"rule":           matchingRuleId,
+				"subscriptionID":   object.ToPrometheusLabel("subscription.id"),
+				"subscriptionName": object.ToPrometheusLabel("subscription.name"),
+				"resourceGroup":    object.ToPrometheusLabel("resourcegroup.name"),
+				"location":         object.ToPrometheusLabel("resourcegroup.location"),
+				"rule":             matchingRuleId,
 			})
 		}
 	}
@@ -49,8 +50,8 @@ func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *lo
 
 	for _, item := range *result.Response().Value {
 		obj := map[string]interface{}{
-			"resource.ID":       stringPtrToStringLower(item.ID),
-			"subscription.ID":   to.String(subscription.SubscriptionID),
+			"resource.id":       stringPtrToStringLower(item.ID),
+			"subscription.id":   to.String(subscription.SubscriptionID),
 			"subscription.name": to.String(subscription.DisplayName),
 
 			"resourcegroup.name":     stringPtrToStringLower(item.Name),
