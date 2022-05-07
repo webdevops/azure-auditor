@@ -33,7 +33,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 
 	callback <- func() {
 		logger.Infof("found %v illegal RoleAssignments", len(violationMetric.GetList()))
-		violationMetric.GaugeSet(auditor.prometheus.roleAssignment)
+		violationMetric.GaugeSetInc(auditor.prometheus.roleAssignment)
 	}
 }
 

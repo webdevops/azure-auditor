@@ -32,7 +32,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 
 	callback <- func() {
 		logger.Infof("found %v illegal KeyVault AccessPolicies", len(violationMetric.GetList()))
-		violationMetric.GaugeSet(auditor.prometheus.keyvaultAccessPolicies)
+		violationMetric.GaugeSetInc(auditor.prometheus.keyvaultAccessPolicies)
 	}
 }
 

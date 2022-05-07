@@ -31,7 +31,7 @@ func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, logger 
 
 	callback <- func() {
 		logger.Infof("found %v illegal ResourceProviders", len(violationMetric.GetList()))
-		violationMetric.GaugeSet(auditor.prometheus.resourceProvider)
+		violationMetric.GaugeSetInc(auditor.prometheus.resourceProvider)
 	}
 }
 

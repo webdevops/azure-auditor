@@ -34,7 +34,7 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 
 	callback <- func() {
 		logger.Infof("found %v illegal ResourceGraph:%v", len(violationMetric.GetList()), to.String(config.Name))
-		violationMetric.GaugeSet(auditor.prometheus.resourceGraph[*config.Name])
+		violationMetric.GaugeSetInc(auditor.prometheus.resourceGraph[*config.Name])
 	}
 }
 
