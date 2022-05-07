@@ -10,7 +10,6 @@ type (
 	AuditConfigValidation struct {
 		Enabled    bool                                    `yaml:"enabled"`
 		Metrics    *bool                                   `yaml:"metrics"`
-		Name       *string                                 `yaml:"name,omitempty"`
 		Query      *string                                 `yaml:"query,omitempty"`
 		Rules      []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
 		Prometheus AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`

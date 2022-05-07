@@ -162,10 +162,10 @@ func (auditor *AzureAuditor) Run() {
 	}
 
 	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceGraph) && auditor.config.ResourceGraph.IsEnabled() {
-		for _, config := range auditor.config.ResourceGraph.Queries {
-			resourceGraphConfig := config
+		for queryName, queryConfig := range auditor.config.ResourceGraph.Queries {
+			resourceGraphConfig := queryConfig
 			auditor.addCronjob(
-				fmt.Sprintf(ReportResourceGraph, to.String(resourceGraphConfig.Name)),
+				fmt.Sprintf(ReportResourceGraph, queryName),
 				auditor.Opts.Cronjobs.ResourceGraph,
 				func(ctx context.Context, logger *log.Entry) {
 					for _, queryConfig := range auditor.config.ResourceGraph.Queries {
@@ -173,7 +173,7 @@ func (auditor *AzureAuditor) Run() {
 					}
 				},
 				func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
-					auditor.auditResourceGraph(ctx, logger, subscription, resourceGraphConfig, report, callback)
+					auditor.auditResourceGraph(ctx, logger, subscription, queryName, resourceGraphConfig, report, callback)
 				},
 				func(ctx context.Context, logger *log.Entry) {
 					for _, gauge := range auditor.prometheus.resourceGraph {

@@ -87,8 +87,7 @@ func (auditor *AzureAuditor) initPrometheus() {
 	}
 
 	auditor.prometheus.resourceGraph = map[string]*prometheus.GaugeVec{}
-	for _, query := range auditor.config.ResourceGraph.Queries {
-		queryName := *query.Name
+	for queryName, query := range auditor.config.ResourceGraph.Queries {
 		auditor.prometheus.resourceGraph[queryName] = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "azurerm_audit_violation_resourcegraph_" + queryName,

@@ -5,7 +5,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	resourcegraph "github.com/Azure/azure-sdk-for-go/services/resourcegraph/mgmt/2019-04-01/resourcegraph"
-	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 
@@ -16,7 +15,7 @@ const (
 	ResourceGraphQueryOptionsTop = 1000
 )
 
-func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.queryResourceGraph(ctx, logger, subscription, config)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -33,8 +32,8 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal ResourceGraph:%v", len(violationMetric.GetList()), to.String(config.Name))
-		violationMetric.GaugeSetInc(auditor.prometheus.resourceGraph[*config.Name])
+		logger.Infof("found %v illegal ResourceGraph:%v", len(violationMetric.GetList()), configName)
+		violationMetric.GaugeSetInc(auditor.prometheus.resourceGraph[configName])
 	}
 }
 

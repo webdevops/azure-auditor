@@ -2,8 +2,8 @@ resourceGraph:
   enabled: true
 
   queries:
-    - name: resources
-
+    
+    resources:
       prometheus:
         labels:
           resourceID: id

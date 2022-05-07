@@ -20,8 +20,8 @@ type (
 	}
 
 	AuditConfigResourceGraph struct {
-		Enabled bool                               `yaml:"enabled"`
-		Queries []*validator.AuditConfigValidation `yaml:"queries"`
+		Enabled bool                                        `yaml:"enabled"`
+		Queries map[string]*validator.AuditConfigValidation `yaml:"queries"`
 	}
 )
 

@@ -85,7 +85,10 @@
                 {{if hasPrefix "ResourceProvider" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
                 {{if hasPrefix "ResourceProviderFeature" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
                 {{if hasPrefix "KeyvaultAccessPolicy" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceGraph" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGraph | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceGraph" $root.RequestReport }}
+                    {{ $requestReportParts := split ":" $root.RequestReport }}
+                    <pre class="code">{{ index .Config.ResourceGraph.Queries $requestReportParts._1 | toYaml }}</pre>
+                {{end}}
             </div>
         {{else}}
             <div class="mb-3 row audit-full-config hide-print">
