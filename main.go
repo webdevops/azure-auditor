@@ -195,10 +195,43 @@ func startHttpServer() {
 	})
 
 	http.HandleFunc(opts.ServerPathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
+		var groupBy *string
+
+		if val := r.URL.Query().Get("groupBy"); val != "" {
+			val := strings.ToLower(val)
+			groupBy = &val
+		}
+
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
 			reportList := audit.GetReport()
 			if report, ok := reportList[reportName]; ok {
-				data, err := json.Marshal(report.Lines)
+
+				reportData := []interface{}{}
+				for _, row := range report.Lines {
+					line := row
+
+					line.GroupBy = ""
+					if groupBy != nil {
+						switch *groupBy {
+						case "rule", "ruleid":
+							line.GroupBy = line.RuleID
+						case "status":
+							if line.Status {
+								line.GroupBy = "allow"
+							} else {
+								line.GroupBy = "deny"
+							}
+						default:
+							if val, ok := line.Resource[*groupBy]; ok {
+								line.GroupBy = val
+							}
+						}
+					}
+
+					reportData = append(reportData, row)
+				}
+
+				data, err := json.Marshal(reportData)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					/* #nosec G104 */

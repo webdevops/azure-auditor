@@ -29,7 +29,7 @@
                 <ul class="navbar-nav">
                     {{range $ReportName, $report := .Report}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}#{{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
+                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
                         </a>
                     </li>
                     {{end}}
@@ -62,32 +62,43 @@
         </h2>
 
         {{if $root.RequestReport}}
-        <div class="mb-3 row audit-config hide-print">
-            <h3 id="config">Config</h3>
-            {{if hasPrefix "RoleAssignments" $root.RequestReport }}<pre class="code">{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
-            {{if hasPrefix "ResourceGroups" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
-            {{if hasPrefix "ResourceProviders" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
-            {{if hasPrefix "ResourceProviderFeatures" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
-            {{if hasPrefix "KeyvaultAccessPolicies" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
-            {{if hasPrefix "ResourceGraph" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGraph | toYaml }}</pre>{{end}}
-        </div>
+            <div class="mb-3 row audit-config hide-print">
+                <h3 id="config">Config</h3>
+                {{if hasPrefix "RoleAssignments" $root.RequestReport }}<pre class="code">{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceGroups" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceProviders" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceProviderFeatures" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
+                {{if hasPrefix "KeyvaultAccessPolicies" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceGraph" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGraph | toYaml }}</pre>{{end}}
+            </div>
         {{else}}
-        <div class="mb-3 row audit-full-config hide-print">
-            <h3 id="config">Config</h3>
-            <pre class="code">{{ .Config | toYaml }}</pre>
-        </div>
+            <div class="mb-3 row audit-full-config hide-print">
+                <h3 id="config">Config</h3>
+                <pre class="code">{{ .Config | toYaml }}</pre>
+            </div>
         {{end}}
 
         {{if $root.RequestReport}}
-        <div class="mb-3 row">
-            <div id="report-table"></div>
-        </div>
-        {{else}}
-        <div class="mb-3 row">
-            <div class="alert alert-warning" role="alert">
-                No report selected
+            <div class="mb-3 row">
+                <form id="report-form" class="row g-3">
+                    <div class="col-md-9"></div>
+
+
+                    <div class="col-md-3">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text" id="reportGroupByLabel" data-report-param="groupBy">groupBy</span>
+                            <input type="text" class="form-control"  id="reportGroupBy" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="status">
+                        </div>
+                    </div>
+                </form>
+                <div id="report-table"></div>
             </div>
-        </div>
+        {{else}}
+            <div class="mb-3 row">
+                <div class="alert alert-warning" role="alert">
+                    No report selected
+                </div>
+            </div>
         {{end}}
 
     </div>
@@ -98,11 +109,44 @@
 
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
+    let refreshTableData = null;
+
     let reportName = "{{ $root.RequestReport }}";
+    let reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
+    let reportAjaxParams = {report:reportName, groupBy: "Status"};
 
     if (!reportName) {
         return;
     }
+
+    let formSaveToHash = () => {
+        let formData = {};
+        $("#report-form :input").each((num, el) => {
+            let formEl = $(el);
+            let fieldName = formEl.attr("id");
+            let fieldValue = formEl.val();
+            fieldValue = fieldValue.trim();
+
+            formData[fieldName] = fieldValue;
+        });
+
+        let hashString = btoa(JSON.stringify(formData));
+        window.location.hash = hashString;
+    };
+
+    let loadFromHash = () => {
+        try {
+            if (window.location.hash && window.location.hash.length >= 2) {
+                let hashString = window.location.hash.substring(1);
+                let formData = jQuery.parseJSON(atob(hashString));
+
+                $("#report-form :input").val("");
+                Object.keys(formData).forEach((fieldName) => {
+                    $("#report-form #" + fieldName + ":input").val(formData[fieldName]);
+                });
+            }
+        } catch(e) {}
+    };
 
     Tabulator.extendModule("persistence", "writers", {
         example:function(id, type, data){
@@ -146,8 +190,6 @@ jQuery( document ).ready(function($) {
     }
 
     let table = new Tabulator("#report-table", {
-        ajaxURL: "{{ $root.ServerPathReport }}/data",
-        ajaxParams: {report:reportName},
         ajaxContentType: "json",
 
         columns: [
@@ -178,23 +220,35 @@ jQuery( document ).ready(function($) {
             columns: false,
         },
 
-        groupBy: "Status",
-        groupHeader: function(value, count, data, group) {
-            let headerName = "allow";
-            if (!value) {
-                headerName = "deny";
-            }
-            return headerName + "<small>(" + count + " rows)</small>";
-        }
+        groupBy: "GroupBy",
     });
 
-    $(document).on("click", "#print-report", function() {
-        table.print();
-    })
+    refreshTableData = () => {
+        $("#report-form :input").each((num, el) => {
+            el = $(el)
+            if (el.data("report-param")) {
+                reportAjaxParams[el.data("report-param")] = el.val()
+            }
+        });
 
-    $(document).on("click", "#reload-report", function() {
-        table.setData();
-    })
+        table.setData(reportAjaxUrl, reportAjaxParams);
+    };
+
+    table.on("tableBuilt", () => {
+        $(document).on("click", "#print-report", function() {
+            table.print();
+        });
+
+        $(document).on("click", "#reload-report", refreshTableData);
+
+        $(document).on("change", "#report-form :input", () => {
+            formSaveToHash();
+            refreshTableData();
+        });
+
+        loadFromHash();
+        refreshTableData();
+    });
 });
 </script>
 

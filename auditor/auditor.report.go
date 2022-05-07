@@ -24,6 +24,7 @@ type (
 	AzureAuditorReportLine struct {
 		Resource map[string]interface{}
 		RuleID   string
+		GroupBy  interface{}
 		Status   bool
 	}
 )
@@ -43,6 +44,7 @@ func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data["Resource"] = string(resourceInfo)
 	data["RuleID"] = reportLine.RuleID
 	data["Status"] = reportLine.Status
+	data["GroupBy"] = reportLine.GroupBy
 
 	return json.Marshal(data)
 }
