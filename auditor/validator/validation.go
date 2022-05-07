@@ -2,6 +2,8 @@ package validator
 
 import (
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type (
@@ -11,7 +13,12 @@ type (
 		Name       *string                                 `yaml:"name,omitempty"`
 		Query      *string                                 `yaml:"query,omitempty"`
 		Rules      []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
+		Prometheus AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
 		ScopeRules map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
+	}
+
+	AuditConfigValidationPrometheus struct {
+		Labels map[string]string `yaml:"labels,omitempty"`
 	}
 )
 
@@ -48,6 +55,28 @@ func (validation *AuditConfigValidation) Reset() {
 			rule.Stats.Matches = 0
 		}
 	}
+}
+
+func (validation *AuditConfigValidation) PrometheusLabels() []string {
+	labels := []string{}
+
+	for name := range validation.Prometheus.Labels {
+		labels = append(labels, name)
+	}
+
+	return labels
+}
+
+func (validation *AuditConfigValidation) CreatePrometheusMetricFromAzureObject(obj *AzureObject, ruleId string) prometheus.Labels {
+	labels := prometheus.Labels{
+		"rule": ruleId,
+	}
+
+	for labelName, fieldName := range validation.Prometheus.Labels {
+		labels[labelName] = obj.ToPrometheusLabel(fieldName)
+	}
+
+	return labels
 }
 
 func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, bool) {

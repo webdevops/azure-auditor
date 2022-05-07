@@ -6,7 +6,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	resourcegraph "github.com/Azure/azure-sdk-for-go/services/resourcegraph/mgmt/2019-04-01/resourcegraph"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 
@@ -27,19 +26,15 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 		report.Add(object, matchingRuleId, status)
 
 		if !status && config.IsMetricsEnabled() {
-			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":   to.String(subscription.SubscriptionID),
-				"subscriptionName": to.String(subscription.DisplayName),
-				"queryName":        to.String(config.Name),
-				"resourceID":       object.ToPrometheusLabel("id"),
-				"rule":             matchingRuleId,
-			})
+			violationMetric.AddInfo(
+				config.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
+			)
 		}
 	}
 
 	callback <- func() {
 		logger.Infof("found %v illegal ResourceGraph:%v", len(violationMetric.GetList()), to.String(config.Name))
-		violationMetric.GaugeSet(auditor.prometheus.resourceGraph)
+		violationMetric.GaugeSet(auditor.prometheus.resourceGraph[*config.Name])
 	}
 }
 

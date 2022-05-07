@@ -176,7 +176,9 @@ func (auditor *AzureAuditor) Run() {
 					auditor.auditResourceGraph(ctx, logger, subscription, resourceGraphConfig, report, callback)
 				},
 				func(ctx context.Context, logger *log.Entry) {
-					auditor.prometheus.resourceGraph.Reset()
+					for _, gauge := range auditor.prometheus.resourceGraph {
+						gauge.Reset()
+					}
 				},
 			)
 		}

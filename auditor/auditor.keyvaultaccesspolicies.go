@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azure"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
@@ -25,24 +24,9 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 		report.Add(object, matchingRuleId, status)
 
 		if !status && auditor.config.KeyvaultAccessPolicies.IsMetricsEnabled() {
-			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":   object.ToPrometheusLabel("subscription.id"),
-				"subscriptionName": object.ToPrometheusLabel("subscription.name"),
-
-				"keyvault":      object.ToPrometheusLabel("keyvault.name"),
-				"resourceGroup": object.ToPrometheusLabel("resourcegroup.name"),
-
-				"principalType":          object.ToPrometheusLabel("principal.type"),
-				"principalDisplayName":   object.ToPrometheusLabel("principal.displayName"),
-				"principalObjectID":      object.ToPrometheusLabel("principal.objectid"),
-				"principalApplicationID": object.ToPrometheusLabel("principal.applicationid"),
-
-				"permissionsCertificates": object.ToPrometheusLabel("permissions.certificates"),
-				"permissionsSecrets":      object.ToPrometheusLabel("permissions.secrets"),
-				"permissionsKeys":         object.ToPrometheusLabel("permissions.keys"),
-				"permissionsStorage":      object.ToPrometheusLabel("permissions.storage"),
-				"rule":                    matchingRuleId,
-			})
+			violationMetric.AddInfo(
+				auditor.config.KeyvaultAccessPolicies.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
+			)
 		}
 	}
 

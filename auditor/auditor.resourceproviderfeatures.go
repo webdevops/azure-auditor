@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/features"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 )
@@ -23,13 +22,9 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 		report.Add(object, matchingRuleId, status)
 
 		if !status && auditor.config.ResourceProviderFeatures.IsMetricsEnabled() {
-			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":    object.ToPrometheusLabel("subscription.id"),
-				"subscriptionName":  object.ToPrometheusLabel("subscription.name"),
-				"providerNamespace": object.ToPrometheusLabel("provider.namespace"),
-				"providerFeature":   object.ToPrometheusLabel("provider.feature"),
-				"rule":              matchingRuleId,
-			})
+			violationMetric.AddInfo(
+				auditor.config.ResourceProviderFeatures.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
+			)
 		}
 	}
 

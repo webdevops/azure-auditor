@@ -3,6 +3,11 @@ resourceGraph:
 
   queries:
     - name: resources
+
+      prometheus:
+        labels:
+          resourceID: id
+
       query: |-
         resources
 
@@ -10,6 +15,13 @@ resourceGraph:
 
 roleAssignments:
   enabled: true
+
+  prometheus:
+    labels:
+      resourceID: resource.id
+      subscriptionID: subscription.id
+      prinicpalName: principal.displayName
+      roleName:  role.name
 
   rules:
     # javscript func example
@@ -44,6 +56,14 @@ roleAssignments:
 
 resourceGroups:
   enabled: true
+
+  prometheus:
+    labels:
+      resourceID: resource.id
+      subscriptionID: subscription.id
+      resourceGroup: resourcegroup.name
+      owner: resourcegroup.tag.owner
+
   rules:
     ## validate location but continue with next rules
     - rule: westeurope
@@ -73,6 +93,14 @@ keyvaultAccessPolicies:
         keyvault.name: { regexp: ".*" }
         permissions.certificates: [ Get,List,Update,Create,Import,Delete,Recover,Backup,Restore,ManageContacts,ManageIssuers,GetIssuers,ListIssuers,SetIssuers,DeleteIssuers ]
 
+  prometheus:
+    labels:
+      keyvault: keyvault.name
+      resourceID: resource.id
+      subscriptionID: subscription.id
+      resourceGroup: resourcegroup.name
+      owner: resourcegroup.tag.owner
+
   rules:
     - rule: foobarasd123
       keyvault.name:
@@ -98,6 +126,11 @@ keyvaultAccessPolicies:
 
 resourceProviders:
   enabled: true
+
+  prometheus:
+    labels:
+      providerNamespace: provider.namespace
+
   rules:
     - provider.namespace: Microsoft.ADHybridHealthService
     - provider.namespace: Microsoft.Advisor
@@ -139,6 +172,12 @@ resourceProviders:
 
 resourceProviderFeatures:
   enabled: true
+
+  prometheus:
+    labels:
+      providerNamespace: provider.namespace
+      providerFeature: provider.feature
+
   rules:
     - rule: microsoft.ContainerService/CustomNodeConfigPreview
       provider.namespace: microsoft.ContainerService

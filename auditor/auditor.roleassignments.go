@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azure"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
@@ -26,25 +25,9 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 		report.Add(object, matchingRuleId, status)
 
 		if !status && auditor.config.RoleAssignments.IsMetricsEnabled() {
-			violationMetric.AddInfo(prometheus.Labels{
-				"subscriptionID":   object.ToPrometheusLabel("subscription.id"),
-				"subscriptionName": object.ToPrometheusLabel("subscription.name"),
-
-				"roleAssignmentID": object.ToPrometheusLabel("resource.id"),
-
-				"scope":         object.ToPrometheusLabel("roleassignment.scope"),
-				"scopeType":     object.ToPrometheusLabel("roleassignment.scopetype"),
-				"resourceGroup": object.ToPrometheusLabel("resourcegroup.name"),
-
-				"principalType":          object.ToPrometheusLabel("principal.type"),
-				"principalObjectID":      object.ToPrometheusLabel("principal.objectid"),
-				"principalApplicationID": object.ToPrometheusLabel("principal.applicationid"),
-				"principalDisplayName":   object.ToPrometheusLabel("principal.displayName"),
-
-				"roleDefinitionID":   object.ToPrometheusLabel("role.id"),
-				"roleDefinitionName": object.ToPrometheusLabel("role.name"),
-				"rule":               matchingRuleId,
-			})
+			violationMetric.AddInfo(
+				auditor.config.RoleAssignments.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
+			)
 		}
 	}
 
