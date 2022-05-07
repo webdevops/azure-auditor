@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -269,7 +270,7 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCal
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = azureCommon.NewClientFromEnvironment(*auditor.Opts.Azure.Environment)
+	auditor.azure.client, err = azureCommon.NewClientFromEnvironment(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
@@ -277,22 +278,44 @@ func (auditor *AzureAuditor) initAzure() {
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
-	cred, err := azidentity.NewEnvironmentCredential(nil)
-	if err != nil {
-		auditor.logger.Panic(err)
+	// azure authorizer
+	switch strings.ToLower(os.Getenv("AZURE_AUTH")) {
+	case "az", "cli", "azcli":
+		cred, err := azidentity.NewAzureCLICredential(nil)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
+	default:
+		cred, err := azidentity.NewEnvironmentCredential(nil)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
+
+		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
 	}
 
-	auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
-	if err != nil {
-		auditor.logger.Panic(err)
-	}
-
-	adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
-	if err != nil {
-		auditor.logger.Panic(err)
-	}
-
-	auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
 }
 
 func (auditor *AzureAuditor) initCache() {

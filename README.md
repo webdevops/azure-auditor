@@ -47,6 +47,8 @@ crons can be disabled by setting them to empty string or `false`
 for Azure API authentication (using ENV vars)
 see https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication
 
+For AzureCLI authentication set `AZURE_AUTH=az`
+
 ## Configuration file
 
 see (example.yaml)[/example.yaml] as for example audit rules
