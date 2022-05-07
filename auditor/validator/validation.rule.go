@@ -170,7 +170,7 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 
 	if matcher.Rule == "" {
 		ruleId, _ := uuid.DefaultGenerator.NewV4()
-		matcher.Rule = fmt.Sprintf("<rule:%s>", ruleId)
+		matcher.Rule = fmt.Sprintf("rule:%s", ruleId)
 	}
 
 	matcher.Stats = AuditConfigValidationRuleStats{Matches: 0}

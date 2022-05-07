@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -127,6 +128,7 @@ func startHttpServer() {
 	// report
 	tmpl := template.New("report")
 
+	cssOptimizeRegexp := regexp.MustCompile(`\n[\s]*`)
 	tmpl, err = tmpl.Funcs(template.FuncMap{
 		"toYaml": func(obj interface{}) string {
 			out, _ := yaml.Marshal(obj)
@@ -139,7 +141,7 @@ func startHttpServer() {
 			return template.HTML(val) // #nosec G203 this template function is for returning unescaped html
 		},
 		"rawCss": func(val string) template.CSS {
-			val = strings.ReplaceAll(val, "\n", " ")
+			val = cssOptimizeRegexp.ReplaceAllString(val, " ")
 			return template.CSS(val) // #nosec G203 this template function is for returning unescaped html
 		},
 		"rawJs": func(val string) template.JS {
@@ -178,12 +180,14 @@ func startHttpServer() {
 		templatePayload := struct {
 			Nonce            string
 			Config           auditor.AuditConfig
+			ReportTitle      string
 			Report           map[string]*auditor.AzureAuditorReport
 			ServerPathReport string
 			RequestReport    string
 		}{
 			Nonce:            cspNonce,
 			Config:           audit.GetConfig(),
+			ReportTitle:      opts.Report.Title,
 			Report:           audit.GetReport(),
 			ServerPathReport: opts.ServerPathReport,
 			RequestReport:    r.URL.Query().Get("report"),
@@ -195,24 +199,53 @@ func startHttpServer() {
 	})
 
 	http.HandleFunc(opts.ServerPathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
-		var groupBy *string
+		var reportGroupBy *string
+		var reportFields *[]string
+		var reportStatus *bool
 
 		if val := r.URL.Query().Get("groupBy"); val != "" {
-			val := strings.ToLower(val)
-			groupBy = &val
+			reportGroupBy = &val
+		}
+
+		if val := r.URL.Query().Get("fields"); val != "" && val != "*" {
+			fieldList := []string{}
+			for _, field := range strings.Split(val, ":") {
+				fieldList = append(fieldList, strings.TrimSpace(field))
+			}
+			reportFields = &fieldList
+		}
+
+		if val := r.URL.Query().Get("status"); val != "" {
+			valStatus := true
+			switch strings.ToLower(val) {
+			case "1", "true", "allow":
+				valStatus = true
+			case "0", "false", "deny":
+				valStatus = false
+			}
+			reportStatus = &valStatus
 		}
 
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
 			reportList := audit.GetReport()
 			if report, ok := reportList[reportName]; ok {
 
-				reportData := []interface{}{}
+				reportData := []auditor.AzureAuditorReportLine{}
 				for _, row := range report.Lines {
-					line := row
+					line := auditor.AzureAuditorReportLine{} // nolint:ineffassign
+					line = *row
 
+					// filter: status
+					if reportStatus != nil {
+						if row.Status != *reportStatus {
+							continue
+						}
+					}
+
+					// group by
 					line.GroupBy = ""
-					if groupBy != nil {
-						switch *groupBy {
+					if reportGroupBy != nil {
+						switch *reportGroupBy {
 						case "rule", "ruleid":
 							line.GroupBy = line.RuleID
 						case "status":
@@ -222,13 +255,24 @@ func startHttpServer() {
 								line.GroupBy = "deny"
 							}
 						default:
-							if val, ok := line.Resource[*groupBy]; ok {
+							if val, ok := line.Resource[*reportGroupBy]; ok {
 								line.GroupBy = val
 							}
 						}
 					}
 
-					reportData = append(reportData, row)
+					// report field filtering
+					if reportFields != nil {
+						resource := map[string]interface{}{}
+						for _, fieldName := range *reportFields {
+							if val, ok := line.Resource[fieldName]; ok {
+								resource[fieldName] = val
+							}
+						}
+						line.Resource = resource
+					}
+
+					reportData = append(reportData, line)
 				}
 
 				data, err := json.Marshal(reportData)

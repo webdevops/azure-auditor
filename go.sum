@@ -327,8 +327,6 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
-github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d h1:sRNKrXc+aGxoDAAjQr+rQCqGN4K8bio7qSQzXbDPgRM=
-github.com/webdevops/go-common v0.0.0-20220410105213-bb21694e541d/go.mod h1:EGb6BMDxY+CD/bphCq6xcQKCFLI1e/8U770aqYr4kJM=
 github.com/webdevops/go-common v0.0.0-20220507104339-e6977d3e7e96 h1:8WVO13Sw5Xe9SFs6bmhY39KWxfCGOlUbttAZW85Wsqw=
 github.com/webdevops/go-common v0.0.0-20220507104339-e6977d3e7e96/go.mod h1:StsDbNavo/7SyvTBMzsqaiTy0rK3wIF1dSJk5vqOaws=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=

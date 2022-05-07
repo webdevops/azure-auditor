@@ -22,10 +22,10 @@ type (
 	}
 
 	AzureAuditorReportLine struct {
-		Resource map[string]interface{}
-		RuleID   string
-		GroupBy  interface{}
-		Status   bool
+		Resource map[string]interface{} `json:"resource"`
+		RuleID   string                 `json:"rule"`
+		GroupBy  interface{}            `json:"groupBy"`
+		Status   bool                   `json:"status"`
 	}
 )
 
@@ -41,10 +41,10 @@ func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data := map[string]interface{}{}
 
 	resourceInfo, _ := yaml.Marshal(reportLine.Resource)
-	data["Resource"] = string(resourceInfo)
-	data["RuleID"] = reportLine.RuleID
-	data["Status"] = reportLine.Status
-	data["GroupBy"] = reportLine.GroupBy
+	data["resource"] = string(resourceInfo)
+	data["rule"] = reportLine.RuleID
+	data["status"] = reportLine.Status
+	data["groupBy"] = reportLine.GroupBy
 
 	return json.Marshal(data)
 }

@@ -4,13 +4,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{- if $root.RequestReport -}}
+            {{ $root.ReportTitle }} audit report "{{ $root.RequestReport }}"
+        {{- else -}}
+            Azure Auditor
+        {{- end -}}</title>
 
     <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" integrity="sha512-GQGU0fMMi238uA+a/bdWJfpUGKUkBdgfFdgBm72SUQ6BeyWjoY/ton0tEjH+OSH9iP4Dfh+7HM0I9f5eR0L/4w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.3/css/tabulator_bootstrap5.min.css" integrity="sha512-IdsXMTvZYT+5cARgJynSLu/iDLFfFc1u1W8+nM7lg5J45oJh85zjagUcj4SSM2pNa1o+N4tzvABNG8C0myWuEg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <style nonce="{{ .Nonce }}">
-        {{ include "report.css" . | rawCss }}
-    </style>
+    <style nonce="{{ .Nonce }}">{{ include "report.css" . | rawCss }}</style>
 </head>
 <body class="hide-config">
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
@@ -29,8 +32,7 @@
                 <ul class="navbar-nav">
                     {{range $ReportName, $report := .Report}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span>
-                        </a>
+                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
                     </li>
                     {{end}}
                 </ul>
@@ -54,8 +56,22 @@
     <div class="bg-light p-5 rounded">
         <h2>
             {{if $root.RequestReport}}
-                Report "{{ $root.RequestReport }}"
-                <div class="toolbar"><button type="button" class="btn btn-secondary" id="reload-report">Reload</button><button type="button" class="btn btn-secondary" id="print-report">Print</button></div>
+                {{ $root.ReportTitle }} report "{{ $root.RequestReport }}"
+                <div class="toolbar">
+                    <button type="button" class="btn btn-secondary" id="report-print">Print</button>
+
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownReportDownload" data-bs-toggle="dropdown" aria-expanded="false">
+                            Download
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownReportDownload">
+                            <li><a class="dropdown-item" id="report-download-csv">csv</a></li>
+                            <li><a class="dropdown-item" id="report-download-json">json</a></li>
+                        </ul>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" id="report-reload">Reload</button>
+                </div>
             {{else}}
                 Azure Auditor
             {{end}}
@@ -80,17 +96,48 @@
 
         {{if $root.RequestReport}}
             <div class="mb-3 row">
-                <form id="report-form" class="row g-3">
-                    <div class="col-md-9"></div>
+                <form id="report-form">
+                    <div class="row g-6">
+                        <div class="col-md-6"><h3>Filter</h3></div>
+                        <div class="col-md-6"><h3>Settings</h3></div>
+                    </div>
 
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <div class="input-group mb-3">
+                                <label class="input-group-text" for="reportFilterStatus">Status</label>
+                                <select class="form-select" id="reportFilterStatus" data-report-refresh="true" data-report-param="status">
+                                    <option value="">all</option>
+                                    <option value="deny" selected>deny</option>
+                                    <option value="allow">allow</option>
+                                </select>
+                            </div>
 
-                    <div class="col-md-3">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="reportGroupByLabel" data-report-param="groupBy">groupBy</span>
-                            <input type="text" class="form-control"  id="reportGroupBy" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="status">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="reportFilterResourceLabel">Resource</span>
+                                <input type="text" class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" value="">
+                            </div>
+
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="reportFilterRuleLabel">Rule</span>
+                                <input type="text" class="form-control" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" value="">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="reportGroupByLabel">groupBy</span>
+                                <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="status">
+                            </div>
+
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="reportFieldsLabel">Fields</span>
+                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields"></textarea>
+                            </div>
                         </div>
                     </div>
                 </form>
+
                 <div id="report-table"></div>
             </div>
         {{else}}
@@ -111,11 +158,11 @@
 
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
-    let refreshTableData = null;
-
     let reportName = "{{ $root.RequestReport }}";
     let reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
     let reportAjaxParams = {report:reportName, groupBy: "Status"};
+
+    let reportFilter = [];
 
     if (!reportName) {
         return;
@@ -163,25 +210,6 @@ jQuery( document ).ready(function($) {
         },
     });
 
-    let statusFilter = (headerValue, rowValue, rowData, filterParams) => {
-        if (!headerValue) {
-            return true;
-        }
-
-        switch (headerValue.toLowerCase()) {
-            case "deny":
-            case "false":
-            case "0":
-                return rowData.Status === false
-            case "allow":
-            case "true":
-            case "1":
-                return rowData.Status === true
-        }
-
-        return false;
-    }
-
     const yamlLine = new RegExp('^([^:\n]+):([^\n]*)$', 'gim');
     var yamlFormatter = function(cell, formatterParams) {
         let val = cell.getValue();
@@ -195,14 +223,11 @@ jQuery( document ).ready(function($) {
         ajaxContentType: "json",
 
         columns: [
-            {title:"Status", field:"Status", formatter:"tickCross", headerFilter:"input", headerFilterFunc:statusFilter, width:115},
-            {title:"Resource", field:"Resource", formatter:yamlFormatter, formatterPrint:yamlFormatter, headerFilter:"input" },
-            {title:"RuleID", field:"RuleID", formatter:"plaintext", headerFilter:"input", width:300},
+            {title:"Status", field:"status", formatter:"tickCross", width:115},
+            {title:reportName, field:"resource", formatter:yamlFormatter, formatterPrint:yamlFormatter, },
+            {title:"Rule", field:"rule", formatter:"plaintext",  width:300},
         ],
-
-        initialHeaderFilter: [
-            {field:"Status", value:"deny"}
-        ],
+        groupBy: "groupBy",
 
         height: "800px",
         layout: "fitColumns",
@@ -220,36 +245,68 @@ jQuery( document ).ready(function($) {
             group: false,
             page: false,
             columns: false,
-        },
-
-        groupBy: "GroupBy",
+        }
     });
 
-    refreshTableData = () => {
-        $("#report-form :input").each((num, el) => {
-            el = $(el)
-            if (el.data("report-param")) {
-                reportAjaxParams[el.data("report-param")] = el.val()
+    let refreshTableData = () => {
+        // reset ajax params
+        reportAjaxParams = {report:reportName};
+
+        // add filter params
+        $("#report-form :input[data-report-param]").each((num, el) => {
+            el = $(el);
+            let paramName = el.data("report-param");
+            let paramValue = el.val();
+            if (paramValue !== "") {
+                switch (paramName) {
+                    case "fields":
+                        paramValue = paramValue.replaceAll("\n", ":")
+                        break;
+                }
+                reportAjaxParams[paramName] = paramValue;
             }
         });
 
         table.setData(reportAjaxUrl, reportAjaxParams);
     };
 
+    let refreshTableFilter = () => {
+        reportFilter = [];
+        $("#report-form :input[data-report-filter]").each((num, el) => {
+            el = $(el);
+            let fieldName = el.data("report-filter");
+            let fieldValue = el.val();
+
+            if (fieldValue !== "") {
+                reportFilter.push({field:fieldName, type:"like", value:el.val()})
+            }
+        });
+        table.setFilter(reportFilter);
+    };
+
     table.on("tableBuilt", () => {
-        $(document).on("click", "#print-report", function() {
+        $(document).on("click", "#report-print", function() {
             table.print();
         });
 
-        $(document).on("click", "#reload-report", refreshTableData);
+        $(document).on("click", "#report-reload", refreshTableData);
+        $(document).on("click", "#report-download-csv", () => {table.download("csv", "report.csv")});
+        $(document).on("click", "#report-download-json", () => {table.download("json", "report.json")});
 
-        $(document).on("change", "#report-form :input", () => {
+        $(document).on("change", "#report-form :input", function(event) {
+            let el = $(this);
+
             formSaveToHash();
-            refreshTableData();
+
+            if (el.data("report-refresh")) {
+                refreshTableData();
+            }
+            refreshTableFilter();
         });
 
         loadFromHash();
         refreshTableData();
+        refreshTableFilter();
     });
 });
 </script>

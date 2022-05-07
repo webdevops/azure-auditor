@@ -21,6 +21,11 @@ type (
 			Subscription []string `long:"azure.subscription"  env:"AZURE_SUBSCRIPTION_ID"  env-delim:" "  description:"Azure subscription ID"`
 		}
 
+		// report
+		Report struct {
+			Title string `long:"report.title"   env:"REPORT_TITLE"                     description:"Report title"`
+		}
+
 		// scrape times
 		Cronjobs struct {
 			KeyvaultAccessPolicies string `long:"cron.keytvaultaccesspolicies" env:"CRON_KEYTVAULTACCESSPOLICIES"  description:"Cronjob for KeyVault AccessPolicies report" default:"0 * * * *"`
