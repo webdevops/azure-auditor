@@ -23,11 +23,11 @@ import (
 )
 
 const (
-	ReportKeyvaultAccessPolicies   = "KeyvaultAccessPolicies"
-	ReportResourceProviders        = "ResourceProviders"
-	ReportResourceProviderFeatures = "ResourceProviderFeatures"
-	ReportResourceGroups           = "ResourceGroups"
-	ReportRoleAssignments          = "RoleAssignments"
+	ReportKeyvaultAccessPolicies   = "KeyvaultAccessPolicy"
+	ReportResourceProviders        = "ResourceProvider"
+	ReportResourceProviderFeatures = "ResourceProviderFeature"
+	ReportResourceGroups           = "ResourceGroup"
+	ReportRoleAssignments          = "RoleAssignment"
 	ReportResourceGraph            = "ResourceGraph:%v"
 )
 

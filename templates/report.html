@@ -80,11 +80,11 @@
         {{if $root.RequestReport}}
             <div class="mb-3 row audit-config hide-print">
                 <h3 id="config">Config</h3>
-                {{if hasPrefix "RoleAssignments" $root.RequestReport }}<pre class="code">{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceGroups" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceProviders" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceProviderFeatures" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
-                {{if hasPrefix "KeyvaultAccessPolicies" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
+                {{if hasPrefix "RoleAssignment" $root.RequestReport }}<pre class="code">{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceGroup" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceProvider" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
+                {{if hasPrefix "ResourceProviderFeature" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
+                {{if hasPrefix "KeyvaultAccessPolicy" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
                 {{if hasPrefix "ResourceGraph" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGraph | toYaml }}</pre>{{end}}
             </div>
         {{else}}
