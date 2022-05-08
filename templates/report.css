@@ -33,7 +33,7 @@ small { font-size: 0.6em; }
 
 .hide-config .audit-config { display: none; }
 
-.tabulator-cell { font-size: 0.8rem; }
+.tabulator-cell { font-size: 0.8rem; white-space: pre !important; }
 .tabulator-print-table td { vertical-align: top; }
 
 pre.code { font-size: 0.8rem; padding: 0.2rem; 0.5rem; background-color: lightgoldenrodyellow; max-height: 800px; overflow-y: scroll; border: 1px solid #aaa; }

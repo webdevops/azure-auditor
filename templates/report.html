@@ -219,7 +219,7 @@ jQuery( document ).ready(function($) {
         try {
             val = val.replaceAll(yamlLine, "<b>$1:</b>$2");
         } catch (e) {}
-        return "<pre>"+val+"</pre>";
+        return val;
     }
 
     let table = new Tabulator("#report-table", {
