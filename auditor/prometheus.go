@@ -87,18 +87,19 @@ func (auditor *AzureAuditor) initPrometheus() {
 	}
 
 	auditor.prometheus.resourceGraph = map[string]*prometheus.GaugeVec{}
-	for queryName, query := range auditor.config.ResourceGraph.Queries {
-		auditor.prometheus.resourceGraph[queryName] = prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "azurerm_audit_violation_resourcegraph_" + queryName,
-				Help: "Azure ResourceManager audit ResourceGraph violation",
-			},
-			append(
-				query.PrometheusLabels(),
-				"rule",
-			),
-		)
-		prometheus.MustRegister(auditor.prometheus.resourceGraph[queryName])
+	if auditor.config.ResourceGraph.IsEnabled() {
+		for queryName, query := range auditor.config.ResourceGraph.Queries {
+			auditor.prometheus.resourceGraph[queryName] = prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "azurerm_audit_violation_resourcegraph_" + queryName,
+					Help: "Azure ResourceManager audit ResourceGraph violation",
+				},
+				append(
+					query.PrometheusLabels(),
+					"rule",
+				),
+			)
+			prometheus.MustRegister(auditor.prometheus.resourceGraph[queryName])
+		}
 	}
-
 }
