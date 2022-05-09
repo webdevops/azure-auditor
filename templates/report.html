@@ -11,7 +11,7 @@
         {{- end -}}</title>
 
     <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" integrity="sha512-GQGU0fMMi238uA+a/bdWJfpUGKUkBdgfFdgBm72SUQ6BeyWjoY/ton0tEjH+OSH9iP4Dfh+7HM0I9f5eR0L/4w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.3/css/tabulator_bootstrap5.min.css" integrity="sha512-IdsXMTvZYT+5cARgJynSLu/iDLFfFc1u1W8+nM7lg5J45oJh85zjagUcj4SSM2pNa1o+N4tzvABNG8C0myWuEg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" nonce="{{ .Nonce }}" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.4/css/tabulator_bootstrap5.min.css" integrity="sha512-IdsXMTvZYT+5cARgJynSLu/iDLFfFc1u1W8+nM7lg5J45oJh85zjagUcj4SSM2pNa1o+N4tzvABNG8C0myWuEg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style nonce="{{ .Nonce }}">{{ include "report.css" . | rawCss }}</style>
 </head>
@@ -118,7 +118,7 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFilterResourceLabel">Resource</span>
-                                <input type="text" class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" value="">
+                                <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2"></textarea>
                             </div>
 
                             <div class="input-group mb-3">
@@ -135,12 +135,16 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFieldsLabel">Fields</span>
-                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="3"></textarea>
+                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4"></textarea>
                             </div>
                         </div>
                     </div>
                 </form>
 
+
+                <div id="report-time">
+                    Last report update: <span class="time">unknown</span>
+                </div>
                 <div id="report-table"></div>
             </div>
         {{else}}
@@ -157,7 +161,7 @@
 <script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js" integrity="sha512-8cU710tp3iH9RniUh6fq5zJsGnjLzOWLWdZqBMLtqaoZUA6AWIE34lwMB3ipUNiTBP5jEZKY95SfbNnQ8cCKvA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js" integrity="sha512-OvBgP9A2JBgiRad/mM36mkzXSXaJE9BEIENnVEmeZdITvwT09xnxLtT4twkCa8m/loMbPHsvPl0T8lRGVBwjlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.3/js/tabulator.min.js" integrity="sha512-iNeSALsKIjLVNkPr0ebLdNbNhMErWQXY3SiGizbe1meeGbIr/O1RNLM5qYUx5ylx+Kh/n2gfNYhoWXYEpodHEA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script nonce="{{ .Nonce }}" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.2.4/js/tabulator.min.js" integrity="sha512-jN3EsqOOePNRzqYuo2UuuxIBRkBAO2zS5tkG54Y8WYnUCcCFfg1/o3YlEOe4bBVrStnNFz/YyOOTFNQrXUVDqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
@@ -200,21 +204,8 @@ jQuery( document ).ready(function($) {
         } catch(e) {}
     };
 
-    Tabulator.extendModule("persistence", "writers", {
-        example:function(id, type, data){
-            localStorage.setItem(id + "-" + type, JSON.stringify(data));
-        },
-    });
-
-    Tabulator.extendModule("persistence", "readers", {
-        example:function(id, type){
-            var data = localStorage.getItem(id + "-" + type);
-            return data ? JSON.parse(data) : false;
-        },
-    });
-
     const yamlLine = new RegExp('^([^:\n]+):([^\n]*)$', 'gim');
-    var yamlFormatter = function(cell, formatterParams) {
+    let yamlFormatter = (cell, formatterParams) => {
         let val = cell.getValue();
         try {
             val = val.replaceAll(yamlLine, "<b>$1:</b>$2");
@@ -222,8 +213,30 @@ jQuery( document ).ready(function($) {
         return val;
     }
 
+    let ajaxRequestFunc = (url, config, params) => {
+        url = url + "?" + new URLSearchParams(params).toString();
+        return new Promise(function (resolve, reject) {
+            fetch(url, config)
+                .then(response => {
+                    let reportTime = response.headers.get("x-report-time");
+                    if (reportTime) {
+                        $("#report-time span.time").text(reportTime)
+                    }
+
+                    return response.json()
+                })
+                .then(data => {
+                    resolve(data);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        });
+    };
+
     let table = new Tabulator("#report-table", {
         ajaxContentType: "json",
+        ajaxRequestFunc: ajaxRequestFunc,
 
         columns: [
             {title:"Status", field:"status", formatter:"tickCross", width:115},
@@ -246,9 +259,10 @@ jQuery( document ).ready(function($) {
             sort: true,
             filter: true,
             group: false,
-            page: false,
+            page: true,
             columns: false,
-        }
+        },
+        persistenceMode: true,
     });
 
     let refreshTableData = () => {
@@ -281,7 +295,19 @@ jQuery( document ).ready(function($) {
             let fieldValue = el.val();
 
             if (fieldValue !== "") {
-                reportFilter.push({field:fieldName, type:"like", value:el.val()})
+                switch (fieldName) {
+                    case "resource":
+                        fieldValue.split("\n").forEach(value => {
+                            value = value.trim()
+                            if (value !== "") {
+                                reportFilter.push({field:fieldName, type:"like", value:value})
+                            }
+                        });
+                        break;
+                    default:
+                        reportFilter.push({field:fieldName, type:"like", value:el.val()})
+                        break;
+                }
             }
         });
         table.setFilter(reportFilter);

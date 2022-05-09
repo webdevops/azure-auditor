@@ -345,6 +345,7 @@ func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
 	defer auditor.reportLock.Unlock()
 
 	auditor.reportUncommited[name] = NewAzureAuditorReport()
+	auditor.reportUncommited[name].UpdateTime = time.Now()
 	return auditor.reportUncommited[name]
 }
 

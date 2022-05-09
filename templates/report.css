@@ -49,6 +49,8 @@ h3 { font-size: 1.2rem; }
 
 .tabulator-group small { font-size: 0.8rem; color: grey; margin-left: 0.25rem; }
 
+#report-time { font-size: 0.8rem; text-align: right; }
+
 @media (min-width: 768px) {
     .navbar.fixed-left {
         bottom: 0;

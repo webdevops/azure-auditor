@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/google/uuid"
@@ -229,6 +230,7 @@ func startHttpServer() {
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
 			reportList := audit.GetReport()
 			if report, ok := reportList[reportName]; ok {
+				w.Header().Add("x-report-time", report.UpdateTime.Format(time.RFC1123Z))
 
 				reportData := []auditor.AzureAuditorReportLine{}
 				for _, row := range report.Lines {

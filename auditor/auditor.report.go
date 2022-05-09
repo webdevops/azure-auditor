@@ -3,6 +3,7 @@ package auditor
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -11,9 +12,10 @@ import (
 
 type (
 	AzureAuditorReport struct {
-		Summary *AzureAuditorReportSummary
-		Lines   []*AzureAuditorReportLine
-		lock    *sync.Mutex
+		Summary    *AzureAuditorReportSummary
+		Lines      []*AzureAuditorReportLine
+		UpdateTime time.Time
+		lock       *sync.Mutex
 	}
 
 	AzureAuditorReportSummary struct {
