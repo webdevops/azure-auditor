@@ -13,11 +13,25 @@ type (
 		Query      *string                                 `yaml:"query,omitempty"`
 		Rules      []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
 		Prometheus AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
+		Report     AuditConfigValidationReport             `yaml:"report,omitempty"`
 		ScopeRules map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
 	}
 
 	AuditConfigValidationPrometheus struct {
 		Labels map[string]string `yaml:"labels,omitempty"`
+	}
+
+	AuditConfigValidationReport struct {
+		Filter struct {
+			Status   string `yaml:"status,omitempty"`
+			Resource string `yaml:"resource,omitempty"`
+			Rule     string `yaml:"rule,omitempty"`
+		} `yaml:"filter,omitempty"`
+
+		Settings struct {
+			GroupBy string `yaml:"groupBy,omitempty"`
+			Fields  string `yaml:"fields,omitempty"`
+		} `yaml:"settings,omitempty"`
 	}
 )
 

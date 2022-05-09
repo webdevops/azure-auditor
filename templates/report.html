@@ -30,7 +30,7 @@
             <li class="nav-item">
                 <a class="nav-link disabled">Reports</a>
                 <ul class="navbar-nav">
-                    {{range $ReportName, $report := .Report}}
+                    {{ range $ReportName, $report := .Reports }}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
                     </li>
@@ -80,15 +80,7 @@
         {{if $root.RequestReport}}
             <div class="mb-3 row audit-config hide-print">
                 <h3 id="config">Config</h3>
-                {{if hasPrefix "RoleAssignment" $root.RequestReport }}<pre class="code">{{ .Config.RoleAssignments | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceGroup" $root.RequestReport }}<pre class="code">{{ .Config.ResourceGroups | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceProvider" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviders | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceProviderFeature" $root.RequestReport }}<pre class="code">{{ .Config.ResourceProviderFeatures | toYaml }}</pre>{{end}}
-                {{if hasPrefix "KeyvaultAccessPolicy" $root.RequestReport }}<pre class="code">{{ .Config.KeyvaultAccessPolicies | toYaml }}</pre>{{end}}
-                {{if hasPrefix "ResourceGraph" $root.RequestReport }}
-                    {{ $requestReportParts := split ":" $root.RequestReport }}
-                    <pre class="code">{{ index .Config.ResourceGraph.Queries $requestReportParts._1 | toYaml }}</pre>
-                {{end}}
+                {{if $root.ReportConfig }}<pre class="code">{{ $root.ReportConfig | toYaml }}</pre>{{end}}
             </div>
         {{else}}
             <div class="mb-3 row audit-full-config hide-print">
@@ -118,24 +110,24 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFilterResourceLabel">Resource</span>
-                                <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2"></textarea>
+                                <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2">{{ $root.ReportConfig.Report.Filter.Resource }}</textarea>
                             </div>
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFilterRuleLabel">Rule</span>
-                                <input type="text" class="form-control" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" value="">
+                                <input type="text" class="form-control" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" value="{{ $root.ReportConfig.Report.Filter.Rule }}">
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportGroupByLabel">groupBy</span>
-                                <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="status">
+                                <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="{{ $root.ReportConfig.Report.Settings.GroupBy }}">
                             </div>
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFieldsLabel">Fields</span>
-                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4"></textarea>
+                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4">{{ $root.ReportConfig.Report.Settings.Fields }}</textarea>
                             </div>
                         </div>
                     </div>

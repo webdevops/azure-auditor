@@ -2,7 +2,6 @@ resourceGraph:
   enabled: true
 
   queries:
-    
     resources:
       prometheus:
         labels:
@@ -22,6 +21,10 @@ roleAssignments:
       subscriptionID: subscription.id
       prinicpalName: principal.displayName
       roleName:  role.name
+
+  report:
+    settings:
+      groupBy: resourcegroup.tag.owner
 
   rules:
     # javscript func example

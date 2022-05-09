@@ -21,6 +21,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
+	"github.com/webdevops/azure-auditor/auditor/validator"
 	"github.com/webdevops/azure-auditor/config"
 )
 
@@ -178,20 +179,45 @@ func startHttpServer() {
 				cspNonce,
 			),
 		)
+		selectedReport := r.URL.Query().Get("report")
+
 		templatePayload := struct {
 			Nonce            string
 			Config           auditor.AuditConfig
 			ReportTitle      string
-			Report           map[string]*auditor.AzureAuditorReport
+			ReportConfig     *validator.AuditConfigValidation
+			Reports          map[string]*auditor.AzureAuditorReport
 			ServerPathReport string
 			RequestReport    string
 		}{
 			Nonce:            cspNonce,
 			Config:           audit.GetConfig(),
 			ReportTitle:      opts.Report.Title,
-			Report:           audit.GetReport(),
+			ReportConfig:     nil,
+			Reports:          audit.GetReport(),
 			ServerPathReport: opts.ServerPathReport,
-			RequestReport:    r.URL.Query().Get("report"),
+			RequestReport:    selectedReport,
+		}
+
+		reportInfo := strings.SplitN(selectedReport, ":", 2)
+		fmt.Println(reportInfo)
+		switch reportInfo[0] {
+		case "RoleAssignment":
+			templatePayload.ReportConfig = templatePayload.Config.RoleAssignments
+		case "ResourceGroup":
+			templatePayload.ReportConfig = templatePayload.Config.ResourceGroups
+		case "ResourceProvider":
+			templatePayload.ReportConfig = templatePayload.Config.ResourceProviders
+		case "ResourceProviderFeature":
+			templatePayload.ReportConfig = templatePayload.Config.ResourceProviderFeatures
+		case "KeyvaultAccessPolicy":
+			templatePayload.ReportConfig = templatePayload.Config.KeyvaultAccessPolicies
+		case "ResourceGraph":
+			if len(reportInfo) == 2 && reportInfo[1] != "" {
+				if config, ok := templatePayload.Config.ResourceGraph.Queries[reportInfo[1]]; ok {
+					templatePayload.ReportConfig = config
+				}
+			}
 		}
 
 		if err := tmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
