@@ -200,7 +200,6 @@ func startHttpServer() {
 		}
 
 		reportInfo := strings.SplitN(selectedReport, ":", 2)
-		fmt.Println(reportInfo)
 		switch reportInfo[0] {
 		case "RoleAssignment":
 			templatePayload.ReportConfig = templatePayload.Config.RoleAssignments
