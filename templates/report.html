@@ -28,13 +28,28 @@
     <div class="collapse navbar-collapse" id="navbarReport">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link disabled">Reports</a>
+                <a class="nav-link disabled">Azure Reports</a>
                 <ul class="navbar-nav">
-                    {{ range $ReportName, $report := .Reports }}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
-                    </li>
-                    {{end}}
+                    {{- range $ReportName, $report := .Reports -}}
+                        {{- if not (hasPrefix "ResourceGraph" $ReportName) -}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                        </li>
+                        {{- end -}}
+                    {{- end -}}
+                </ul>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link disabled">ResourceGraph reports</a>
+                <ul class="navbar-nav">
+                    {{- range $ReportName, $report := .Reports -}}
+                        {{- if (hasPrefix "ResourceGraph" $ReportName) -}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ trimPrefix "ResourceGraph:" $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                        </li>
+                        {{- end -}}
+                    {{- end -}}
                 </ul>
             </li>
 
