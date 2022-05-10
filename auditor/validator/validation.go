@@ -14,6 +14,8 @@ type (
 		Rules      []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
 		Prometheus AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
 		Report     AuditConfigValidationReport             `yaml:"report,omitempty"`
+		Mapping    *map[string]string                      `yaml:"mapping,omitempty"`
+		Enrich     bool                                    `yaml:"enrich,omitempty"`
 		ScopeRules map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
 	}
 

@@ -78,7 +78,22 @@ func (auditor *AzureAuditor) queryResourceGraph(ctx context.Context, logger *log
 
 				for _, v := range resultList {
 					if resultRow, ok := v.(map[string]interface{}); ok {
-						list = append(list, validator.NewAzureObject(resultRow))
+						auditLine := map[string]interface{}{}
+
+						if config.Mapping != nil {
+							mapping := *config.Mapping
+							for rowKey, rowVal := range resultRow {
+								if targetField, ok := mapping[rowKey]; ok {
+									auditLine[targetField] = rowVal
+								} else {
+									auditLine[rowKey] = rowVal
+								}
+							}
+						} else {
+							auditLine = resultRow
+						}
+
+						list = append(list, validator.NewAzureObject(auditLine))
 					}
 				}
 			}
@@ -90,6 +105,10 @@ func (auditor *AzureAuditor) queryResourceGraph(ctx context.Context, logger *log
 		if *RequestOptions.Skip >= resultTotalRecords {
 			break
 		}
+	}
+
+	if config.Enrich {
+		auditor.enrichAzureObjects(ctx, subscription, &list)
 	}
 
 	return
