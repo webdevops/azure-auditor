@@ -15,7 +15,7 @@
 
     <style nonce="{{ .Nonce }}">{{ include "report.css" . | rawCss }}</style>
 </head>
-<body class="hide-config">
+<body>
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-left">
     <h1>
         <a class="navbar-brand" href>Azure Auditor <small>v{{ version }}</small></a>
@@ -53,12 +53,19 @@
                 </ul>
             </li>
 
-            <li class="nav-item nav-item-settings settings">
+            <li class="nav-item nav-item-settings global-settings">
                 <a class="nav-link disabled">Settings</a>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="0" id="showConfig" data-body-class="hide-config">
+                    <input class="form-check-input" type="checkbox" value="0" id="showConfig" data-setting-name="show-config">
                     <label class="form-check-label" for="showConfig">
                         Show config
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="1" id="saveFilterSettings" data-setting-name="save-filter-settings">
+                    <label class="form-check-label" for="saveFilterSettings">
+                        Save filter/settings
                     </label>
                 </div>
             </li>
@@ -74,6 +81,7 @@
                 {{ $root.ReportTitle }} report "{{ $root.RequestReport }}"
                 <div class="toolbar">
                     <button type="button" class="btn btn-secondary" id="report-print">Print</button>
+                    <button type="button" class="btn btn-secondary" id="report-reset">Reset filter/settings</button>
 
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownReportDownload" data-bs-toggle="dropdown" aria-expanded="false">
@@ -116,7 +124,7 @@
                         <div class="col-md-6">
                             <div class="input-group mb-3">
                                 <label class="input-group-text" for="reportFilterStatus">Status</label>
-                                <select class="form-select" id="reportFilterStatus" data-report-refresh="true" data-report-param="status">
+                                <select class="form-select" id="reportFilterStatus" data-report-refresh="true" data-report-param="status" data-default="deny">
                                     <option value="">all</option>
                                     <option value="deny" selected>deny</option>
                                     <option value="allow">allow</option>
@@ -125,24 +133,24 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFilterResourceLabel">Resource</span>
-                                <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2">{{ $root.ReportConfig.Report.Filter.Resource }}</textarea>
+                                <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2" data-default="{{ $root.ReportConfig.Report.Filter.Resource }}"></textarea>
                             </div>
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFilterRuleLabel">Rule</span>
-                                <input type="text" class="form-control" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" value="{{ $root.ReportConfig.Report.Filter.Rule }}">
+                                <input type="text" class="form-control" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" data-default="{{ $root.ReportConfig.Report.Filter.Rule }}">
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportGroupByLabel">groupBy</span>
-                                <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" value="{{ $root.ReportConfig.Report.Settings.GroupBy }}">
+                                <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" data-default="{{ $root.ReportConfig.Report.Settings.GroupBy }}">
                             </div>
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="reportFieldsLabel">Fields</span>
-                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4">{{ $root.ReportConfig.Report.Settings.Fields }}</textarea>
+                                <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4" data-default="{{ $root.ReportConfig.Report.Settings.Fields }}"></textarea>
                             </div>
                         </div>
                     </div>
@@ -172,226 +180,7 @@
 
 <script nonce="{{ .Nonce }}">
 jQuery( document ).ready(function($) {
-    let reportName = "{{ $root.RequestReport }}";
-    let reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
-    let reportAjaxParams = {report:reportName, groupBy: "Status"};
-
-    let reportFilter = [];
-
-    if (!reportName) {
-        return;
-    }
-
-    let formSaveToHash = () => {
-        let formData = {};
-        $("#report-form :input").each((num, el) => {
-            let formEl = $(el);
-            let fieldName = formEl.attr("id");
-            let fieldValue = formEl.val();
-            fieldValue = fieldValue.trim();
-
-            formData[fieldName] = fieldValue;
-        });
-
-        let hashString = btoa(JSON.stringify(formData));
-        window.location.hash = hashString;
-    };
-
-    let loadFromHash = () => {
-        try {
-            if (window.location.hash && window.location.hash.length >= 2) {
-                let hashString = window.location.hash.substring(1);
-                let formData = jQuery.parseJSON(atob(hashString));
-
-                $("#report-form :input").val("");
-                Object.keys(formData).forEach((fieldName) => {
-                    $("#report-form #" + fieldName + ":input").val(formData[fieldName]);
-                });
-            }
-        } catch(e) {}
-    };
-
-    const yamlLine = new RegExp('^([^:\n]+):([^\n]*)$', 'gim');
-    let yamlFormatter = (cell, formatterParams) => {
-        let val = cell.getValue();
-        try {
-            val = val.replaceAll(yamlLine, "<b>$1:</b>$2");
-        } catch (e) {}
-        return val;
-    }
-
-    let ajaxRequestFunc = (url, config, params) => {
-        url = url + "?" + new URLSearchParams(params).toString();
-        return new Promise(function (resolve, reject) {
-            fetch(url, config)
-                .then(response => {
-                    let reportTime = response.headers.get("x-report-time");
-                    if (reportTime) {
-                        $("#report-time span.time").text(reportTime)
-                    }
-
-                    return response.json()
-                })
-                .then(data => {
-                    resolve(data);
-                })
-                .catch((error) => {
-                    reject(error);
-                });
-        });
-    };
-
-    let table = new Tabulator("#report-table", {
-        ajaxContentType: "json",
-        ajaxRequestFunc: ajaxRequestFunc,
-
-        columns: [
-            {title:"Status", field:"status", formatter:"tickCross", width:115},
-            {title:reportName, field:"resource", formatter:yamlFormatter, formatterPrint:yamlFormatter, },
-            {title:"Rule", field:"rule", formatter:"plaintext",  width:300},
-        ],
-
-        groupBy: "groupBy",
-        groupToggleElement: "header",
-
-        height: "800px",
-        layout: "fitColumns",
-
-        pagination: true,
-        paginationSize: 10,
-        paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
-
-        printRowRange: "active",
-        printAsHtml: true,
-
-        persistence: {
-            sort: true,
-            filter: true,
-            group: false,
-            page: true,
-            columns: false,
-        },
-        persistenceMode: true,
-    });
-
-    let refreshTableData = () => {
-        // reset ajax params
-        reportAjaxParams = {report:reportName};
-
-        // add filter params
-        $("#report-form :input[data-report-param]").each((num, el) => {
-            el = $(el);
-            let paramName = el.data("report-param");
-            let paramValue = el.val();
-            if (paramValue !== "") {
-                switch (paramName) {
-                    case "fields":
-                        paramValue = paramValue.replaceAll("\n", ":")
-                        break;
-                }
-                reportAjaxParams[paramName] = paramValue;
-            }
-        });
-
-        table.setData(reportAjaxUrl, reportAjaxParams);
-    };
-
-    let refreshTableFilter = () => {
-        reportFilter = [];
-        $("#report-form :input[data-report-filter]").each((num, el) => {
-            el = $(el);
-            let fieldName = el.data("report-filter");
-            let fieldValue = el.val();
-
-            if (fieldValue !== "") {
-                switch (fieldName) {
-                    case "resource":
-                        fieldValue.split("\n").forEach(value => {
-                            value = value.trim()
-                            if (value !== "") {
-                                reportFilter.push({field:fieldName, type:"like", value:value})
-                            }
-                        });
-                        break;
-                    default:
-                        reportFilter.push({field:fieldName, type:"like", value:el.val()})
-                        break;
-                }
-            }
-        });
-        table.setFilter(reportFilter);
-    };
-
-    table.on("tableBuilt", () => {
-        $(document).on("click", "#report-print", function() {
-            table.print();
-        });
-
-        $(document).on("click", "#report-reload", refreshTableData);
-        $(document).on("click", "#report-download-csv", () => {table.download("csv", "report.csv")});
-        $(document).on("click", "#report-download-json", () => {table.download("json", "report.json")});
-
-        $(document).on("change", "#report-form :input", function(event) {
-            let el = $(this);
-
-            formSaveToHash();
-
-            if (el.data("report-refresh")) {
-                refreshTableData();
-            }
-            refreshTableFilter();
-        });
-
-        loadFromHash();
-        refreshTableData();
-        refreshTableFilter();
-    });
-});
-</script>
-
-<script nonce="{{ .Nonce }}">
-jQuery( document ).ready(function($) {
-    let settingKey = "azureAuditorPreferences";
-
-    // restore settings
-    try {
-        let settings = JSON.parse(localStorage.getItem(settingKey));
-        if (settings) {
-            let settingInputList = $(".settings input:checkbox")
-            $.each(settings, (settingName, settingValue) => {
-                $(".settings input:checkbox").each((idx, element) => {
-                    let el = $(element);
-                    if (el.data("body-class") === settingName) {
-                        el.attr("checked", settingValue)
-                    }
-                });
-            })
-        }
-    } catch (e) {}
-
-    let processSettings = () => {
-        let settings = {}
-        $(".settings input:checkbox").each((idx, element) => {
-            let el = $(element);
-            let settingName = el.data("body-class")
-            if (el.is(':checked')) {
-                settings[settingName] = true
-                $("body").removeClass(settingName)
-            } else {
-                settings[settingName] = false
-                $("body").addClass(settingName)
-            }
-        })
-
-        try {
-            localStorage.setItem(settingKey, JSON.stringify(settings));
-        } catch(e) {}
-    };
-
-    $(document).on("change", ".settings input:checkbox", function() {
-        processSettings()
-    });
-    processSettings();
+    {{ include "report.js" . | rawJs }}
 });
 </script>
 

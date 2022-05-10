@@ -31,7 +31,8 @@ small { font-size: 0.6em; }
     padding-left: 3rem;
 }
 
-.hide-config .audit-config { display: none; }
+.audit-config { display: none; }
+.show-config .audit-config { display: block; }
 
 .tabulator-cell { font-size: 0.8rem; white-space: pre !important; }
 .tabulator-print-table td { vertical-align: top; }
