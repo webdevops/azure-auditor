@@ -17,6 +17,11 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 	resourcesList := auditor.getResourceList(ctx, subscription)
 
+	inheritTag := map[string]string{}
+	for _, tagName := range auditor.Opts.Azure.InheritTags {
+		inheritTag[tagName] = ""
+	}
+
 	for key, row := range *list {
 		obj := (*(*list)[key])
 
@@ -35,13 +40,20 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 
 		// enrich with resourcegroup information
 		if resourceGroupName, ok := (*row)["resourcegroup.name"].(string); ok && resourceGroupName != "" {
+			resourceGroupName = strings.ToLower(resourceGroupName)
 			if resourceGroup, ok := resourceGroupList[resourceGroupName]; ok {
 				obj["resourcegroup.name"] = to.String(resourceGroup.Name)
 				obj["resourcegroup.location"] = to.String(resourceGroup.Location)
 
 				for tagName, tagValue := range resourceGroup.Tags {
 					valKey := fmt.Sprintf("resourcegroup.tag.%v", tagName)
-					obj[valKey] = to.String(tagValue)
+					tagValueStr := to.String(tagValue)
+					obj[valKey] = tagValueStr
+
+					// save tags for inheritance
+					if _, ok := inheritTag[tagName]; ok {
+						inheritTag[tagName] = tagValueStr
+					}
 				}
 			}
 		}
@@ -56,8 +68,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 
 		if resourceID != "" {
 			if resourceInfo, err := azureCommon.ParseResourceId(resourceID); err == nil && resourceInfo.ResourceName != "" {
-				resourceID := resourceInfo.ResourceId()
-
+				resourceID := strings.ToLower(resourceInfo.ResourceId())
 				obj["resource.name"] = resourceInfo.ResourceName
 				obj["resource.type"] = resourceInfo.ResourceType
 
@@ -73,6 +84,13 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 				if resource, ok := resourcesList[resourceID]; ok {
 					obj["resource.location"] = to.String(resource.Location)
 
+					// use tags from inhertiance for (as default)
+					for tagName, tagValue := range inheritTag {
+						valKey := fmt.Sprintf("resource.tag.%v", tagName)
+						obj[valKey] = tagValue
+					}
+
+					// resource tags (might overwrite inhertiance tags)
 					for tagName, tagValue := range resource.Tags {
 						valKey := fmt.Sprintf("resource.tag.%v", tagName)
 						obj[valKey] = to.String(tagValue)
