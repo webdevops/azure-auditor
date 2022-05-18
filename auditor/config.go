@@ -17,9 +17,15 @@ type (
 		ResourceProviderFeatures *validator.AuditConfigValidation `yaml:"resourceProviderFeatures"`
 		KeyvaultAccessPolicies   *validator.AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
 		ResourceGraph            *AuditConfigResourceGraph        `yaml:"resourceGraph"`
+		LogAnalytics             *AuditConfiLogAnalytics          `yaml:"logAnalytics"`
 	}
 
 	AuditConfigResourceGraph struct {
+		Enabled bool                                        `yaml:"enabled"`
+		Queries map[string]*validator.AuditConfigValidation `yaml:"queries"`
+	}
+
+	AuditConfiLogAnalytics struct {
 		Enabled bool                                        `yaml:"enabled"`
 		Queries map[string]*validator.AuditConfigValidation `yaml:"queries"`
 	}
@@ -46,6 +52,10 @@ func (auditor *AzureAuditor) ParseConfig(configPaths ...string) {
 	}
 }
 
-func (configResourceGraph *AuditConfigResourceGraph) IsEnabled() bool {
-	return configResourceGraph != nil && configResourceGraph.Enabled && len(configResourceGraph.Queries) >= 1
+func (config *AuditConfigResourceGraph) IsEnabled() bool {
+	return config != nil && config.Enabled && len(config.Queries) >= 1
+}
+
+func (config *AuditConfiLogAnalytics) IsEnabled() bool {
+	return config != nil && config.Enabled && len(config.Queries) >= 1
 }

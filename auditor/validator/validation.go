@@ -8,15 +8,18 @@ import (
 
 type (
 	AuditConfigValidation struct {
-		Enabled    bool                                    `yaml:"enabled"`
-		Metrics    *bool                                   `yaml:"metrics"`
-		Query      *string                                 `yaml:"query,omitempty"`
-		Rules      []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
-		Prometheus AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
-		Report     AuditConfigValidationReport             `yaml:"report,omitempty"`
-		Mapping    *map[string]string                      `yaml:"mapping,omitempty"`
-		Enrich     bool                                    `yaml:"enrich,omitempty"`
-		ScopeRules map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
+		Enabled              bool                                    `yaml:"enabled"`
+		Metrics              *bool                                   `yaml:"metrics"`
+		Query                *string                                 `yaml:"query,omitempty"`
+		Timespan             *string                                 `yaml:"timespan,omitempty"`
+		Workspaces           *[]string                               `yaml:"workspaces,omitempty"`
+		AdditionalWorkspaces *[]string                               `yaml:"additionalWorkspaces,omitempty"`
+		Rules                []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
+		Prometheus           AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
+		Report               AuditConfigValidationReport             `yaml:"report,omitempty"`
+		Mapping              *map[string]string                      `yaml:"mapping,omitempty"`
+		Enrich               bool                                    `yaml:"enrich,omitempty"`
+		ScopeRules           map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
 	}
 
 	AuditConfigValidationPrometheus struct {

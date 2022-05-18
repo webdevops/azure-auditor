@@ -196,25 +196,38 @@ func startHttpServer() {
 			ReportConfig:     nil,
 			Reports:          audit.GetReport(),
 			ServerPathReport: opts.ServerPathReport,
-			RequestReport:    selectedReport,
+			RequestReport:    "",
 		}
 
 		reportInfo := strings.SplitN(selectedReport, ":", 2)
 		switch reportInfo[0] {
 		case "RoleAssignment":
 			templatePayload.ReportConfig = templatePayload.Config.RoleAssignments
+			templatePayload.RequestReport = selectedReport
 		case "ResourceGroup":
 			templatePayload.ReportConfig = templatePayload.Config.ResourceGroups
+			templatePayload.RequestReport = selectedReport
 		case "ResourceProvider":
 			templatePayload.ReportConfig = templatePayload.Config.ResourceProviders
+			templatePayload.RequestReport = selectedReport
 		case "ResourceProviderFeature":
 			templatePayload.ReportConfig = templatePayload.Config.ResourceProviderFeatures
+			templatePayload.RequestReport = selectedReport
 		case "KeyvaultAccessPolicy":
 			templatePayload.ReportConfig = templatePayload.Config.KeyvaultAccessPolicies
+			templatePayload.RequestReport = selectedReport
 		case "ResourceGraph":
 			if len(reportInfo) == 2 && reportInfo[1] != "" {
-				if config, ok := templatePayload.Config.ResourceGraph.Queries[reportInfo[1]]; ok {
-					templatePayload.ReportConfig = config
+				if v, ok := templatePayload.Config.ResourceGraph.Queries[reportInfo[1]]; ok {
+					templatePayload.ReportConfig = v
+					templatePayload.RequestReport = selectedReport
+				}
+			}
+		case "LogAnalytics":
+			if len(reportInfo) == 2 && reportInfo[1] != "" {
+				if v, ok := templatePayload.Config.LogAnalytics.Queries[reportInfo[1]]; ok {
+					templatePayload.ReportConfig = v
+					templatePayload.RequestReport = selectedReport
 				}
 			}
 		}

@@ -2,12 +2,17 @@ package auditor
 
 import (
 	"encoding/json"
+	"regexp"
 	"sync"
 	"time"
 
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
+)
+
+var (
+	yamlCleanupRegexp = regexp.MustCompile(`(?im)^([^:]+)[\s]*:[\s]*"(.+)"$`)
 )
 
 type (
@@ -47,6 +52,8 @@ func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data["rule"] = reportLine.RuleID
 	data["status"] = reportLine.Status
 	data["groupBy"] = reportLine.GroupBy
+
+	data["resource"] = yamlCleanupRegexp.ReplaceAllString(data["resource"].(string), "$1: $2")
 
 	return json.Marshal(data)
 }

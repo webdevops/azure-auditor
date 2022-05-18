@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	azureCommon "github.com/webdevops/go-common/azure"
@@ -13,9 +14,15 @@ import (
 )
 
 func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
+	var (
+		resourceGroupList map[string]resources.Group
+		resourcesList     map[string]resources.GenericResourceExpanded
+	)
 	subscriptionList := auditor.getSubscriptionList(ctx)
-	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
-	resourcesList := auditor.getResourceList(ctx, subscription)
+	if subscription != nil {
+		resourceGroupList = auditor.getResourceGroupList(ctx, subscription)
+		resourcesList = auditor.getResourceList(ctx, subscription)
+	}
 
 	inheritTag := map[string]string{}
 	for _, tagName := range auditor.Opts.Azure.InheritTags {

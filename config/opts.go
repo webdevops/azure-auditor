@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -34,6 +35,11 @@ type (
 			ResourceProvider       string `long:"cron.resourceproviders"       env:"CRON_RESOURCEPROVIDERS"        description:"Cronjob for ResourceProviders report"       default:"0 * * * *"`
 			RoleAssignments        string `long:"cron.roleassignments"         env:"CRON_ROLEASSIGNMENTS"          description:"Cronjob for RoleAssignments report"         default:"*/5 * * * *"`
 			ResourceGraph          string `long:"cron.resourcegraph"           env:"CRON_RESOURCEGRAPH"            description:"Cronjob for ResourceGraph report"           default:"15 * * * *"`
+			LogAnalytics           string `long:"cron.loganalytics"            env:"CRON_LOGANALYTICS"             description:"Cronjob for LogAnalytics report"            default:"30 * * * *"`
+		}
+
+		LogAnalytics struct {
+			WaitTime time.Duration `long:"loganalytics.waitduration"           env:"LOGANALYTICS_WAITDURATION"     description:"Wait duration between LogAnalytics queries" default:"5s"`
 		}
 
 		Config []string `long:"config"  env:"CONFIG"   description:"Config file path"     required:"true"`

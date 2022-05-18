@@ -32,9 +32,11 @@
                 <ul class="navbar-nav">
                     {{- range $ReportName, $report := .Reports -}}
                         {{- if not (hasPrefix "ResourceGraph" $ReportName) -}}
+                        {{- if not (hasPrefix "LogAnalytics" $ReportName) -}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
                         </li>
+                        {{- end -}}
                         {{- end -}}
                     {{- end -}}
                 </ul>
@@ -49,6 +51,19 @@
                             <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ trimPrefix "ResourceGraph:" $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
                         </li>
                         {{- end -}}
+                    {{- end -}}
+                </ul>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link disabled">LogAnalytics reports</a>
+                <ul class="navbar-nav">
+                    {{- range $ReportName, $report := .Reports -}}
+                    {{- if (hasPrefix "LogAnalytics" $ReportName) -}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ trimPrefix "LogAnalytics:" $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                    </li>
+                    {{- end -}}
                     {{- end -}}
                 </ul>
             </li>
@@ -100,19 +115,12 @@
             {{end}}
         </h2>
 
-        {{if $root.RequestReport}}
+        {{if $root.RequestReport }}
             <div class="mb-3 row audit-config hide-print">
                 <h3 id="config">Config</h3>
                 {{if $root.ReportConfig }}<pre class="code">{{ $root.ReportConfig | toYaml }}</pre>{{end}}
             </div>
-        {{else}}
-            <div class="mb-3 row audit-full-config hide-print">
-                <h3 id="config">Config</h3>
-                <pre class="code">{{ .Config | toYaml }}</pre>
-            </div>
-        {{end}}
 
-        {{if $root.RequestReport}}
             <div class="mb-3 row">
                 <form id="report-form">
                     <div class="row g-6">

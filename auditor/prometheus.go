@@ -12,6 +12,7 @@ type (
 		resourceProviderFeature *prometheus.GaugeVec
 		keyvaultAccessPolicies  *prometheus.GaugeVec
 		resourceGraph           map[string]*prometheus.GaugeVec
+		logAnalytics            map[string]*prometheus.GaugeVec
 	}
 )
 
@@ -100,6 +101,23 @@ func (auditor *AzureAuditor) initPrometheus() {
 				),
 			)
 			prometheus.MustRegister(auditor.prometheus.resourceGraph[queryName])
+		}
+	}
+
+	auditor.prometheus.logAnalytics = map[string]*prometheus.GaugeVec{}
+	if auditor.config.LogAnalytics.IsEnabled() {
+		for queryName, query := range auditor.config.LogAnalytics.Queries {
+			auditor.prometheus.logAnalytics[queryName] = prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "azurerm_audit_violation_loganalytics_" + queryName,
+					Help: "Azure ResourceManager audit LogAnalytics violation",
+				},
+				append(
+					query.PrometheusLabels(),
+					"rule",
+				),
+			)
+			prometheus.MustRegister(auditor.prometheus.logAnalytics[queryName])
 		}
 	}
 }
