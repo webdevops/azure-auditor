@@ -79,7 +79,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			workspaceLogger.Panic(err)
 		}
 
-		workspaces := []string{to.String(mainWorkspaceId)}
+		workspaces := []string{}
 
 		if config.AdditionalWorkspaces != nil {
 			for _, additionalWorkspaceResourceId := range *config.AdditionalWorkspaces {
@@ -100,7 +100,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			Timespan:   config.Timespan,
 			Workspaces: &workspaces,
 		}
-		var queryResults, queryErr = logAnalyticsClient.Execute(ctx, workspaces[0], queryBody)
+		var queryResults, queryErr = logAnalyticsClient.Execute(ctx, *mainWorkspaceId, queryBody)
 		if queryErr != nil {
 			workspaceLogger.Error(queryErr.Error())
 			return
@@ -108,11 +108,10 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 
 		// parse and process result
 		resultTables := *queryResults.Tables
-		if len(resultTables) >= 1 {
-			table := resultTables[0]
+		for _, table := range resultTables {
 			if table.Rows == nil || table.Columns == nil {
 				// no results found, skip table
-				return
+				continue
 			}
 
 			for _, v := range *table.Rows {
@@ -136,7 +135,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 				workspaceAuditList = append(workspaceAuditList, validator.NewAzureObject(auditLine))
 			}
 		}
-		workspaceLogger.WithField("workspaces", workspaces).Debugf("finished query after %s", time.Since(startTime).String())
+		workspaceLogger.WithField("workspaces", workspaces).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
 
 		if config.Enrich {
 			auditor.enrichAzureObjects(ctx, workspaceSubscription, &workspaceAuditList)
