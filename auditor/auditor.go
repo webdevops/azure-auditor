@@ -421,8 +421,14 @@ func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
 	auditor.reportLock.Lock()
 	defer auditor.reportLock.Unlock()
 
+	// create empty report if no report
+	if _, ok := auditor.report[name]; !ok {
+		auditor.report[name] = NewAzureAuditorReport()
+	}
+
+	reportTime := time.Now()
 	auditor.reportUncommited[name] = NewAzureAuditorReport()
-	auditor.reportUncommited[name].UpdateTime = time.Now()
+	auditor.reportUncommited[name].UpdateTime = &reportTime
 	return auditor.reportUncommited[name]
 }
 
