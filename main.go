@@ -268,7 +268,12 @@ func startHttpServer() {
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
 			reportList := audit.GetReport()
 			if report, ok := reportList[reportName]; ok {
-				w.Header().Add("x-report-time", report.UpdateTime.Format(time.RFC1123Z))
+
+				if report.UpdateTime != nil {
+					w.Header().Add("x-report-time", report.UpdateTime.Format(time.RFC1123Z))
+				} else {
+					w.Header().Add("x-report-time", "init")
+				}
 
 				reportData := []auditor.AzureAuditorReportLine{}
 				for _, row := range report.Lines {

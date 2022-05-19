@@ -19,7 +19,7 @@ type (
 	AzureAuditorReport struct {
 		Summary    *AzureAuditorReportSummary
 		Lines      []*AzureAuditorReportLine
-		UpdateTime time.Time
+		UpdateTime *time.Time
 		lock       *sync.Mutex
 	}
 
