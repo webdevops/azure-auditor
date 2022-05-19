@@ -96,7 +96,6 @@
                 {{ $root.ReportTitle }} report "{{ $root.RequestReport }}"
                 <div class="toolbar">
                     <button type="button" class="btn btn-secondary" id="report-print">Print</button>
-                    <button type="button" class="btn btn-secondary" id="report-reset">Reset filter/settings</button>
 
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownReportDownload" data-bs-toggle="dropdown" aria-expanded="false">
@@ -108,7 +107,6 @@
                         </ul>
                     </div>
 
-                    <button type="button" class="btn btn-primary" id="report-reload">Reload</button>
                 </div>
             {{else}}
                 Azure Auditor
@@ -165,8 +163,24 @@
                 </form>
 
 
-                <div id="report-time">
-                    Last report update: <span class="time">unknown</span>
+                <div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-secondary" id="report-group-expand">Expand all</button>
+                                <button type="button" class="btn btn-secondary" id="report-group-collapse">Collapse all</button>
+                            </div>
+                        </div>
+                        <div class="col text-end">
+                            <button type="button" class="btn btn-secondary" id="report-reset">Reset filter/settings</button>
+                            <button type="button" class="btn btn-primary" id="report-reload">Reload</button>
+                        </div>
+                    </div>
+
+                    <div id="report-time" class="text-end">
+                        Last report update: <span class="time">unknown</span>
+                    </div>
                 </div>
                 <div id="report-table"></div>
             </div>

@@ -132,6 +132,8 @@ let table = new Tabulator("#report-table", {
     groupBy: "groupBy",
     groupToggleElement: "header",
 
+    placeholder: "no report data found",
+
     height: "800px",
     layout: "fitColumns",
 
@@ -212,15 +214,31 @@ table.on("tableBuilt", () => {
         });
     };
 
-    $(document).on("click", "#report-reload", refreshTableData);
+    $(document).on("click", "#report-reload", () => {refreshTableData()});
     $(document).on("click", "#report-download-csv", () => {table.download("csv", "report.csv")});
     $(document).on("click", "#report-download-json", () => {table.download("json", "report.json")});
     $(document).on("click", "#report-reset", () => {
+        table.blockRedraw();
         resetTableFilterSettings();
         window.location.hash = "";
         refreshTableData();
         refreshTableFilter();
+        table.restoreRedraw();
     });
+    $(document).on("click", "#report-group-collapse", () => {
+        table.blockRedraw();
+        table.getGroups().forEach((el,i) => {el.hide()});
+        table.restoreRedraw();
+    });
+    $(document).on("click", "#report-group-expand", () => {
+        table.blockRedraw();
+        table.getGroups().forEach((el,i) => {el.show()});
+        table.restoreRedraw();
+
+    });
+
+    window.foo = table;
+
 
     $(document).on("click", ".nav-link", function(e) {
         let el = $(this);
@@ -240,14 +258,18 @@ table.on("tableBuilt", () => {
 
         formSaveToHash();
 
+        table.blockRedraw();
         if (el.data("report-refresh")) {
             refreshTableData();
         }
         refreshTableFilter();
+        table.restoreRedraw();
     });
 
+    table.blockRedraw();
     resetTableFilterSettings();
     loadFromHash();
     refreshTableData();
     refreshTableFilter();
+    table.restoreRedraw();
 });

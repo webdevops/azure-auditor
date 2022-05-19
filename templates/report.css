@@ -48,9 +48,10 @@ h3 { font-size: 1.2rem; }
 
 .container-xxl { max-width: 100% !important; }
 
+.tabulator-group { user-select: none; }
 .tabulator-group small { font-size: 0.8rem; color: grey; margin-left: 0.25rem; }
 
-#report-time { font-size: 0.8rem; text-align: right; }
+#report-time { font-size: 0.8rem; }
 
 @media (min-width: 768px) {
     .navbar.fixed-left {
