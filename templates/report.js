@@ -125,7 +125,7 @@ let table = new Tabulator("#report-table", {
 
     columns: [
         {title:"Status", field:"status", formatter:"tickCross", width:115},
-        {title:reportName, field:"resource", formatter:yamlFormatter, formatterPrint:yamlFormatter},
+        {title:"Resource", field:"resource", formatter:yamlFormatter, formatterPrint:yamlFormatter},
         {title:"Rule", field:"rule", formatter:"plaintext",  width:300},
     ],
 
@@ -141,6 +141,7 @@ let table = new Tabulator("#report-table", {
     paginationSize: 10,
     paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
 
+    printHeader: $("#report-title").html(),
     printRowRange: "active",
     printAsHtml: true,
 

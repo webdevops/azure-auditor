@@ -35,14 +35,16 @@ small { font-size: 0.6em; }
 .show-config .audit-config { display: block; }
 
 .tabulator-cell { font-size: 0.8rem; white-space: pre !important; }
-.tabulator-print-table td { vertical-align: top; }
+
+.tabulator-print-header { text-align: center; font-size: 1.5rem; }
+.tabulator-print-table td { vertical-align: top; white-space: pre !important; }
 
 pre.code { font-size: 0.8rem; padding: 0.2rem; 0.5rem; background-color: lightgoldenrodyellow; max-height: 800px; overflow-y: scroll; border: 1px solid #aaa; }
 
 h1,h2,h3 { position: relative; }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.2rem; }
-.toolbar { position: absolute; right: 0; display: inline-block; }
+.toolbar { display: inline-block; }
 .toolbar button { margin-right: 0.5rem; }
 .toolbar .dropdown { display: inline-block; }
 

@@ -149,6 +149,13 @@ func startHttpServer() {
 		"rawJs": func(val string) template.JS {
 			return template.JS(val) // #nosec G203 this template function is for returning unescaped html
 		},
+		"reportTitle": func(val string) (reportTitle string) {
+			reportTitle = val
+			if pos := strings.Index(reportTitle, ":"); pos >= 0 {
+				reportTitle = strings.TrimPrefix(reportTitle, reportTitle[0:pos+1])
+			}
+			return
+		},
 		"include": func(name string, data interface{}) string {
 			var buf strings.Builder
 			err := tmpl.ExecuteTemplate(&buf, name, data)

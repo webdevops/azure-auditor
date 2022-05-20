@@ -91,27 +91,25 @@
 
 <main class="container-xxl">
     <div class="bg-light p-5 rounded">
-        <h2>
-            {{if $root.RequestReport}}
-                {{ $root.ReportTitle }} report "{{ $root.RequestReport }}"
-                <div class="toolbar">
-                    <button type="button" class="btn btn-secondary" id="report-print">Print</button>
 
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownReportDownload" data-bs-toggle="dropdown" aria-expanded="false">
-                            Download
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownReportDownload">
-                            <li><a class="dropdown-item" id="report-download-csv">csv</a></li>
-                            <li><a class="dropdown-item" id="report-download-json">json</a></li>
-                        </ul>
-                    </div>
+        <div class="row">
+            <div class="col" id="report-title">
+                <h2>{{if $root.RequestReport}}{{ $root.ReportTitle }} report "{{ $root.RequestReport }}"{{else}}Azure Auditor{{end}}</h2>
+            </div>
+            <div class="col text-end toolbar">
+                <button type="button" class="btn btn-secondary" id="report-print">Print</button>
 
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownReportDownload" data-bs-toggle="dropdown" aria-expanded="false">
+                        Download
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownReportDownload">
+                        <li><a class="dropdown-item" id="report-download-csv">csv</a></li>
+                        <li><a class="dropdown-item" id="report-download-json">json</a></li>
+                    </ul>
                 </div>
-            {{else}}
-                Azure Auditor
-            {{end}}
-        </h2>
+            </div>
+        </div>
 
         {{if $root.RequestReport }}
             <div class="mb-3 row audit-config hide-print">
