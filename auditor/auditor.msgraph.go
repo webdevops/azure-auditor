@@ -50,10 +50,8 @@ func (auditor *AzureAuditor) lookupPrincipalIdMap(ctx context.Context, principal
 
 		principalObjectIDChunkList := lookupPrincipalObjectIDList[i:end]
 
-		opts := getbyids.GetByIdsRequestBuilderPostOptions{
-			Body: getbyids.NewGetByIdsRequestBody(),
-		}
-		opts.Body.SetIds(principalObjectIDChunkList)
+		opts := getbyids.GetByIdsPostRequestBody{}
+		opts.SetIds(principalObjectIDChunkList)
 
 		result, err := auditor.azure.msGraph.DirectoryObjects().GetByIds().Post(&opts)
 		if err != nil {
