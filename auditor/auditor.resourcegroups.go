@@ -36,7 +36,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 
 func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := resources.NewGroupsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
 	result, err := client.ListComplete(ctx, "", nil)
 	if err != nil {

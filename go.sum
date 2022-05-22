@@ -302,6 +302,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMTY=
 github.com/webdevops/go-common v0.0.0-20220507163513-4f4eb1b57c0d h1:XVRohW/sWIEJdJUzT9rkjA9YgYcm+FY1pmzwAkwbvrw=
 github.com/webdevops/go-common v0.0.0-20220507163513-4f4eb1b57c0d/go.mod h1:StsDbNavo/7SyvTBMzsqaiTy0rK3wIF1dSJk5vqOaws=
+github.com/webdevops/go-common v0.0.0-20220521200912-e60c528ac8d5 h1:6C+ehA85qGvn2XgyhyRBVy2dNChyDjIEa/QqjbYG55o=
+github.com/webdevops/go-common v0.0.0-20220521200912-e60c528ac8d5/go.mod h1:StsDbNavo/7SyvTBMzsqaiTy0rK3wIF1dSJk5vqOaws=
 github.com/yosida95/uritemplate/v3 v3.0.2 h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=
 github.com/yosida95/uritemplate/v3 v3.0.2/go.mod h1:ILOh0sOhIJR3+L/8afwt/kE++YT040gmv5BQTMR2HP4=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

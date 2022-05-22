@@ -21,7 +21,7 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/webdevops/go-common v0.0.0-20220507163513-4f4eb1b57c0d
+	github.com/webdevops/go-common v0.0.0-20220521200912-e60c528ac8d5
 	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99
 )
 

@@ -36,7 +36,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 
 func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	client := features.NewClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
 	result, err := client.ListAllComplete(ctx)
 	if err != nil {

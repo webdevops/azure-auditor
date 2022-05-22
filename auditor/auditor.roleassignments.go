@@ -43,7 +43,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
 
 	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
 	response, err := client.ListComplete(ctx, "", "")
 
@@ -104,7 +104,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 
 func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]authorization.RoleDefinition {
 	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
 	response, err := client.ListComplete(ctx, *subscription.ID, "")
 

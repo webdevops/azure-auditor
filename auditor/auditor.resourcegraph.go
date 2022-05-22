@@ -40,7 +40,7 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 func (auditor *AzureAuditor) queryResourceGraph(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
 	// Create and authorize a ResourceGraph client
 	resourcegraphClient := resourcegraph.NewWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint)
-	auditor.decorateAzureClient(&resourcegraphClient.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&resourcegraphClient.Client, auditor.azure.client.GetAuthorizer())
 
 	requestQueryTop := int32(ResourceGraphQueryOptionsTop)
 	requestQuerySkip := int32(0)

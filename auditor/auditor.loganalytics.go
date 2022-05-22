@@ -7,7 +7,6 @@ import (
 	operationalinsightsResource "github.com/Azure/azure-sdk-for-go/profiles/latest/operationalinsights/mgmt/operationalinsights"
 	operationalinsightsQuery "github.com/Azure/azure-sdk-for-go/services/operationalinsights/v1/operationalinsights"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2021-01-01/subscriptions"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azure"
@@ -45,11 +44,7 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.
 func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.Entry, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
 	// Create and authorize a LogAnalytics client
 	logAnalyticsClient := operationalinsightsQuery.NewQueryClientWithBaseURI(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights + OperationInsightsWorkspaceUrlSuffix)
-	authorizer, err := auth.NewAuthorizerFromEnvironmentWithResource(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights)
-	if err != nil {
-		log.Panic(err)
-	}
-	auditor.decorateAzureClient(&logAnalyticsClient.Client, authorizer)
+	auditor.decorateAzureClient(&logAnalyticsClient.Client, auditor.azure.client.GetAuthorizerWithResource(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights))
 
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
@@ -156,7 +151,7 @@ func (auditor *AzureAuditor) lookupWorkspaceResource(ctx context.Context, resour
 	}
 
 	client := operationalinsightsResource.NewWorkspacesClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, resourceInfo.Subscription)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.Authorizer)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
 	workspace, azureErr := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName)
 	if azureErr != nil {
