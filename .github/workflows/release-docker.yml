@@ -22,7 +22,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-          args: -E exportloopref,gofmt --timeout=30m
+          args: -E exportloopref,gofmt --timeout=60m
 
       - name: Docker meta
         id: docker_meta
