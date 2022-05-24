@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest/to"
-	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
+	jsonserialization "github.com/microsoft/kiota-serialization-json-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/directoryobjects/getbyids"
 )
 
