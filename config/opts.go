@@ -42,8 +42,8 @@ type (
 			WaitTime time.Duration `long:"loganalytics.waitduration"           env:"LOGANALYTICS_WAITDURATION"     description:"Wait duration between LogAnalytics queries" default:"5s"`
 		}
 
-		Config []string `long:"config"  env:"CONFIG"   description:"Config file path"     required:"true"`
-		DryRun bool     `long:"dry-run"  env:"DRYRUN"  description:"Dry Run (report only)"`
+		Config []string `long:"config"   env:"CONFIG" env-delim:":"   description:"Config file path"      required:"true"`
+		DryRun bool     `long:"dry-run"  env:"DRYRUN"                 description:"Dry Run (report only)"`
 
 		// general options
 		ServerBind       string `long:"bind" env:"SERVER_BIND"   description:"Server address" env-delim:":" default:":8080"`
