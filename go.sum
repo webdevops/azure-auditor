@@ -221,10 +221,6 @@ github.com/microsoft/kiota-serialization-json-go v0.4.0 h1:EDMLoSNTgrUE6w/G7QGIh
 github.com/microsoft/kiota-serialization-json-go v0.4.0/go.mod h1:InkiQLhTkWLNJdjLm4xlZVpAsff65g/7q/9s359aD6M=
 github.com/microsoft/kiota-serialization-text-go v0.3.0 h1:lJITrVXy+CqU8bcvdDCAW+pVrsIzLgJM3GJzzVdx6c0=
 github.com/microsoft/kiota-serialization-text-go v0.3.0/go.mod h1:oHWZXrd5ArbEFn0CdunoCdRaHtPIFfHeZ40XoKpDVyg=
-github.com/microsoft/kiota/abstractions/go v0.0.0-20220314101957-d2823fe62079 h1:M2GmF6QszBwSbAF5xvps1BJCLwRZOYKbPMeOMcFsqJM=
-github.com/microsoft/kiota/abstractions/go v0.0.0-20220314101957-d2823fe62079/go.mod h1:BUv5PFNuBLFXQlDtarjdgqdqDjee3FgfjrNkfZlA5us=
-github.com/microsoft/kiota/serialization/go/json v0.0.0-20220331211134-ada6b745f15a h1:DvSXF2E1yO+Yjouez4PklcTT8FDbaoK2Q7p2b2OCdOM=
-github.com/microsoft/kiota/serialization/go/json v0.0.0-20220331211134-ada6b745f15a/go.mod h1:Jtz7hHhcXIqLk4cVhv1+4sC8PKtEgu2qLeQawnRp0JU=
 github.com/microsoftgraph/msgraph-sdk-go v0.24.0 h1:UcMI3H2GBmCjwEooOwXRkBrp5AlJx+Zv/IuLhf7ALZU=
 github.com/microsoftgraph/msgraph-sdk-go v0.24.0/go.mod h1:fJhCJmNqclHLHQROZgJ9s8z99pMJX+GeD2A19mbyIEQ=
 github.com/microsoftgraph/msgraph-sdk-go-core v0.25.0 h1:sy7UD56iAph9+4i+eVRWKWX/MmWDaf5bur3GnphCXQc=
@@ -300,8 +296,6 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMTY=
-github.com/webdevops/go-common v0.0.0-20220507163513-4f4eb1b57c0d h1:XVRohW/sWIEJdJUzT9rkjA9YgYcm+FY1pmzwAkwbvrw=
-github.com/webdevops/go-common v0.0.0-20220507163513-4f4eb1b57c0d/go.mod h1:StsDbNavo/7SyvTBMzsqaiTy0rK3wIF1dSJk5vqOaws=
 github.com/webdevops/go-common v0.0.0-20220521200912-e60c528ac8d5 h1:6C+ehA85qGvn2XgyhyRBVy2dNChyDjIEa/QqjbYG55o=
 github.com/webdevops/go-common v0.0.0-20220521200912-e60c528ac8d5/go.mod h1:StsDbNavo/7SyvTBMzsqaiTy0rK3wIF1dSJk5vqOaws=
 github.com/yosida95/uritemplate/v3 v3.0.2 h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=
