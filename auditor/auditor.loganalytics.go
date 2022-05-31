@@ -6,7 +6,6 @@ import (
 
 	operationalinsightsResource "github.com/Azure/azure-sdk-for-go/profiles/latest/operationalinsights/mgmt/operationalinsights"
 	operationalinsightsQuery "github.com/Azure/azure-sdk-for-go/services/operationalinsights/v1/operationalinsights"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2021-01-01/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azure"
@@ -49,7 +48,6 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
 	for _, mainWorkspaceResourceId := range *config.Workspaces {
-		var workspaceSubscription *subscriptions.Subscription
 		workspaceAuditList := []*validator.AzureObject{}
 
 		workspaceLogger := logger.WithField("logAnalyticsWorkspace", mainWorkspaceResourceId)
@@ -61,8 +59,6 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 
 		// lookup subscription from workspace id
 		if v, ok := subscriptionList[mainWorkspaceInfo.Subscription]; ok {
-			workspaceSubscription = &v
-
 			workspaceLogger = workspaceLogger.WithFields(log.Fields{
 				"subscriptionID":   to.String(v.SubscriptionID),
 				"subscriptionName": to.String(v.DisplayName),
@@ -133,7 +129,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 		workspaceLogger.WithField("workspaces", workspaces).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
 
 		if config.Enrich {
-			auditor.enrichAzureObjects(ctx, workspaceSubscription, &workspaceAuditList)
+			auditor.enrichAzureObjects(ctx, nil, &workspaceAuditList)
 		}
 
 		list = append(list, workspaceAuditList...)

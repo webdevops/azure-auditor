@@ -32,6 +32,19 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 	for key, row := range *list {
 		obj := (*(*list)[key])
 
+		// detect subscription info by row (if subscription is not specified before)
+		if subscription == nil {
+			resourceGroupList = map[string]resources.Group{}
+			resourcesList = map[string]resources.GenericResourceExpanded{}
+
+			if subscriptionID, ok := (*row)["subscription.id"].(string); ok && subscriptionID != "" {
+				if val, ok := subscriptionList[subscriptionID]; ok {
+					resourceGroupList = auditor.getResourceGroupList(ctx, &val)
+					resourcesList = auditor.getResourceList(ctx, &val)
+				}
+			}
+		}
+
 		// enrich with subscription information
 		if subscriptionID, ok := (*row)["subscription.id"].(string); ok && subscriptionID != "" {
 			if subscription, ok := subscriptionList[subscriptionID]; ok {
@@ -42,7 +55,6 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 					obj[valKey] = to.String(tagValue)
 				}
 			}
-
 		}
 
 		// enrich with resourcegroup information
