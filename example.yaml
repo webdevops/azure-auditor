@@ -10,6 +10,13 @@ resourceGraph:
       query: |-
         resources
 
+      enrich: true
+
+      mapping:
+        subscriptionId: subscription.id
+        resourceGroup: resourcegroup.name
+        id: resource.id
+
       rules: []
 
 roleAssignments:
