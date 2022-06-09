@@ -135,7 +135,11 @@ let table = new Tabulator("#report-table", {
     placeholder: "no report data found",
 
     height: "800px",
+    renderVerticalBuffer: 20000,
     layout: "fitColumns",
+
+    renderVertical: "virtual",
+    renderHorizontal: "virtual",
 
     pagination: true,
     paginationSize: 10,
@@ -225,6 +229,7 @@ table.on("tableBuilt", () => {
         refreshTableData();
         refreshTableFilter();
         table.restoreRedraw();
+        table.redraw();
     });
     $(document).on("click", "#report-group-collapse", () => {
         table.blockRedraw();
