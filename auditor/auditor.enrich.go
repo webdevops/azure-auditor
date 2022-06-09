@@ -80,8 +80,9 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Cont
 			}
 
 			// enrich with roledefinition information
-			if val, ok := (*row)["roledefinition.id"].(string); ok && val != "" {
-				if roleDefinition, ok := roleDefinitionList[val]; ok {
+			if roleDefinitionId, ok := (*row)["roledefinition.id"].(string); ok && roleDefinitionId != "" {
+				roleDefinitionId = strings.ToLower(roleDefinitionId)
+				if roleDefinition, ok := roleDefinitionList[strings.ToLower(roleDefinitionId)]; ok {
 					obj["roledefinition.name"] = to.String(roleDefinition.RoleName)
 					obj["roledefinition.type"] = to.String(roleDefinition.RoleType)
 					obj["roledefinition.description"] = to.String(roleDefinition.Description)
