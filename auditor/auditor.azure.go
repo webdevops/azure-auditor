@@ -6,6 +6,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
@@ -116,6 +117,40 @@ func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *
 	}
 
 	auditor.logger.Infof("found %v Azure Resoures for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
+
+	// save to cache
+	_ = auditor.cache.Add(cacheKey, list, auditor.cacheExpiry)
+
+	return
+}
+
+func (auditor *AzureAuditor) getRoleDefinitionList(ctx context.Context, subscription *subscriptions.Subscription) (list map[string]authorization.RoleDefinition) {
+	auditor.locks.resources.Lock()
+	defer auditor.locks.resources.Unlock()
+
+	list = map[string]authorization.RoleDefinition{}
+
+	cacheKey := "roledefinitions:" + *subscription.SubscriptionID
+	if val, ok := auditor.cache.Get(cacheKey); ok {
+		// fetched from cache
+		list = val.(map[string]authorization.RoleDefinition)
+		return
+	}
+
+	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
+	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
+
+	listResult, err := client.ListComplete(ctx, *subscription.ID, "")
+	if err != nil {
+		auditor.logger.Panic(err)
+	}
+
+	for _, item := range *listResult.Response().Value {
+		resourceID := strings.ToLower(to.String(item.ID))
+		list[resourceID] = item
+	}
+
+	auditor.logger.Infof("found %v Azure RoleDefinitions for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
 
 	// save to cache
 	_ = auditor.cache.Add(cacheKey, list, auditor.cacheExpiry)

@@ -40,8 +40,6 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
 	list = []*validator.AzureObject{}
 
-	roleDefinitionList := auditor.fetchRoleDefinitionList(ctx, logger, subscription)
-
 	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
 	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
 
@@ -72,7 +70,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		obj := map[string]interface{}{
 			"resource.id":        stringPtrToStringLower(roleAssignment.ID),
 			"subscription.id":    to.String(subscription.SubscriptionID),
-			"role.id":            stringPtrToStringLower(roleAssignment.RoleDefinitionID),
+			"roledefinition.id":  stringPtrToStringLower(roleAssignment.RoleDefinitionID),
 			"principal.objectid": stringPtrToStringLower(roleAssignment.PrincipalID),
 			"resourcegroup.name": azureScope.ResourceGroup,
 
@@ -82,12 +80,6 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 			"roleassignment.scopetype":   scopeType,
 			"roleassignment.createdon":   roleAssignment.CreatedOn.Time,
 			"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
-		}
-
-		if roleDefinition, exists := roleDefinitionList[stringPtrToStringLower(roleAssignment.RoleDefinitionID)]; exists {
-			obj["role.name"] = stringPtrToStringLower(roleDefinition.RoleName)
-			obj["role.type"] = stringPtrToStringLower(roleDefinition.RoleType)
-			obj["role.description"] = stringPtrToStringLower(roleDefinition.Description)
 		}
 
 		list = append(list, validator.NewAzureObject(obj))
@@ -100,30 +92,4 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 	auditor.enrichAzureObjects(ctx, subscription, &list)
 
 	return
-}
-
-func (auditor *AzureAuditor) fetchRoleDefinitionList(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) map[string]authorization.RoleDefinition {
-	client := authorization.NewRoleDefinitionsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	response, err := client.ListComplete(ctx, *subscription.ID, "")
-
-	if err != nil {
-		logger.Panic(err)
-	}
-
-	roleDefinitionList := map[string]authorization.RoleDefinition{}
-
-	for response.NotDone() {
-		roleDefinition := response.Value()
-
-		roleDefinitionID := stringPtrToStringLower(roleDefinition.ID)
-		roleDefinitionList[roleDefinitionID] = roleDefinition
-
-		if response.NextWithContext(ctx) != nil {
-			break
-		}
-	}
-
-	return roleDefinitionList
 }

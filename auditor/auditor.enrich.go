@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
 	"github.com/Azure/go-autorest/autorest/to"
 	azureCommon "github.com/webdevops/go-common/azure"
 
@@ -15,13 +16,15 @@ import (
 
 func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
 	var (
-		resourceGroupList map[string]resources.Group
-		resourcesList     map[string]resources.GenericResourceExpanded
+		resourceGroupList  map[string]resources.Group
+		resourcesList      map[string]resources.GenericResourceExpanded
+		roleDefinitionList map[string]authorization.RoleDefinition
 	)
 	subscriptionList := auditor.getSubscriptionList(ctx)
 	if subscription != nil {
 		resourceGroupList = auditor.getResourceGroupList(ctx, subscription)
 		resourcesList = auditor.getResourceList(ctx, subscription)
+		roleDefinitionList = auditor.getRoleDefinitionList(ctx, subscription)
 	}
 
 	inheritTag := map[string]string{}
@@ -36,11 +39,13 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		if subscription == nil {
 			resourceGroupList = map[string]resources.Group{}
 			resourcesList = map[string]resources.GenericResourceExpanded{}
+			roleDefinitionList = map[string]authorization.RoleDefinition{}
 
 			if subscriptionID, ok := (*row)["subscription.id"].(string); ok && subscriptionID != "" {
 				if val, ok := subscriptionList[subscriptionID]; ok {
 					resourceGroupList = auditor.getResourceGroupList(ctx, &val)
 					resourcesList = auditor.getResourceList(ctx, &val)
+					roleDefinitionList = auditor.getRoleDefinitionList(ctx, &val)
 				}
 			}
 		}
@@ -74,6 +79,15 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 						inheritTag[tagName] = tagValueStr
 					}
 				}
+			}
+		}
+
+		// enrich with roledefinition information
+		if val, ok := (*row)["roledefinition.id"].(string); ok && val != "" {
+			if roleDefinition, ok := roleDefinitionList[val]; ok {
+				obj["roledefinition.name"] = to.String(roleDefinition.RoleName)
+				obj["roledefinition.type"] = to.String(roleDefinition.RoleType)
+				obj["roledefinition.description"] = to.String(roleDefinition.Description)
 			}
 		}
 
