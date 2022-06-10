@@ -327,6 +327,25 @@ func startHttpServer() {
 					reportData = append(reportData, line)
 				}
 
+				// unique filter
+				reportDataUnique := map[[20]byte]auditor.AzureAuditorReportLine{}
+				for _, line := range reportData {
+					hash := line.Hash()
+
+					if existingLine, exists := reportDataUnique[hash]; exists {
+						existingLine.Count++
+						reportDataUnique[hash] = existingLine
+					} else {
+						line.Count = 1
+						reportDataUnique[hash] = line
+					}
+				}
+				reportData = []auditor.AzureAuditorReportLine{}
+				for _, line := range reportDataUnique {
+					reportData = append(reportData, line)
+				}
+
+				// json encoding
 				data, err := json.Marshal(reportData)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)

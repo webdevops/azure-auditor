@@ -1,6 +1,7 @@
 package auditor
 
 import (
+	"crypto/sha1" // #nosec G505
 	"encoding/json"
 	"regexp"
 	"sync"
@@ -33,6 +34,7 @@ type (
 		RuleID   string                 `json:"rule"`
 		GroupBy  interface{}            `json:"groupBy"`
 		Status   bool                   `json:"status"`
+		Count    uint64                 `json:"count"`
 	}
 )
 
@@ -44,6 +46,11 @@ func NewAzureAuditorReport() *AzureAuditorReport {
 	return report
 }
 
+func (reportLine *AzureAuditorReportLine) Hash() [20]byte {
+	hashData, _ := json.Marshal(reportLine)
+	return sha1.Sum(hashData) // #nosec G401
+}
+
 func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data := map[string]interface{}{}
 
@@ -52,6 +59,7 @@ func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data["rule"] = reportLine.RuleID
 	data["status"] = reportLine.Status
 	data["groupBy"] = reportLine.GroupBy
+	data["count"] = reportLine.Count
 
 	data["resource"] = yamlCleanupRegexp.ReplaceAllString(data["resource"].(string), "$1: $2")
 
