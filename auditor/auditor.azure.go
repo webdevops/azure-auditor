@@ -14,38 +14,15 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[
 	auditor.locks.subscriptions.Lock()
 	defer auditor.locks.subscriptions.Unlock()
 
-	list = map[string]subscriptions.Subscription{}
-
 	if val, ok := auditor.cache.Get("subscriptions"); ok {
 		// fetched from cache
 		list = val.(map[string]subscriptions.Subscription)
 		return
 	}
 
-	client := subscriptions.NewClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	if len(auditor.Opts.Azure.Subscription) == 0 {
-		result, err := client.ListComplete(ctx)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		for result.NotDone() {
-			subscription := result.Value()
-			list[to.String(subscription.SubscriptionID)] = subscription
-			if result.NextWithContext(ctx) != nil {
-				break
-			}
-		}
-	} else {
-		for _, subId := range auditor.Opts.Azure.Subscription {
-			result, err := client.Get(ctx, subId)
-			if err != nil {
-				auditor.logger.Panic(err)
-			}
-			list[to.String(result.SubscriptionID)] = result
-		}
+	list, err := auditor.azure.client.ListSubscriptions(ctx)
+	if err != nil {
+		auditor.logger.Panic(err)
 	}
 
 	auditor.logger.Infof("found %v Azure Subscriptions (cache update)", len(list))
