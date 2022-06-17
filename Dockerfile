@@ -33,6 +33,6 @@ RUN ["/azure-auditor", "--help"]
 FROM gcr.io/distroless/static
 ENV LOG_JSON=1
 COPY --from=test /azure-auditor /
-COPY --from=test /go/src/github.com/webdevops/azure-auditor/templates/ /templates/
+COPY --from=test /templates/ /templates/
 USER 1000:1000
 ENTRYPOINT ["/azure-auditor"]
