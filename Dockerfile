@@ -22,6 +22,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 # Test
 #############################################
 FROM gcr.io/distroless/static as test
+USER 0:0
 WORKDIR /app
 COPY --from=build /go/src/github.com/webdevops/azure-auditor/azure-auditor .
 COPY --from=build /go/src/github.com/webdevops/azure-auditor/templates ./templates
