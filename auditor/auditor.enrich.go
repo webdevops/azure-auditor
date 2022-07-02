@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	azureCommon "github.com/webdevops/go-common/azure"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
+func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *armsubscriptions.Subscription, list *[]*validator.AzureObject) {
 	if subscription != nil {
 		// fixed subscription
 		auditor.enrichAzureObjectsWithSubscription(ctx, subscription, list)
@@ -28,7 +28,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		subscriptionList := auditor.getSubscriptionList(ctx)
 		for _, subscriptionId := range subscriptionIdList {
 			if subscription, ok := subscriptionList[subscriptionId]; ok {
-				auditor.enrichAzureObjectsWithSubscription(ctx, &subscription, list)
+				auditor.enrichAzureObjectsWithSubscription(ctx, subscription, list)
 			}
 		}
 	}
@@ -37,7 +37,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 	auditor.enrichAzureObjectsWithMsGraphPrincipals(ctx, list)
 }
 
-func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
+func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Context, subscription *armsubscriptions.Subscription, list *[]*validator.AzureObject) {
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 	resourcesList := auditor.getResourceList(ctx, subscription)
 	roleDefinitionList := auditor.getRoleDefinitionList(ctx, subscription)
@@ -83,9 +83,9 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Cont
 			if roleDefinitionId, ok := (*row)["roledefinition.id"].(string); ok && roleDefinitionId != "" {
 				roleDefinitionId = strings.ToLower(roleDefinitionId)
 				if roleDefinition, ok := roleDefinitionList[strings.ToLower(roleDefinitionId)]; ok {
-					obj["roledefinition.name"] = to.String(roleDefinition.RoleName)
-					obj["roledefinition.type"] = to.String(roleDefinition.RoleType)
-					obj["roledefinition.description"] = to.String(roleDefinition.Description)
+					obj["roledefinition.name"] = to.String(roleDefinition.Properties.RoleName)
+					obj["roledefinition.type"] = to.String(roleDefinition.Properties.RoleType)
+					obj["roledefinition.description"] = to.String(roleDefinition.Properties.Description)
 				}
 			}
 

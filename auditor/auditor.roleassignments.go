@@ -3,10 +3,9 @@ package auditor
 import (
 	"context"
 	"strings"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
-	"github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2020-04-01-preview/authorization"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azure"
@@ -15,7 +14,7 @@ import (
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -37,55 +36,54 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	list = []*validator.AzureObject{}
 
-	client := authorization.NewRoleAssignmentsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	response, err := client.ListComplete(ctx, "", "")
-
+	client, err := armauthorization.NewRoleAssignmentsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)
 	}
 
-	for response.NotDone() {
-		roleAssignment := response.Value()
-
-		scopeResourceId := strings.ToLower(*roleAssignment.Scope)
-
-		azureScope, _ := azureCommon.ParseResourceId(scopeResourceId)
-
-		scopeType := ""
-		if azureScope.ResourceName != "" {
-			scopeType = "resource"
-		} else if azureScope.ResourceGroup != "" {
-			scopeType = "resourcegroup"
-		} else if azureScope.Subscription != "" {
-			scopeType = "subscription"
-		} else if strings.HasPrefix(scopeResourceId, "/providers/microsoft.management/managementgroups/") {
-			scopeType = "managementgroup"
+	pager := client.NewListPager(nil)
+	for pager.More() {
+		result, err := pager.NextPage(ctx)
+		if err != nil {
+			logger.Panic(err)
 		}
 
-		obj := map[string]interface{}{
-			"resource.id":        stringPtrToStringLower(roleAssignment.ID),
-			"subscription.id":    to.String(subscription.SubscriptionID),
-			"roledefinition.id":  stringPtrToStringLower(roleAssignment.RoleDefinitionID),
-			"principal.objectid": stringPtrToStringLower(roleAssignment.PrincipalID),
-			"resourcegroup.name": azureScope.ResourceGroup,
+		for _, roleAssignment := range result.RoleAssignmentListResult.Value {
+			scopeResourceId := strings.ToLower(to.String(roleAssignment.Properties.Scope))
 
-			"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
-			"roleassignment.description": to.String(roleAssignment.Description),
-			"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Scope),
-			"roleassignment.scopetype":   scopeType,
-			"roleassignment.createdon":   roleAssignment.CreatedOn.Time,
-			"roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
-		}
+			azureScope, _ := azureCommon.ParseResourceId(scopeResourceId)
 
-		list = append(list, validator.NewAzureObject(obj))
+			scopeType := ""
+			if azureScope.ResourceName != "" {
+				scopeType = "resource"
+			} else if azureScope.ResourceGroup != "" {
+				scopeType = "resourcegroup"
+			} else if azureScope.Subscription != "" {
+				scopeType = "subscription"
+			} else if strings.HasPrefix(scopeResourceId, "/providers/microsoft.management/managementgroups/") {
+				scopeType = "managementgroup"
+			}
 
-		if response.NextWithContext(ctx) != nil {
-			break
+			obj := map[string]interface{}{
+				"resource.id":        stringPtrToStringLower(roleAssignment.ID),
+				"subscription.id":    to.String(subscription.SubscriptionID),
+				"roledefinition.id":  stringPtrToStringLower(roleAssignment.Properties.RoleDefinitionID),
+				"principal.objectid": stringPtrToStringLower(roleAssignment.Properties.PrincipalID),
+				"resourcegroup.name": azureScope.ResourceGroup,
+
+				"roleassignment.type": stringPtrToStringLower(roleAssignment.Type),
+				// "roleassignment.description": to.String(roleAssignment.Properties.Description),
+				"roleassignment.scope":     stringPtrToStringLower(roleAssignment.Properties.Scope),
+				"roleassignment.scopetype": scopeType,
+				// "roleassignment.createdon":   roleAssignment.CreatedOn.Time,
+				// "roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
+			}
+
+			list = append(list, validator.NewAzureObject(obj))
+
 		}
 	}
 

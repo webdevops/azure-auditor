@@ -41,6 +41,7 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.
 }
 
 func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.Entry, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
+	// armoperationalinsights.NewQueriesClient()
 	// Create and authorize a LogAnalytics client
 	logAnalyticsClient := operationalinsightsQuery.NewQueryClientWithBaseURI(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights + OperationInsightsWorkspaceUrlSuffix)
 	auditor.decorateAzureClient(&logAnalyticsClient.Client, auditor.azure.client.GetAuthorizerWithResource(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights))

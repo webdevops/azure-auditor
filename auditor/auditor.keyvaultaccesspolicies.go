@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/mgmt/keyvault"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +15,7 @@ import (
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -36,46 +36,48 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
-	client := keyvault.NewVaultsClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	result, err := client.ListComplete(ctx, nil)
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+	client, err := armkeyvault.NewVaultsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)
 	}
-	for _, item := range *result.Response().Value {
-		resourceInfo, _ := azure.ParseResourceID(to.String(item.ID))
-		keyvaultResource, err := client.Get(ctx, resourceInfo.ResourceGroup, to.String(item.Name))
+
+	pager := client.NewListPager(nil)
+	for pager.More() {
+		result, err := pager.NextPage(ctx)
 		if err != nil {
 			logger.Panic(err)
 		}
 
-		if keyvaultResource.Properties.AccessPolicies != nil {
-			for _, accessPolicy := range *keyvaultResource.Properties.AccessPolicies {
-				applicationId := ""
-				if accessPolicy.ApplicationID != nil {
-					applicationId = accessPolicy.ApplicationID.String()
+		for _, item := range result.ResourceListResult.Value {
+			resourceInfo, _ := azure.ParseResourceID(to.String(item.ID))
+
+			keyvaultResource, err := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName, nil)
+			if err != nil {
+				logger.Panic(err)
+			}
+
+			if keyvaultResource.Properties.AccessPolicies != nil {
+				for _, accessPolicy := range keyvaultResource.Properties.AccessPolicies {
+					azureResource, _ := azureCommon.ParseResourceId(*item.ID)
+
+					obj := map[string]interface{}{
+						"resource.id":             stringPtrToStringLower(item.ID),
+						"subscription.id":         to.String(subscription.SubscriptionID),
+						"resourcegroup.name":      azureResource.ResourceGroup,
+						"principal.applicationid": stringPtrToStringLower(accessPolicy.ApplicationID),
+						"principal.objectid":      stringPtrToStringLower(accessPolicy.ObjectID),
+
+						"keyvault.name": azureResource.ResourceName,
+
+						"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
+						"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
+						"permissions.keys":         keyvaultKeyPermissionsToStringList(accessPolicy.Permissions.Keys),
+						"permissions.storage":      keyvaultStoragePermissionsToStringList(accessPolicy.Permissions.Storage),
+					}
+
+					list = append(list, validator.NewAzureObject(obj))
 				}
-
-				azureResource, _ := azureCommon.ParseResourceId(*item.ID)
-
-				obj := map[string]interface{}{
-					"resource.id":             stringPtrToStringLower(item.ID),
-					"subscription.id":         to.String(subscription.SubscriptionID),
-					"resourcegroup.name":      azureResource.ResourceGroup,
-					"principal.applicationid": applicationId,
-					"principal.objectid":      stringPtrToStringLower(accessPolicy.ObjectID),
-
-					"keyvault.name": azureResource.ResourceName,
-
-					"permissions.certificates": keyvaultCertificatePermissionsToStringList(accessPolicy.Permissions.Certificates),
-					"permissions.secrets":      keyvaultSecretPermissionsToStringList(accessPolicy.Permissions.Secrets),
-					"permissions.keys":         keyvaultKeyPermissionsToStringList(accessPolicy.Permissions.Keys),
-					"permissions.storage":      keyvaultStoragePermissionsToStringList(accessPolicy.Permissions.Storage),
-				}
-
-				list = append(list, validator.NewAzureObject(obj))
 			}
 		}
 	}
@@ -85,40 +87,40 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 	return
 }
 
-func keyvaultCertificatePermissionsToStringList(val *[]keyvault.CertificatePermissions) (list []string) {
+func keyvaultCertificatePermissionsToStringList(val []*armkeyvault.CertificatePermissions) (list []string) {
 	if val != nil {
-		for _, row := range *val {
-			val := strings.ToLower(string(row))
+		for _, row := range val {
+			val := strings.ToLower(string(*row))
 			list = append(list, val)
 		}
 	}
 	return
 }
 
-func keyvaultSecretPermissionsToStringList(val *[]keyvault.SecretPermissions) (list []string) {
+func keyvaultSecretPermissionsToStringList(val []*armkeyvault.SecretPermissions) (list []string) {
 	if val != nil {
-		for _, row := range *val {
-			val := strings.ToLower(string(row))
+		for _, row := range val {
+			val := strings.ToLower(string(*row))
 			list = append(list, val)
 		}
 	}
 	return
 }
 
-func keyvaultKeyPermissionsToStringList(val *[]keyvault.KeyPermissions) (list []string) {
+func keyvaultKeyPermissionsToStringList(val []*armkeyvault.KeyPermissions) (list []string) {
 	if val != nil {
-		for _, row := range *val {
-			val := strings.ToLower(string(row))
+		for _, row := range val {
+			val := strings.ToLower(string(*row))
 			list = append(list, val)
 		}
 	}
 	return
 }
 
-func keyvaultStoragePermissionsToStringList(val *[]keyvault.StoragePermissions) (list []string) {
+func keyvaultStoragePermissionsToStringList(val []*armkeyvault.StoragePermissions) (list []string) {
 	if val != nil {
-		for _, row := range *val {
-			val := strings.ToLower(string(row))
+		for _, row := range val {
+			val := strings.ToLower(string(*row))
 			list = append(list, val)
 		}
 	}

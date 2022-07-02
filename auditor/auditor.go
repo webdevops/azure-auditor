@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	a "github.com/microsoft/kiota-authentication-azure-go"
@@ -17,7 +17,8 @@ import (
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	azureCommon "github.com/webdevops/go-common/azure"
+
+	azureCommon "github.com/webdevops/azure-auditor/azure"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -173,7 +174,7 @@ func (auditor *AzureAuditor) Run() {
 						queryConfig.Reset()
 					}
 				},
-				func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+				func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 					contextLogger := log.WithField("configQueryName", queryName)
 					auditor.auditResourceGraph(ctx, contextLogger, subscription, queryName, resourceGraphConfig, report, callback)
 				},
@@ -280,7 +281,7 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCal
 	}
 }
 
-func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
+func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
 	contextLogger := auditor.logger.WithFields(log.Fields{
 		"report": name,
 	})
@@ -305,13 +306,13 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 					subscription := row
 
 					wg.Add(1)
-					go func(subscription subscriptions.Subscription) {
+					go func(subscription *armsubscriptions.Subscription) {
 						defer wg.Done()
 						callLogger := contextLogger.WithFields(log.Fields{
 							"subscriptionID":   to.String(subscription.SubscriptionID),
 							"subscriptionName": to.String(subscription.DisplayName),
 						})
-						callback(ctx, callLogger, &subscription, report, metricCallbackChannel)
+						callback(ctx, callLogger, subscription, report, metricCallbackChannel)
 					}(subscription)
 				}
 
