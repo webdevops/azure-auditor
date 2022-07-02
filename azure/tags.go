@@ -35,14 +35,7 @@ func AddResourceTagsToPrometheusLabels(labels prometheus.Labels, resourceTags in
 }
 
 func AddResourceTagsToPrometheusLabelsWithCustomPrefix(labels prometheus.Labels, resourceTags interface{}, tags []string, labelPrefix string) prometheus.Labels {
-	resourceTagMap := map[string]string{}
-
-	switch v := resourceTags.(type) {
-	case map[string]*string:
-		resourceTagMap = to.StringMap(v)
-	case map[string]string:
-		resourceTagMap = v
-	}
+	resourceTagMap := translateTagsToStringMap(resourceTags)
 
 	// normalize
 	resourceTagMap = normalizeTags(resourceTagMap)
@@ -95,4 +88,15 @@ func normalizeTags(tags map[string]string) map[string]string {
 	}
 
 	return ret
+}
+
+func translateTagsToStringMap(tags interface{}) map[string]string {
+	switch v := tags.(type) {
+	case map[string]*string:
+		return to.StringMap(v)
+	case map[string]string:
+		return v
+	}
+
+	return map[string]string{}
 }
