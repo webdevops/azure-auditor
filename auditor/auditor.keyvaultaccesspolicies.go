@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 
-	azureCommon "github.com/webdevops/azure-auditor/armclient"
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )

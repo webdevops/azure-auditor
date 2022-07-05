@@ -18,7 +18,7 @@ import (
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	azureCommon "github.com/webdevops/azure-auditor/armclient"
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -43,7 +43,7 @@ type (
 		config AuditConfig
 
 		azure struct {
-			client  *azureCommon.Client
+			client  *azureCommon.ArmClient
 			msGraph *msgraphsdk.GraphServiceClient
 		}
 
@@ -350,7 +350,7 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = azureCommon.NewClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.client, err = azureCommon.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
