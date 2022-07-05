@@ -18,7 +18,7 @@ import (
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	azureCommon "github.com/webdevops/azure-auditor/azure"
+	azureCommon "github.com/webdevops/azure-auditor/armclient"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -187,29 +187,29 @@ func (auditor *AzureAuditor) Run() {
 		}
 	}
 
-	if cronspecIsValid(auditor.Opts.Cronjobs.LogAnalytics) && auditor.config.LogAnalytics.IsEnabled() {
-		for queryName, queryConfig := range auditor.config.LogAnalytics.Queries {
-			logAnalyticsConfig := queryConfig
-			auditor.addCronjob(
-				fmt.Sprintf(ReportLogAnalytics, queryName),
-				auditor.Opts.Cronjobs.LogAnalytics,
-				func(ctx context.Context, logger *log.Entry) {
-					for _, queryConfig := range auditor.config.LogAnalytics.Queries {
-						queryConfig.Reset()
-					}
-				},
-				func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
-					contextLogger := log.WithField("configQueryName", queryName)
-					auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
-				},
-				func(ctx context.Context, logger *log.Entry) {
-					for _, gauge := range auditor.prometheus.logAnalytics {
-						gauge.Reset()
-					}
-				},
-			)
-		}
-	}
+	// if cronspecIsValid(auditor.Opts.Cronjobs.LogAnalytics) && auditor.config.LogAnalytics.IsEnabled() {
+	// 	for queryName, queryConfig := range auditor.config.LogAnalytics.Queries {
+	// 		logAnalyticsConfig := queryConfig
+	// 		auditor.addCronjob(
+	// 			fmt.Sprintf(ReportLogAnalytics, queryName),
+	// 			auditor.Opts.Cronjobs.LogAnalytics,
+	// 			func(ctx context.Context, logger *log.Entry) {
+	// 				for _, queryConfig := range auditor.config.LogAnalytics.Queries {
+	// 					queryConfig.Reset()
+	// 				}
+	// 			},
+	// 			func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
+	// 				contextLogger := log.WithField("configQueryName", queryName)
+	// 				auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
+	// 			},
+	// 			func(ctx context.Context, logger *log.Entry) {
+	// 				for _, gauge := range auditor.prometheus.logAnalytics {
+	// 					gauge.Reset()
+	// 				}
+	// 			},
+	// 		)
+	// 	}
+	// }
 
 	// check if cron jobs are active
 	cronjobEntries := auditor.cron.Entries()
@@ -350,7 +350,7 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = azureCommon.NewClientFromEnvironment(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.client, err = azureCommon.NewClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
@@ -412,7 +412,7 @@ func (auditor *AzureAuditor) initCron() {
 }
 
 func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {
-	auditor.azure.client.DecorateAzureAutorestWithAuthorizer(client, authorizer)
+	// auditor.azure.client.DecorateAzureAutorestWithAuthorizer(client, authorizer)
 }
 
 func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {

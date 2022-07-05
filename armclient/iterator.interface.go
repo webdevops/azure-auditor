@@ -1,4 +1,4 @@
-package azure
+package armclient
 
 import (
 	"github.com/remeh/sizedwaitgroup"

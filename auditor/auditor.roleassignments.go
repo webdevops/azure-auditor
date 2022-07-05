@@ -8,8 +8,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
-	azureCommon "github.com/webdevops/go-common/azure"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+
+	azureCommon "github.com/webdevops/azure-auditor/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )

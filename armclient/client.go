@@ -1,7 +1,8 @@
-package azure
+package armclient
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -11,18 +12,14 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
 	cache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/webdevops/go-common/prometheus/azuretracing"
 )
 
 type (
 	Client struct {
-		Environment azure.Environment
+		cloud cloud.Configuration
 
 		logger *log.Logger
 
@@ -37,9 +34,10 @@ type (
 	}
 )
 
-func NewClient(environment azure.Environment, logger *log.Logger) *Client {
+// Creates new Azure SDK ARM client
+func NewClient(cloudConfig cloud.Configuration, logger *log.Logger) *Client {
 	azureClient := &Client{}
-	azureClient.Environment = environment
+	azureClient.cloud = cloudConfig
 
 	azureClient.cacheTtl = 30 * time.Minute
 	azureClient.cache = cache.New(60*time.Minute, 60*time.Second)
@@ -51,92 +49,83 @@ func NewClient(environment azure.Environment, logger *log.Logger) *Client {
 	return azureClient
 }
 
-func NewClientFromEnvironment(environmentName string, logger *log.Logger) (*Client, error) {
-	environment, err := azure.EnvironmentFromName(environmentName)
-	if err != nil {
-		return nil, err
+// Creates new Azure SDK ARM client with environment name as string
+func NewClientWithCloudName(cloudName string, logger *log.Logger) (*Client, error) {
+	var cloudConfig cloud.Configuration
+
+	switch strings.ToLower(cloudName) {
+	case "azurepublic", "azurepubliccloud":
+		cloudConfig = cloud.AzurePublic
+	case "azurechina", "azurechinacloud":
+		cloudConfig = cloud.AzurePublic
+	case "azuregovernment", "azuregovernmentcloud", "azureusgovernmentcloud":
+		cloudConfig = cloud.AzureGovernment
+	default:
+		return nil, fmt.Errorf(`unable to set Azure Cloud "%v", not valid`, cloudName)
 	}
 
-	return NewClient(environment, logger), nil
+	return NewClient(cloudConfig, logger), nil
 }
 
+// returns Azure ARM credential
 func (azureClient *Client) GetCred() azcore.TokenCredential {
 	cacheKey := "authorizer"
 	if v, ok := azureClient.cache.Get(cacheKey); ok {
-		if authorizer, ok := v.(azcore.TokenCredential); ok {
-			return authorizer
+		if cred, ok := v.(azcore.TokenCredential); ok {
+			return cred
 		}
 	}
 
-	authorizer, err := azureClient.createAuthorizer()
+	cred, err := azureClient.createAuthorizer()
 	if err != nil {
 		panic(err)
 	}
 
-	azureClient.cache.Set(cacheKey, authorizer, azureClient.cacheAuthorizerTtl)
+	azureClient.cache.Set(cacheKey, cred, azureClient.cacheAuthorizerTtl)
 
-	return authorizer
+	return cred
 }
 
+// creates new azure credential authorizer based on azure environment
 func (azureClient *Client) createAuthorizer() (azcore.TokenCredential, error) {
-	environment := cloud.AzurePublic
-	if val := os.Getenv("AZURE_ENVIRONMENT"); val != "" {
-		switch strings.ToLower(val) {
-		case "azurepublic", "azurepubliccloud":
-			environment = cloud.AzurePublic
-		case "azurechina", "azurechinacloud":
-			environment = cloud.AzurePublic
-		case "azuregovernment", "azuregovernmentcloud":
-			environment = cloud.AzureGovernment
-		}
-	}
-
 	// azure authorizer
 	switch strings.ToLower(os.Getenv("AZURE_AUTH")) {
 	case "az", "cli", "azcli":
+		// azurecli authentication
 		opts := azidentity.AzureCLICredentialOptions{}
 		return azidentity.NewAzureCLICredential(&opts)
 	default:
+		// general azure authentication (env vars, service principal, msi, ...)
 		opts := azidentity.DefaultAzureCredentialOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud: environment,
+				Cloud: azureClient.cloud,
 			},
 		}
 		return azidentity.NewDefaultAzureCredential(&opts)
 	}
 }
 
-func (azureClient *Client) GetEnvironment() azure.Environment {
-	return azureClient.Environment
+// Returns selected Azure cloud/environment configuration
+func (azureClient *Client) GetCloud() cloud.Configuration {
+	return azureClient.cloud
 }
 
+// Set user agent for all API calls
 func (azureClient *Client) SetUserAgent(useragent string) {
 	azureClient.userAgent = useragent
 }
 
+// Set TTL for service discovery cache
 func (azureClient *Client) SetCacheTtl(ttl time.Duration) {
 	azureClient.cacheTtl = ttl
 }
 
+// Set subscription filter, other subscriptions will be ignored
 func (azureClient *Client) SetSubscriptionFilter(subscriptionId ...string) {
 	azureClient.subscriptionFilter = subscriptionId
 }
 
-func (azureClient *Client) DecorateAzureAutorest(client *autorest.Client) {
-	//	azureClient.DecorateAzureAutorestWithAuthorizer(client, azureClient.GetCred())
-}
-
-func (azureClient *Client) DecorateAzureAutorestWithAuthorizer(client *autorest.Client, authorizer autorest.Authorizer) {
-	client.Authorizer = authorizer
-	if azureClient.userAgent != "" {
-		if err := client.AddToUserAgent(azureClient.userAgent); err != nil {
-			panic(err)
-		}
-	}
-
-	azuretracing.DecorateAzureAutoRestClient(client)
-}
-
+// Return list of subscription with filter by subscription ids
 func (azureClient *Client) ListCachedSubscriptionsWithFilter(ctx context.Context, subscriptionFilter ...string) (map[string]*armsubscriptions.Subscription, error) {
 	availableSubscriptions, err := azureClient.ListCachedSubscriptions(ctx)
 	if err != nil {
@@ -160,6 +149,7 @@ func (azureClient *Client) ListCachedSubscriptionsWithFilter(ctx context.Context
 	return availableSubscriptions, nil
 }
 
+// Return cached list of Azure Subscriptions as map (key is subscription id)
 func (azureClient *Client) ListCachedSubscriptions(ctx context.Context) (map[string]*armsubscriptions.Subscription, error) {
 	cacheKey := "subscriptions"
 	if v, ok := azureClient.cache.Get(cacheKey); ok {
@@ -180,6 +170,7 @@ func (azureClient *Client) ListCachedSubscriptions(ctx context.Context) (map[str
 	return list, nil
 }
 
+// Return list of Azure Subscriptions as map (key is subscription id)
 func (azureClient *Client) ListSubscriptions(ctx context.Context) (map[string]*armsubscriptions.Subscription, error) {
 	list := map[string]*armsubscriptions.Subscription{}
 
@@ -213,6 +204,7 @@ func (azureClient *Client) ListSubscriptions(ctx context.Context) (map[string]*a
 	return list, nil
 }
 
+// Return cached list of Azure ResourceGroups as map (key is name of ResourceGroup)
 func (azureClient *Client) ListCachedResourceGroups(ctx context.Context, subscription string) (map[string]*armresources.ResourceGroup, error) {
 	list := map[string]*armresources.ResourceGroup{}
 
@@ -235,6 +227,7 @@ func (azureClient *Client) ListCachedResourceGroups(ctx context.Context, subscri
 	return list, nil
 }
 
+// Return list of Azure ResourceGroups as map (key is name of ResourceGroup)
 func (azureClient *Client) ListResourceGroups(ctx context.Context, subscription string) (map[string]*armresources.ResourceGroup, error) {
 	list := map[string]*armresources.ResourceGroup{}
 
