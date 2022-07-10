@@ -167,18 +167,14 @@ func (auditor *AzureAuditor) Run() {
 				fmt.Sprintf(ReportResourceGraph, queryName),
 				auditor.Opts.Cronjobs.ResourceGraph,
 				func(ctx context.Context, logger *log.Entry) {
-					for _, queryConfig := range auditor.config.ResourceGraph.Queries {
-						queryConfig.Reset()
-					}
+					auditor.config.ResourceGraph.Queries[queryName].Reset()
 				},
 				func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 					contextLogger := log.WithField("configQueryName", queryName)
 					auditor.auditResourceGraph(ctx, contextLogger, subscription, queryName, resourceGraphConfig, report, callback)
 				},
 				func(ctx context.Context, logger *log.Entry) {
-					for _, gauge := range auditor.prometheus.resourceGraph {
-						gauge.Reset()
-					}
+					auditor.prometheus.resourceGraph[queryName].Reset()
 				},
 			)
 		}
@@ -191,18 +187,14 @@ func (auditor *AzureAuditor) Run() {
 	// 			fmt.Sprintf(ReportLogAnalytics, queryName),
 	// 			auditor.Opts.Cronjobs.LogAnalytics,
 	// 			func(ctx context.Context, logger *log.Entry) {
-	// 				for _, queryConfig := range auditor.config.LogAnalytics.Queries {
-	// 					queryConfig.Reset()
-	// 				}
+	//				auditor.config.LogAnalytics.Queries[queryName].Reset()
 	// 			},
 	// 			func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
 	// 				contextLogger := log.WithField("configQueryName", queryName)
 	// 				auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
 	// 			},
 	// 			func(ctx context.Context, logger *log.Entry) {
-	// 				for _, gauge := range auditor.prometheus.logAnalytics {
-	// 					gauge.Reset()
-	// 				}
+	//				auditor.prometheus.logAnalytics[queryName].Reset()
 	// 			},
 	// 		)
 	// 	}
