@@ -18,16 +18,13 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/microsoft/kiota-authentication-azure-go v0.3.1
-	github.com/microsoft/kiota-serialization-json-go v0.5.2
-	github.com/microsoftgraph/msgraph-sdk-go v0.26.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.2
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/robertkrimen/otto v0.0.0-20211024170158-b87d35c0b86f
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/webdevops/go-common v0.0.0-20220705220043-e57781e45a45
+	github.com/webdevops/go-common v0.0.0-20220710144606-a26195db2d99
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -53,8 +50,11 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/microsoft/kiota-abstractions-go v0.8.1 // indirect
+	github.com/microsoft/kiota-authentication-azure-go v0.3.1 // indirect
 	github.com/microsoft/kiota-http-go v0.5.1 // indirect
+	github.com/microsoft/kiota-serialization-json-go v0.5.4 // indirect
 	github.com/microsoft/kiota-serialization-text-go v0.4.1 // indirect
+	github.com/microsoftgraph/msgraph-sdk-go v0.28.0 // indirect
 	github.com/microsoftgraph/msgraph-sdk-go-core v0.26.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect

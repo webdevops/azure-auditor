@@ -4,21 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
-	a "github.com/microsoft/kiota-authentication-azure-go"
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/msgraphsdk/msgraphclient"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -43,8 +40,8 @@ type (
 		config AuditConfig
 
 		azure struct {
-			client  *azureCommon.ArmClient
-			msGraph *msgraphsdk.GraphServiceClient
+			client  *armclient.ArmClient
+			msGraph *msgraphclient.MsGraphClient
 		}
 
 		locks struct {
@@ -350,7 +347,7 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = azureCommon.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
@@ -359,44 +356,12 @@ func (auditor *AzureAuditor) initAzure() {
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
-	// azure authorizer
-	switch strings.ToLower(os.Getenv("AZURE_AUTH")) {
-	case "az", "cli", "azcli":
-		cred, err := azidentity.NewAzureCLICredential(nil)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
-	default:
-		cred, err := azidentity.NewEnvironmentCredential(nil)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
+	var err error
+	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	if err != nil {
+		auditor.logger.Panic(err)
 	}
-
+	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 }
 
 func (auditor *AzureAuditor) initCache() {

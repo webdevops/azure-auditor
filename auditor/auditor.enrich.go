@@ -135,32 +135,42 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Cont
 }
 
 func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
-	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
+	principalObjectIdMap := map[string]string{}
+	// create uniq pricipalid list
 	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
-			principalObjectIDMap[principalObjectID] = nil
+		if principalId, ok := (*row)["principal.objectid"].(string); ok && principalId != "" {
+			principalObjectIdMap[principalId] = principalId
 		}
 	}
 
-	if len(principalObjectIDMap) > 0 {
-		auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
+	// create pricipalid list
+	principalIdList := []string{}
+	for _, principalId := range principalObjectIdMap {
+		principalIdList = append(principalIdList, principalId)
+	}
+
+	if len(principalIdList) > 0 {
+		principalObjectMap, err := auditor.azure.msGraph.LookupPrincipalID(principalIdList...)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
 
 		for key, row := range *list {
 			obj := (*(*list)[key])
 
 			obj["principal.type"] = "unknown"
 			if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
-				if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
+				if directoryObjectInfo, exists := principalObjectMap[principalObjectID]; exists && directoryObjectInfo != nil {
 
-					obj["principal.objectid"] = directoryObjectInfo.ObjectId
+					obj["principal.objectid"] = directoryObjectInfo.ObjectID
 					obj["principal.type"] = directoryObjectInfo.Type
 
 					if directoryObjectInfo.DisplayName != "" {
 						obj["principal.displayname"] = directoryObjectInfo.DisplayName
 					}
 
-					if directoryObjectInfo.ApplicationId != "" {
-						obj["principal.applicationid"] = directoryObjectInfo.ApplicationId
+					if directoryObjectInfo.ApplicationID != "" {
+						obj["principal.applicationid"] = directoryObjectInfo.ApplicationID
 					}
 
 					if directoryObjectInfo.ServicePrincipalType != "" {
