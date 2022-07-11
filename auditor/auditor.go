@@ -163,7 +163,8 @@ func (auditor *AzureAuditor) Run() {
 	}
 
 	if cronspecIsValid(auditor.Opts.Cronjobs.ResourceGraph) && auditor.config.ResourceGraph.IsEnabled() {
-		for queryName, queryConfig := range auditor.config.ResourceGraph.Queries {
+		for key, queryConfig := range auditor.config.ResourceGraph.Queries {
+			queryName := key
 			resourceGraphConfig := queryConfig
 			auditor.addCronjobBySubscription(
 				fmt.Sprintf(ReportResourceGraph, queryName),
@@ -183,7 +184,8 @@ func (auditor *AzureAuditor) Run() {
 	}
 
 	if cronspecIsValid(auditor.Opts.Cronjobs.LogAnalytics) && auditor.config.LogAnalytics.IsEnabled() {
-		for queryName, queryConfig := range auditor.config.LogAnalytics.Queries {
+		for key, queryConfig := range auditor.config.LogAnalytics.Queries {
+			queryName := key
 			logAnalyticsConfig := queryConfig
 			auditor.addCronjob(
 				fmt.Sprintf(ReportLogAnalytics, queryName),
