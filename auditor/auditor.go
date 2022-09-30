@@ -375,10 +375,6 @@ func (auditor *AzureAuditor) initCron() {
 	))
 }
 
-func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {
-	// auditor.azure.client.DecorateAzureAutorestWithAuthorizer(client, authorizer)
-}
-
 func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
 	return auditor.report
 }
