@@ -351,7 +351,7 @@ func (auditor *AzureAuditor) initAzure() {
 
 func (auditor *AzureAuditor) initMsGraph() {
 	var err error
-	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}

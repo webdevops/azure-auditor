@@ -150,7 +150,7 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context
 	}
 
 	if len(principalIdList) > 0 {
-		principalObjectMap, err := auditor.azure.msGraph.LookupPrincipalID(principalIdList...)
+		principalObjectMap, err := auditor.azure.msGraph.LookupPrincipalID(ctx, principalIdList...)
 		if err != nil {
 			auditor.logger.Panic(err)
 		}

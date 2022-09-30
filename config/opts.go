@@ -19,6 +19,7 @@ type (
 		// azure
 		Azure struct {
 			Environment  *string  `long:"azure.environment"   env:"AZURE_ENVIRONMENT"                     description:"Azure environment name" default:"AZUREPUBLICCLOUD"`
+			Tenant       *string  `long:"azure.tenant"        env:"AZURE_TENANT_ID"                       description:"Azure tenant id" required:"true"`
 			Subscription []string `long:"azure.subscription"  env:"AZURE_SUBSCRIPTION_ID"  env-delim:" "  description:"Azure subscription ID"`
 			InheritTags  []string `long:"azure.tag.inherit"   env:"AZURE_TAG_INHERIT"      env-delim:" "  description:"Inherit tags"`
 		}
