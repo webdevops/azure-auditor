@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
@@ -376,6 +375,8 @@ func (auditor *AzureAuditor) initCron() {
 }
 
 func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
+	auditor.reportLock.RLock()
+	defer auditor.reportLock.RUnlock()
 	return auditor.report
 }
 
