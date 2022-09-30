@@ -35,7 +35,7 @@ var (
 	argparser *flags.Parser
 	opts      config.Opts
 
-	audit *auditor.AzureAuditor
+	azureAuditor *auditor.AzureAuditor
 
 	// Git version information
 	gitCommit = "<unknown>"
@@ -50,11 +50,11 @@ func main() {
 	log.Info(string(opts.GetJson()))
 
 	log.Infof("starting audit")
-	audit = auditor.NewAzureAuditor()
-	audit.Opts = opts
-	audit.UserAgent = UserAgent + gitTag
-	audit.ParseConfig(opts.Config...)
-	audit.Run()
+	azureAuditor = auditor.NewAzureAuditor()
+	azureAuditor.Opts = opts
+	azureAuditor.UserAgent = UserAgent + gitTag
+	azureAuditor.ParseConfig(opts.Config...)
+	azureAuditor.Run()
 
 	log.Infof("Starting http server on %s", opts.ServerBind)
 	startHttpServer()
@@ -198,10 +198,10 @@ func startHttpServer() {
 			RequestReport    string
 		}{
 			Nonce:            cspNonce,
-			Config:           audit.GetConfig(),
+			Config:           azureAuditor.GetConfig(),
 			ReportTitle:      opts.Report.Title,
 			ReportConfig:     nil,
-			Reports:          audit.GetReport(),
+			Reports:          azureAuditor.GetReport(),
 			ServerPathReport: opts.ServerPathReport,
 			RequestReport:    "",
 		}
@@ -273,7 +273,7 @@ func startHttpServer() {
 		}
 
 		if reportName := r.URL.Query().Get("report"); reportName != "" {
-			reportList := audit.GetReport()
+			reportList := azureAuditor.GetReport()
 			if report, ok := reportList[reportName]; ok {
 
 				if report.UpdateTime != nil {
@@ -366,7 +366,7 @@ func startHttpServer() {
 	http.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 
-		content, err := yaml.Marshal(audit.GetConfig())
+		content, err := yaml.Marshal(azureAuditor.GetConfig())
 		if err == nil {
 			if _, writeErr := w.Write(content); writeErr != nil {
 				log.Error(writeErr)
@@ -380,6 +380,13 @@ func startHttpServer() {
 		}
 	})
 
-	http.Handle("/metrics", azuretracing.RegisterAzureMetricAutoClean(promhttp.Handler()))
+	http.Handle("/metrics", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			azureAuditor.MetricsLock().RLock()
+			defer azureAuditor.MetricsLock().RUnlock()
+			azuretracing.RegisterAzureMetricAutoClean(promhttp.Handler()).ServeHTTP(w, r)
+		},
+	))
+
 	log.Error(http.ListenAndServe(opts.ServerBind, nil))
 }

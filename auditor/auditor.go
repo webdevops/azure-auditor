@@ -57,7 +57,9 @@ type (
 
 		report           map[string]*AzureAuditorReport
 		reportUncommited map[string]*AzureAuditorReport
-		reportLock       *sync.Mutex
+		reportLock       *sync.RWMutex
+
+		metricsLock *sync.RWMutex
 
 		prometheus auditorPrometheus
 	}
@@ -68,7 +70,8 @@ func NewAzureAuditor() *AzureAuditor {
 	auditor.logger = log.WithFields(log.Fields{})
 	auditor.report = map[string]*AzureAuditorReport{}
 	auditor.reportUncommited = map[string]*AzureAuditorReport{}
-	auditor.reportLock = &sync.Mutex{}
+	auditor.reportLock = &sync.RWMutex{}
+	auditor.metricsLock = &sync.RWMutex{}
 	return &auditor
 }
 
@@ -319,6 +322,8 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 			// apply/commit metrics (only if not dry run)
 			if !auditor.Opts.DryRun {
+				auditor.metricsLock.Lock()
+				defer auditor.metricsLock.Unlock()
 				finishCallback(ctx, contextLogger)
 				for _, metricCallback := range metricCallbackList {
 					metricCallback()
@@ -376,6 +381,14 @@ func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, author
 
 func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
 	return auditor.report
+}
+
+func (auditor *AzureAuditor) ReportLock() *sync.RWMutex {
+	return auditor.reportLock
+}
+
+func (auditor *AzureAuditor) MetricsLock() *sync.RWMutex {
+	return auditor.metricsLock
 }
 
 func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {
