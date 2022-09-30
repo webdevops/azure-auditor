@@ -3,8 +3,9 @@ package auditor
 import (
 	"context"
 	"strings"
+	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization"
+	armauthorization "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
@@ -45,7 +46,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 		logger.Panic(err)
 	}
 
-	pager := client.NewListPager(nil)
+	pager := client.NewListForSubscriptionPager(nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
@@ -75,12 +76,12 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *l
 				"principal.objectid": stringPtrToStringLower(roleAssignment.Properties.PrincipalID),
 				"resourcegroup.name": azureScope.ResourceGroup,
 
-				"roleassignment.type": stringPtrToStringLower(roleAssignment.Type),
-				// "roleassignment.description": to.String(roleAssignment.Properties.Description),
-				"roleassignment.scope":     stringPtrToStringLower(roleAssignment.Properties.Scope),
-				"roleassignment.scopetype": scopeType,
-				// "roleassignment.createdon":   roleAssignment.CreatedOn.Time,
-				// "roleassignment.age":         time.Since(roleAssignment.CreatedOn.Time),
+				"roleassignment.type":        stringPtrToStringLower(roleAssignment.Type),
+				"roleassignment.description": to.String(roleAssignment.Properties.Description),
+				"roleassignment.scope":       stringPtrToStringLower(roleAssignment.Properties.Scope),
+				"roleassignment.scopetype":   scopeType,
+				"roleassignment.createdon":   *roleAssignment.Properties.CreatedOn,
+				"roleassignment.age":         time.Since(*roleAssignment.Properties.CreatedOn),
 			}
 
 			list = append(list, validator.NewAzureObject(obj))
