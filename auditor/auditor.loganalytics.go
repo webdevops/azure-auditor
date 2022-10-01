@@ -153,6 +153,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			workspaceLogger.Error(err)
 			return
 		}
+		defer response.Body.Close()
 
 		responseBody, err := io.ReadAll(response.Body)
 		if err != nil {

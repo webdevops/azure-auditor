@@ -1,7 +1,7 @@
 package auditor
 
 import (
-	"io/ioutil"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -39,7 +39,7 @@ func (auditor *AzureAuditor) ParseConfig(configPaths ...string) {
 	for _, path := range configPaths {
 		auditor.logger.Infof("reading configuration from file %v", path)
 		/* #nosec */
-		if data, err := ioutil.ReadFile(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil {
 			configRaw = data
 		} else {
 			auditor.logger.Panic(err)

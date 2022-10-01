@@ -89,41 +89,33 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 }
 
 func keyvaultCertificatePermissionsToStringList(val []*armkeyvault.CertificatePermissions) (list []string) {
-	if val != nil {
-		for _, row := range val {
-			val := strings.ToLower(string(*row))
-			list = append(list, val)
-		}
+	for _, row := range val {
+		val := strings.ToLower(string(*row))
+		list = append(list, val)
 	}
 	return
 }
 
 func keyvaultSecretPermissionsToStringList(val []*armkeyvault.SecretPermissions) (list []string) {
-	if val != nil {
-		for _, row := range val {
-			val := strings.ToLower(string(*row))
-			list = append(list, val)
-		}
+	for _, row := range val {
+		val := strings.ToLower(string(*row))
+		list = append(list, val)
 	}
 	return
 }
 
 func keyvaultKeyPermissionsToStringList(val []*armkeyvault.KeyPermissions) (list []string) {
-	if val != nil {
-		for _, row := range val {
-			val := strings.ToLower(string(*row))
-			list = append(list, val)
-		}
+	for _, row := range val {
+		val := strings.ToLower(string(*row))
+		list = append(list, val)
 	}
 	return
 }
 
 func keyvaultStoragePermissionsToStringList(val []*armkeyvault.StoragePermissions) (list []string) {
-	if val != nil {
-		for _, row := range val {
-			val := strings.ToLower(string(*row))
-			list = append(list, val)
-		}
+	for _, row := range val {
+		val := strings.ToLower(string(*row))
+		list = append(list, val)
 	}
 	return
 }

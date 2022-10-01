@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -56,7 +57,7 @@ func main() {
 	azureAuditor.ParseConfig(opts.Config...)
 	azureAuditor.Run()
 
-	log.Infof("Starting http server on %s", opts.ServerBind)
+	log.Infof("Starting http server on %s", opts.Server.Bind)
 	startHttpServer()
 }
 
@@ -64,9 +65,10 @@ func initArgparser() {
 	argparser = flags.NewParser(&opts, flags.Default)
 	_, err := argparser.Parse()
 
-	// check if there is an parse error
+	// check if there is a parse error
 	if err != nil {
-		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
+		var flagsErr *flags.Error
+		if ok := errors.As(err, &flagsErr); ok && flagsErr.Type == flags.ErrHelp {
 			os.Exit(0)
 		} else {
 			fmt.Println()
@@ -112,16 +114,17 @@ func initLogger() {
 // start and handle prometheus handler
 func startHttpServer() {
 	var err error
+	mux := http.NewServeMux()
 
 	// healthz
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			log.Error(err)
 		}
 	})
 
 	// readyz
-	http.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			log.Error(err)
 		}
@@ -172,7 +175,7 @@ func startHttpServer() {
 		log.Panic(err)
 	}
 
-	http.HandleFunc(opts.ServerPathReport, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(opts.Server.PathReport, func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
 		w.Header().Add("Content-Type", "text/html")
@@ -202,7 +205,7 @@ func startHttpServer() {
 			ReportTitle:      opts.Report.Title,
 			ReportConfig:     nil,
 			Reports:          azureAuditor.GetReport(),
-			ServerPathReport: opts.ServerPathReport,
+			ServerPathReport: opts.Server.PathReport,
 			RequestReport:    "",
 		}
 
@@ -244,7 +247,7 @@ func startHttpServer() {
 		}
 	})
 
-	http.HandleFunc(opts.ServerPathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(opts.Server.PathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
 		var reportGroupBy *string
 		var reportFields *[]string
 		var reportStatus *bool
@@ -363,7 +366,7 @@ func startHttpServer() {
 	})
 
 	// config
-	http.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 
 		content, err := yaml.Marshal(azureAuditor.GetConfig())
@@ -380,7 +383,7 @@ func startHttpServer() {
 		}
 	})
 
-	http.Handle("/metrics", http.HandlerFunc(
+	mux.Handle("/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			azureAuditor.MetricsLock().RLock()
 			defer azureAuditor.MetricsLock().RUnlock()
@@ -388,5 +391,11 @@ func startHttpServer() {
 		},
 	))
 
-	log.Error(http.ListenAndServe(opts.ServerBind, nil))
+	srv := &http.Server{
+		Addr:         opts.Server.Bind,
+		Handler:      mux,
+		ReadTimeout:  opts.Server.ReadTimeout,
+		WriteTimeout: opts.Server.WriteTimeout,
+	}
+	log.Fatal(srv.ListenAndServe())
 }
