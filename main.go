@@ -18,7 +18,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"github.com/webdevops/go-common/prometheus/azuretracing"
+	"github.com/webdevops/go-common/azuresdk/prometheus/tracing"
 	yaml "gopkg.in/yaml.v3"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
@@ -387,7 +387,7 @@ func startHttpServer() {
 		func(w http.ResponseWriter, r *http.Request) {
 			azureAuditor.MetricsLock().RLock()
 			defer azureAuditor.MetricsLock().RUnlock()
-			azuretracing.RegisterAzureMetricAutoClean(promhttp.Handler()).ServeHTTP(w, r)
+			tracing.RegisterAzureMetricAutoClean(promhttp.Handler()).ServeHTTP(w, r)
 		},
 	))
 
