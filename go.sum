@@ -45,6 +45,8 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthoriza
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal v1.0.0 h1:lMW1lD/17LUA5z1XTURo7LcVG2ICBPlyMHjIUrcFZNQ=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.0.0 h1:Jc2KcpCDMu7wJfkrzn7fs/53QMDXH78GuqnH4HOd7zs=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.0.0/go.mod h1:PFVgFsclKzPqYRT/BiwpfUN22cab0C7FlgXR3iWpwMo=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2 v2.0.0-beta.2 h1:+1l5t4FUqzK8a5nsMNeXe4HHMZrhToZ7my0JXlzISvo=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2 v2.0.0-beta.2/go.mod h1:wJXYS9Ga1XDM0NNj6+7VtuTXR7GWb0Hd/s7MElDAUZo=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.6.0 h1:ofIfA+/dTgrqhykfrz+GbFtPAtE697LAOCSw/8AQbwI=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.6.0/go.mod h1:KKrvyReEXgIA2D4ez2Jq5dRynJW4bOjRDkONdze2qjs=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures v1.0.0 h1:DLg+BAz1Fadj9NqQA1OsW/NeoqJTJrNv0YkTg9Wm1iQ=

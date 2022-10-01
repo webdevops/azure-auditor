@@ -183,26 +183,26 @@ func (auditor *AzureAuditor) Run() {
 		}
 	}
 
-	// if cronspecIsValid(auditor.Opts.Cronjobs.LogAnalytics) && auditor.config.LogAnalytics.IsEnabled() {
-	// 	for key, queryConfig := range auditor.config.LogAnalytics.Queries {
-	//		queryName := key
-	// 		logAnalyticsConfig := queryConfig
-	// 		auditor.addCronjob(
-	// 			fmt.Sprintf(ReportLogAnalytics, queryName),
-	// 			auditor.Opts.Cronjobs.LogAnalytics,
-	// 			func(ctx context.Context, logger *log.Entry) {
-	//				auditor.config.LogAnalytics.Queries[queryName].Reset()
-	// 			},
-	// 			func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
-	// 				contextLogger := log.WithField("configQueryName", queryName)
-	// 				auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
-	// 			},
-	// 			func(ctx context.Context, logger *log.Entry) {
-	//				auditor.prometheus.logAnalytics[queryName].Reset()
-	// 			},
-	// 		)
-	// 	}
-	// }
+	if cronspecIsValid(auditor.Opts.Cronjobs.LogAnalytics) && auditor.config.LogAnalytics.IsEnabled() {
+		for key, queryConfig := range auditor.config.LogAnalytics.Queries {
+			queryName := key
+			logAnalyticsConfig := queryConfig
+			auditor.addCronjob(
+				fmt.Sprintf(ReportLogAnalytics, queryName),
+				auditor.Opts.Cronjobs.LogAnalytics,
+				func(ctx context.Context, logger *log.Entry) {
+					auditor.config.LogAnalytics.Queries[queryName].Reset()
+				},
+				func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
+					contextLogger := log.WithField("configQueryName", queryName)
+					auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
+				},
+				func(ctx context.Context, logger *log.Entry) {
+					auditor.prometheus.logAnalytics[queryName].Reset()
+				},
+			)
+		}
+	}
 
 	// check if cron jobs are active
 	cronjobEntries := auditor.cron.Entries()
