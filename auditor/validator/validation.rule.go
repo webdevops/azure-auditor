@@ -58,7 +58,7 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 				if funcCall, err := vm.Compile("", funcString); err == nil {
 					matcher.customFunction = funcCall
 				} else {
-					return fmt.Errorf("unable to parse func: %v\n\n%v", err.Error(), funcString)
+					return fmt.Errorf("unable to parse func: %w\n\n%v", err, funcString)
 				}
 			default:
 				switch v := val.(type) {

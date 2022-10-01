@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
-	azureCommon "github.com/webdevops/go-common/azure"
+
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
+func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscription *armsubscriptions.Subscription, list *[]*validator.AzureObject) {
 	if subscription != nil {
 		// fixed subscription
 		auditor.enrichAzureObjectsWithSubscription(ctx, subscription, list)
@@ -28,7 +29,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 		subscriptionList := auditor.getSubscriptionList(ctx)
 		for _, subscriptionId := range subscriptionIdList {
 			if subscription, ok := subscriptionList[subscriptionId]; ok {
-				auditor.enrichAzureObjectsWithSubscription(ctx, &subscription, list)
+				auditor.enrichAzureObjectsWithSubscription(ctx, subscription, list)
 			}
 		}
 	}
@@ -37,7 +38,7 @@ func (auditor *AzureAuditor) enrichAzureObjects(ctx context.Context, subscriptio
 	auditor.enrichAzureObjectsWithMsGraphPrincipals(ctx, list)
 }
 
-func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Context, subscription *subscriptions.Subscription, list *[]*validator.AzureObject) {
+func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Context, subscription *armsubscriptions.Subscription, list *[]*validator.AzureObject) {
 	resourceGroupList := auditor.getResourceGroupList(ctx, subscription)
 	resourcesList := auditor.getResourceList(ctx, subscription)
 	roleDefinitionList := auditor.getRoleDefinitionList(ctx, subscription)
@@ -83,9 +84,9 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Cont
 			if roleDefinitionId, ok := (*row)["roledefinition.id"].(string); ok && roleDefinitionId != "" {
 				roleDefinitionId = strings.ToLower(roleDefinitionId)
 				if roleDefinition, ok := roleDefinitionList[strings.ToLower(roleDefinitionId)]; ok {
-					obj["roledefinition.name"] = to.String(roleDefinition.RoleName)
-					obj["roledefinition.type"] = to.String(roleDefinition.RoleType)
-					obj["roledefinition.description"] = to.String(roleDefinition.Description)
+					obj["roledefinition.name"] = to.String(roleDefinition.Properties.RoleName)
+					obj["roledefinition.type"] = to.String(roleDefinition.Properties.RoleType)
+					obj["roledefinition.description"] = to.String(roleDefinition.Properties.Description)
 				}
 			}
 
@@ -134,32 +135,42 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithSubscription(ctx context.Cont
 }
 
 func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context.Context, list *[]*validator.AzureObject) {
-	principalObjectIDMap := map[string]*MsGraphDirectoryObjectInfo{}
+	principalObjectIdMap := map[string]string{}
+	// create uniq pricipalid list
 	for _, row := range *list {
-		if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
-			principalObjectIDMap[principalObjectID] = nil
+		if principalId, ok := (*row)["principal.objectid"].(string); ok && principalId != "" {
+			principalObjectIdMap[principalId] = principalId
 		}
 	}
 
-	if len(principalObjectIDMap) > 0 {
-		auditor.lookupPrincipalIdMap(ctx, &principalObjectIDMap)
+	// create pricipalid list
+	principalIdList := []string{}
+	for _, principalId := range principalObjectIdMap {
+		principalIdList = append(principalIdList, principalId)
+	}
+
+	if len(principalIdList) > 0 {
+		principalObjectMap, err := auditor.azure.msGraph.LookupPrincipalID(ctx, principalIdList...)
+		if err != nil {
+			auditor.logger.Panic(err)
+		}
 
 		for key, row := range *list {
 			obj := (*(*list)[key])
 
 			obj["principal.type"] = "unknown"
 			if principalObjectID, ok := (*row)["principal.objectid"].(string); ok && principalObjectID != "" {
-				if directoryObjectInfo, exists := principalObjectIDMap[principalObjectID]; exists && directoryObjectInfo != nil {
+				if directoryObjectInfo, exists := principalObjectMap[principalObjectID]; exists && directoryObjectInfo != nil {
 
-					obj["principal.objectid"] = directoryObjectInfo.ObjectId
+					obj["principal.objectid"] = directoryObjectInfo.ObjectID
 					obj["principal.type"] = directoryObjectInfo.Type
 
 					if directoryObjectInfo.DisplayName != "" {
 						obj["principal.displayname"] = directoryObjectInfo.DisplayName
 					}
 
-					if directoryObjectInfo.ApplicationId != "" {
-						obj["principal.applicationid"] = directoryObjectInfo.ApplicationId
+					if directoryObjectInfo.ApplicationID != "" {
+						obj["principal.applicationid"] = directoryObjectInfo.ApplicationID
 					}
 
 					if directoryObjectInfo.ServicePrincipalType != "" {

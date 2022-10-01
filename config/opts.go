@@ -19,6 +19,7 @@ type (
 		// azure
 		Azure struct {
 			Environment  *string  `long:"azure.environment"   env:"AZURE_ENVIRONMENT"                     description:"Azure environment name" default:"AZUREPUBLICCLOUD"`
+			Tenant       *string  `long:"azure.tenant"        env:"AZURE_TENANT_ID"                       description:"Azure tenant id" required:"true"`
 			Subscription []string `long:"azure.subscription"  env:"AZURE_SUBSCRIPTION_ID"  env-delim:" "  description:"Azure subscription ID"`
 			InheritTags  []string `long:"azure.tag.inherit"   env:"AZURE_TAG_INHERIT"      env-delim:" "  description:"Inherit tags"`
 		}
@@ -46,8 +47,14 @@ type (
 		DryRun bool     `long:"dry-run"  env:"DRYRUN"                 description:"Dry Run (report only)"`
 
 		// general options
-		ServerBind       string `long:"bind" env:"SERVER_BIND"   description:"Server address" env-delim:":" default:":8080"`
-		ServerPathReport string `long:"server.path.report" env:"SERVER_PATH_REPORT"   description:"Server path for report"     default:"/report"`
+		Server struct {
+			// general options
+			Bind         string        `long:"server.bind"              env:"SERVER_BIND"           description:"Server address"        default:":8080"`
+			ReadTimeout  time.Duration `long:"server.timeout.read"      env:"SERVER_TIMEOUT_READ"   description:"Server read timeout"   default:"5s"`
+			WriteTimeout time.Duration `long:"server.timeout.write"     env:"SERVER_TIMEOUT_WRITE"  description:"Server write timeout"  default:"10s"`
+
+			PathReport string `long:"server.path.report" env:"SERVER_PATH_REPORT"   description:"Server path for report"     default:"/report"`
+		}
 	}
 )
 

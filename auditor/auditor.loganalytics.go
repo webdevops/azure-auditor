@@ -1,21 +1,40 @@
 package auditor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"time"
 
-	operationalinsightsResource "github.com/Azure/azure-sdk-for-go/profiles/latest/operationalinsights/mgmt/operationalinsights"
-	operationalinsightsQuery "github.com/Azure/azure-sdk-for-go/services/operationalinsights/v1/operationalinsights"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	armoperationalinsights "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2"
 	log "github.com/sirupsen/logrus"
-	azureCommon "github.com/webdevops/go-common/azure"
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/azuresdk/cloudconfig"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 const (
 	OperationInsightsWorkspaceUrlSuffix = "/v1"
+)
+
+type (
+	LogAnaltyicsQueryResult struct {
+		Tables *[]struct {
+			Name    string `json:"name"`
+			Columns *[]struct {
+				Name *string `json:"name"`
+				Type *string `json:"type"`
+			} `json:"columns"`
+			Rows *[][]interface{} `json:"rows"`
+		} `json:"tables"`
+	}
 )
 
 func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.Entry, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
@@ -41,9 +60,18 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.
 }
 
 func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.Entry, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
-	// Create and authorize a LogAnalytics client
-	logAnalyticsClient := operationalinsightsQuery.NewQueryClientWithBaseURI(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights + OperationInsightsWorkspaceUrlSuffix)
-	auditor.decorateAzureClient(&logAnalyticsClient.Client, auditor.azure.client.GetAuthorizerWithResource(auditor.azure.client.Environment.ResourceIdentifiers.OperationalInsights))
+	var (
+		baseUrl string
+	)
+
+	switch auditor.azure.client.GetCloudName() {
+	case cloudconfig.AzurePublicCloud:
+		baseUrl = "https://api.loganalytics.io"
+	case cloudconfig.AzureChinaCloud:
+		baseUrl = "https://api.loganalytics.azure.cn"
+	case cloudconfig.AzureGovernmentCloud:
+		baseUrl = "https://api.loganalytics.us"
+	}
 
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
@@ -83,17 +111,59 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			}
 		}
 
+		scopeUrl := fmt.Sprintf("%s/.default", baseUrl)
+		queryUrl := fmt.Sprintf("%s/v1/workspaces/%s/query", baseUrl, to.String(mainWorkspaceId))
+
+		credToken, err := auditor.azure.client.GetCred().GetToken(ctx, policy.TokenRequestOptions{
+			Scopes: []string{scopeUrl},
+		})
+		if err != nil {
+			workspaceLogger.Error(err)
+			return
+		}
+
 		// execute query
 		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
 		startTime := time.Now()
-		queryBody := operationalinsightsQuery.QueryBody{
+		requestBody := struct {
+			Query      *string   `json:"query"`
+			Workspaces *[]string `json:"workspaces"`
+			Timespan   *string   `json:"timespan"`
+		}{
 			Query:      config.Query,
-			Timespan:   config.Timespan,
 			Workspaces: &workspaces,
+			Timespan:   config.Timespan,
 		}
-		var queryResults, queryErr = logAnalyticsClient.Execute(ctx, *mainWorkspaceId, queryBody)
-		if queryErr != nil {
-			workspaceLogger.Error(queryErr.Error())
+
+		requestBodyBytes, err := json.Marshal(requestBody)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bytes.NewBuffer(requestBodyBytes)
+
+		req, err := http.NewRequest(http.MethodPost, queryUrl, bytes.NewBuffer(requestBodyBytes))
+		if err != nil {
+			log.Fatal(err)
+		}
+		req.Method = http.MethodPost
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("authorization", fmt.Sprintf("Bearer %s", credToken.Token))
+		response, err := http.DefaultClient.Do(req)
+		if err != nil {
+			workspaceLogger.Error(err)
+			return
+		}
+		defer response.Body.Close()
+
+		responseBody, err := io.ReadAll(response.Body)
+		if err != nil {
+			workspaceLogger.Error(err)
+			return
+		}
+
+		var queryResults LogAnaltyicsQueryResult
+		if err := json.Unmarshal(responseBody, &queryResults); err != nil {
+			workspaceLogger.Error(err)
 			return
 		}
 
@@ -140,21 +210,21 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 }
 
 func (auditor *AzureAuditor) lookupWorkspaceResource(ctx context.Context, resourceId string) (workspaceId *string, err error) {
-	var resourceInfo *azureCommon.AzureResourceDetails
-	resourceInfo, err = azureCommon.ParseResourceId(resourceId)
+	resourceInfo, err := azureCommon.ParseResourceId(resourceId)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	client := operationalinsightsResource.NewWorkspacesClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, resourceInfo.Subscription)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	workspace, azureErr := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName)
-	if azureErr != nil {
-		err = azureErr
-		return
+	client, err := armoperationalinsights.NewWorkspacesClient(resourceInfo.Subscription, auditor.azure.client.GetCred(), auditor.azure.client.NewArmClientOptions())
+	if err != nil {
+		return nil, err
 	}
-	workspaceId = workspace.CustomerID
 
+	workspace, err := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceId = workspace.Properties.CustomerID
 	return
 }

@@ -4,16 +4,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/features"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 )
 
-func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceProviderFeatures(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -34,36 +35,35 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription) (list []*validator.AzureObject) {
-	client := features.NewClientWithBaseURI(auditor.azure.client.Environment.ResourceManagerEndpoint, *subscription.SubscriptionID)
-	auditor.decorateAzureClient(&client.Client, auditor.azure.client.GetAuthorizer())
-
-	result, err := client.ListAllComplete(ctx)
+func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+	client, err := armfeatures.NewClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)
 	}
 
-	for result.NotDone() {
-		item := result.Value()
-
-		if strings.EqualFold(to.String(item.Properties.State), "Registered") {
-			nameParts := strings.SplitN(stringPtrToStringLower(item.Name), "/", 2)
-
-			if len(nameParts) >= 2 {
-				obj := map[string]interface{}{
-					"resource.id":     stringPtrToStringLower(item.ID),
-					"subscription.id": to.String(subscription.SubscriptionID),
-
-					"provider.namespace": nameParts[0],
-					"provider.feature":   nameParts[1],
-				}
-
-				list = append(list, validator.NewAzureObject(obj))
-			}
+	pager := client.NewListAllPager(nil)
+	for pager.More() {
+		result, err := pager.NextPage(ctx)
+		if err != nil {
+			logger.Panic(err)
 		}
 
-		if result.NextWithContext(ctx) != nil {
-			break
+		for _, feature := range result.FeatureOperationsListResult.Value {
+			if strings.EqualFold(to.String(feature.Properties.State), "Registered") {
+				nameParts := strings.SplitN(stringPtrToStringLower(feature.Name), "/", 2)
+
+				if len(nameParts) >= 2 {
+					obj := map[string]interface{}{
+						"resource.id":     stringPtrToStringLower(feature.ID),
+						"subscription.id": to.String(subscription.SubscriptionID),
+
+						"provider.namespace": nameParts[0],
+						"provider.feature":   nameParts[1],
+					}
+
+					list = append(list, validator.NewAzureObject(obj))
+				}
+			}
 		}
 	}
 

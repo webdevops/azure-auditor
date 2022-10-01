@@ -4,20 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
-	a "github.com/microsoft/kiota-authentication-azure-go"
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	azureCommon "github.com/webdevops/go-common/azure"
+
+	"github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/msgraphsdk/msgraphclient"
 
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -42,8 +39,8 @@ type (
 		config AuditConfig
 
 		azure struct {
-			client  *azureCommon.Client
-			msGraph *msgraphsdk.GraphServiceClient
+			client  *armclient.ArmClient
+			msGraph *msgraphclient.MsGraphClient
 		}
 
 		locks struct {
@@ -59,7 +56,9 @@ type (
 
 		report           map[string]*AzureAuditorReport
 		reportUncommited map[string]*AzureAuditorReport
-		reportLock       *sync.Mutex
+		reportLock       *sync.RWMutex
+
+		metricsLock *sync.RWMutex
 
 		prometheus auditorPrometheus
 	}
@@ -70,7 +69,8 @@ func NewAzureAuditor() *AzureAuditor {
 	auditor.logger = log.WithFields(log.Fields{})
 	auditor.report = map[string]*AzureAuditorReport{}
 	auditor.reportUncommited = map[string]*AzureAuditorReport{}
-	auditor.reportLock = &sync.Mutex{}
+	auditor.reportLock = &sync.RWMutex{}
+	auditor.metricsLock = &sync.RWMutex{}
 	return &auditor
 }
 
@@ -172,7 +172,7 @@ func (auditor *AzureAuditor) Run() {
 				func(ctx context.Context, logger *log.Entry) {
 					auditor.config.ResourceGraph.Queries[queryName].Reset()
 				},
-				func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+				func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 					contextLogger := log.WithField("configQueryName", queryName)
 					auditor.auditResourceGraph(ctx, contextLogger, subscription, queryName, resourceGraphConfig, report, callback)
 				},
@@ -274,7 +274,7 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCal
 	}
 }
 
-func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *subscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
+func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
 	contextLogger := auditor.logger.WithFields(log.Fields{
 		"report": name,
 	})
@@ -299,13 +299,13 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 					subscription := row
 
 					wg.Add(1)
-					go func(subscription subscriptions.Subscription) {
+					go func(subscription *armsubscriptions.Subscription) {
 						defer wg.Done()
 						callLogger := contextLogger.WithFields(log.Fields{
 							"subscriptionID":   to.String(subscription.SubscriptionID),
 							"subscriptionName": to.String(subscription.DisplayName),
 						})
-						callback(ctx, callLogger, &subscription, report, metricCallbackChannel)
+						callback(ctx, callLogger, subscription, report, metricCallbackChannel)
 					}(subscription)
 				}
 
@@ -321,6 +321,8 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 			// apply/commit metrics (only if not dry run)
 			if !auditor.Opts.DryRun {
+				auditor.metricsLock.Lock()
+				defer auditor.metricsLock.Unlock()
 				finishCallback(ctx, contextLogger)
 				for _, metricCallback := range metricCallbackList {
 					metricCallback()
@@ -343,7 +345,7 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = azureCommon.NewClientFromEnvironment(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
 	if err != nil {
 		auditor.logger.Panic(err)
 	}
@@ -352,44 +354,12 @@ func (auditor *AzureAuditor) initAzure() {
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
-	// azure authorizer
-	switch strings.ToLower(os.Getenv("AZURE_AUTH")) {
-	case "az", "cli", "azcli":
-		cred, err := azidentity.NewAzureCLICredential(nil)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
-	default:
-		cred, err := azidentity.NewEnvironmentCredential(nil)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auth, err := a.NewAzureIdentityAuthenticationProvider(cred)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		adapter, err := msgraphsdk.NewGraphRequestAdapter(auth)
-		if err != nil {
-			auditor.logger.Panic(err)
-		}
-
-		auditor.azure.msGraph = msgraphsdk.NewGraphServiceClient(adapter)
+	var err error
+	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.logger.Logger)
+	if err != nil {
+		auditor.logger.Panic(err)
 	}
-
+	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 }
 
 func (auditor *AzureAuditor) initCache() {
@@ -404,12 +374,18 @@ func (auditor *AzureAuditor) initCron() {
 	))
 }
 
-func (auditor *AzureAuditor) decorateAzureClient(client *autorest.Client, authorizer autorest.Authorizer) {
-	auditor.azure.client.DecorateAzureAutorestWithAuthorizer(client, authorizer)
+func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
+	auditor.reportLock.RLock()
+	defer auditor.reportLock.RUnlock()
+	return auditor.report
 }
 
-func (auditor *AzureAuditor) GetReport() map[string]*AzureAuditorReport {
-	return auditor.report
+func (auditor *AzureAuditor) ReportLock() *sync.RWMutex {
+	return auditor.reportLock
+}
+
+func (auditor *AzureAuditor) MetricsLock() *sync.RWMutex {
+	return auditor.metricsLock
 }
 
 func (auditor *AzureAuditor) startReport(name string) *AzureAuditorReport {

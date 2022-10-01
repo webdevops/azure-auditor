@@ -195,3 +195,19 @@ resourceProviderFeatures:
     - rule: microsoft.security/governance
       provider.feature: governance
       provider.namespace: microsoft.security
+
+logAnalytics:
+  enabled: true
+
+  queries:
+    foobar:
+      enabled: true
+      query: |-
+        union withsource=sourceTable *
+        | project sourceTable
+        | summarize count_ = count() by sourceTable
+        | project sourceTable, count_ = (todouble(count_) / 3600)
+      timespan: PT1H
+
+      workspaces:
+        - /subscriptions/XXXXX/resourcegroups/XXXXX/providers/microsoft.operationalinsights/workspaces/XXXX
