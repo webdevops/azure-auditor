@@ -3,7 +3,6 @@ package auditor
 import (
 	"context"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
@@ -36,31 +35,23 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 }
 
 func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
-	client, err := armresources.NewResourceGroupsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
+	resourceGroupList, err := auditor.azure.client.ListResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
 		logger.Panic(err)
 	}
 
-	pager := client.NewListPager(nil)
-	for pager.More() {
-		result, err := pager.NextPage(ctx)
-		if err != nil {
-			logger.Panic(err)
+	for _, resourceGroup := range resourceGroupList {
+		obj := map[string]interface{}{
+			"resource.id":       stringPtrToStringLower(resourceGroup.ID),
+			"subscription.id":   to.String(subscription.SubscriptionID),
+			"subscription.name": to.String(subscription.DisplayName),
+
+			"resourcegroup.name":     stringPtrToStringLower(resourceGroup.Name),
+			"resourcegroup.location": stringPtrToStringLower(resourceGroup.Location),
+			"resourcegroup.tag":      azureTagsToAzureObjectField(resourceGroup.Tags),
 		}
 
-		for _, resourceGroup := range result.ResourceGroupListResult.Value {
-			obj := map[string]interface{}{
-				"resource.id":       stringPtrToStringLower(resourceGroup.ID),
-				"subscription.id":   to.String(subscription.SubscriptionID),
-				"subscription.name": to.String(subscription.DisplayName),
-
-				"resourcegroup.name":     stringPtrToStringLower(resourceGroup.Name),
-				"resourcegroup.location": stringPtrToStringLower(resourceGroup.Location),
-				"resourcegroup.tag":      azureTagsToAzureObjectField(resourceGroup.Tags),
-			}
-
-			list = append(list, validator.NewAzureObject(obj))
-		}
+		list = append(list, validator.NewAzureObject(obj))
 	}
 
 	auditor.enrichAzureObjects(ctx, subscription, &list)
