@@ -15,16 +15,16 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/gofrs/uuid v4.3.0+incompatible
+	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.13.0
-	github.com/robertkrimen/otto v0.0.0-20221011175642-09fc211e5ab1
+	github.com/robertkrimen/otto v0.0.0-20221025135307-511d75fba9f8
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/webdevops/go-common v0.0.0-20221019183326-eb3b3f10bf48
+	github.com/webdevops/go-common v0.0.0-20221101184349-613f9f8ca6f9
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -41,23 +41,23 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/cjlapao/common-go v0.0.27 // indirect
+	github.com/cjlapao/common-go v0.0.29 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
-	github.com/microsoft/kiota-abstractions-go v0.12.0 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+	github.com/microsoft/kiota-abstractions-go v0.14.0 // indirect
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0 // indirect
 	github.com/microsoft/kiota-http-go v0.9.0 // indirect
 	github.com/microsoft/kiota-serialization-json-go v0.7.2 // indirect
 	github.com/microsoft/kiota-serialization-text-go v0.6.0 // indirect
-	github.com/microsoftgraph/msgraph-sdk-go v0.44.0 // indirect
-	github.com/microsoftgraph/msgraph-sdk-go-core v0.30.0 // indirect
+	github.com/microsoftgraph/msgraph-sdk-go v0.45.0 // indirect
+	github.com/microsoftgraph/msgraph-sdk-go-core v0.30.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
@@ -68,10 +68,10 @@ require (
 	github.com/remeh/sizedwaitgroup v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
-	go.opentelemetry.io/otel v1.11.0 // indirect
-	go.opentelemetry.io/otel/trace v1.11.0 // indirect
+	go.opentelemetry.io/otel v1.11.1 // indirect
+	go.opentelemetry.io/otel/trace v1.11.1 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
