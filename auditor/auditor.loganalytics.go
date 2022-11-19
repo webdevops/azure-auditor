@@ -95,7 +95,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 
 		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
 		startTime := time.Now()
-		
+
 		queryResults, err := loganalytics.ExecuteQuery(
 			ctx,
 			auditor.azure.client,
