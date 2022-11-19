@@ -3,7 +3,6 @@ module github.com/webdevops/azure-auditor
 go 1.19
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization v1.0.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2 v2.0.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.0.0
@@ -24,11 +23,12 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20221025135307-511d75fba9f8
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/webdevops/go-common v0.0.0-20221119133732-e35d54501261
+	github.com/webdevops/go-common v0.0.0-20221119151806-463e0576fc25
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
