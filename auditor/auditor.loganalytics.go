@@ -1,19 +1,13 @@
 package auditor
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	armoperationalinsights "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
-	"github.com/webdevops/go-common/azuresdk/cloudconfig"
+	"github.com/webdevops/go-common/azuresdk/loganalytics"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
 
@@ -60,18 +54,6 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.
 }
 
 func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.Entry, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
-	var (
-		baseUrl string
-	)
-
-	switch auditor.azure.client.GetCloudName() {
-	case cloudconfig.AzurePublicCloud:
-		baseUrl = "https://api.loganalytics.io"
-	case cloudconfig.AzureChinaCloud:
-		baseUrl = "https://api.loganalytics.azure.cn"
-	case cloudconfig.AzureGovernmentCloud:
-		baseUrl = "https://api.loganalytics.us"
-	}
 
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
@@ -111,58 +93,18 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			}
 		}
 
-		scopeUrl := fmt.Sprintf("%s/.default", baseUrl)
-		queryUrl := fmt.Sprintf("%s/v1/workspaces/%s/query", baseUrl, to.String(mainWorkspaceId))
-
-		credToken, err := auditor.azure.client.GetCred().GetToken(ctx, policy.TokenRequestOptions{
-			Scopes: []string{scopeUrl},
-		})
-		if err != nil {
-			workspaceLogger.Error(err)
-			return
-		}
-
-		// execute query
 		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
 		startTime := time.Now()
-		requestBody := struct {
-			Query      *string   `json:"query"`
-			Workspaces *[]string `json:"workspaces"`
-			Timespan   *string   `json:"timespan"`
-		}{
-			Query:      config.Query,
-			Workspaces: &workspaces,
-			Timespan:   config.Timespan,
-		}
-
-		requestBodyBytes, err := json.Marshal(requestBody)
+		
+		queryResults, err := loganalytics.ExecuteQuery(
+			ctx,
+			auditor.azure.client,
+			*mainWorkspaceId,
+			*config.Query,
+			config.Timespan,
+			&workspaces,
+		)
 		if err != nil {
-			log.Fatal(err)
-		}
-		bytes.NewBuffer(requestBodyBytes)
-
-		req, err := http.NewRequest(http.MethodPost, queryUrl, bytes.NewBuffer(requestBodyBytes))
-		if err != nil {
-			log.Fatal(err)
-		}
-		req.Method = http.MethodPost
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("authorization", fmt.Sprintf("Bearer %s", credToken.Token))
-		response, err := http.DefaultClient.Do(req)
-		if err != nil {
-			workspaceLogger.Error(err)
-			return
-		}
-		defer response.Body.Close()
-
-		responseBody, err := io.ReadAll(response.Body)
-		if err != nil {
-			workspaceLogger.Error(err)
-			return
-		}
-
-		var queryResults LogAnaltyicsQueryResult
-		if err := json.Unmarshal(responseBody, &queryResults); err != nil {
 			workspaceLogger.Error(err)
 			return
 		}
