@@ -95,7 +95,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
 		startTime := time.Now()
 
-		clientOpts := azquery.LogsClientOptions{*auditor.azure.client.NewAzCoreClientOptions()}
+		clientOpts := azquery.LogsClientOptions{ClientOptions: *auditor.azure.client.NewAzCoreClientOptions()}
 		logsClient, err := azquery.NewLogsClient(auditor.azure.client.GetCred(), &clientOpts)
 		if err != nil {
 			workspaceLogger.Error(err)
