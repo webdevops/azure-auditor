@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	armoperationalinsights "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2"
 	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
-	"github.com/webdevops/go-common/azuresdk/loganalytics"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
 
@@ -80,8 +80,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			workspaceLogger.Panic(err)
 		}
 
-		workspaces := []string{}
-
+		var workspaces []*string
 		if config.AdditionalWorkspaces != nil {
 			for _, additionalWorkspaceResourceId := range *config.AdditionalWorkspaces {
 				additionalWorkspaceId, err := auditor.lookupWorkspaceResource(ctx, additionalWorkspaceResourceId)
@@ -89,39 +88,45 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 					workspaceLogger.Panic(err)
 				}
 
-				workspaces = append(workspaces, to.String(additionalWorkspaceId))
+				workspaces = append(workspaces, additionalWorkspaceId)
 			}
 		}
 
 		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
 		startTime := time.Now()
 
-		queryResults, err := loganalytics.ExecuteQuery(
-			ctx,
-			auditor.azure.client,
-			*mainWorkspaceId,
-			*config.Query,
-			config.Timespan,
-			&workspaces,
-		)
+		clientOpts := azquery.LogsClientOptions{*auditor.azure.client.NewAzCoreClientOptions()}
+		logsClient, err := azquery.NewLogsClient(auditor.azure.client.GetCred(), &clientOpts)
+		if err != nil {
+			workspaceLogger.Error(err)
+			return
+		}
+
+		opts := azquery.LogsClientQueryWorkspaceOptions{}
+		queryBody := azquery.Body{
+			Query:      config.Query,
+			Timespan:   config.Timespan,
+			Workspaces: workspaces,
+		}
+		queryResults, err := logsClient.QueryWorkspace(ctx, *mainWorkspaceId, queryBody, &opts)
 		if err != nil {
 			workspaceLogger.Error(err)
 			return
 		}
 
 		// parse and process result
-		resultTables := *queryResults.Tables
+		resultTables := queryResults.Tables
 		for _, table := range resultTables {
 			if table.Rows == nil || table.Columns == nil {
 				// no results found, skip table
 				continue
 			}
 
-			for _, v := range *table.Rows {
+			for _, v := range table.Rows {
 				auditLine := map[string]interface{}{}
 				auditLine["resource.id"] = mainWorkspaceResourceId
 				auditLine["subscription.id"] = mainWorkspaceInfo.Subscription
-				for colNum, colName := range *resultTables[0].Columns {
+				for colNum, colName := range resultTables[0].Columns {
 					fieldName := to.String(colName.Name)
 					fieldValue := v[colNum]
 
