@@ -20,7 +20,7 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[
 }
 
 func (auditor *AzureAuditor) getResourceGroupList(ctx context.Context, subscription *armsubscriptions.Subscription) (list map[string]*armresources.ResourceGroup) {
-	list, err := auditor.azure.client.ListCachedResourceGroups(ctx, *subscription.SubscriptionID)
+	list, err := auditor.azure.client.ListResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
 		auditor.Logger.Panic(err)
 	}
