@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
-	stringsCommon "github.com/webdevops/go-common/strings"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -12,19 +8,6 @@ import (
 var (
 	logger *zap.SugaredLogger
 )
-
-func buildContextLoggerFromRequest(r *http.Request) *zap.SugaredLogger {
-	contextLogger := logger.With(zap.String("requestPath", r.URL.Path))
-
-	for name, value := range r.URL.Query() {
-		fieldName := fmt.Sprintf("param%s", stringsCommon.UppercaseFirst(name))
-		fieldValue := value
-
-		contextLogger = contextLogger.With(zap.Any(fieldName, fieldValue))
-	}
-
-	return contextLogger
-}
 
 func initLogger() *zap.SugaredLogger {
 	var config zap.Config

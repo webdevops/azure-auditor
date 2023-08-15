@@ -83,7 +83,7 @@ func (auditor *AzureAuditor) Init() {
 	auditor.initPrometheus()
 	auditor.initCache()
 	auditor.initCron()
-	
+
 	validator.Logger = auditor.Logger
 }
 
