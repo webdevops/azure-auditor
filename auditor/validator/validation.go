@@ -138,5 +138,5 @@ func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, 
 		}
 	}
 
-	return "", false
+	return "__DEFAULTDENY__", false
 }

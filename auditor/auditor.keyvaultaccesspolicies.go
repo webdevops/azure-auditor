@@ -8,15 +8,15 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
-	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"go.uber.org/zap"
 
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -37,7 +37,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	client, err := armkeyvault.NewVaultsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)

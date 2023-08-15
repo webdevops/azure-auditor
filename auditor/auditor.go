@@ -3,6 +3,7 @@ package auditor
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -11,11 +12,14 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
-	log "github.com/sirupsen/logrus"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapio"
 
 	"github.com/webdevops/go-common/azuresdk/armclient"
 	"github.com/webdevops/go-common/msgraphsdk/msgraphclient"
 
+	"github.com/webdevops/azure-auditor/auditor/validator"
 	"github.com/webdevops/azure-auditor/config"
 )
 
@@ -34,7 +38,7 @@ type (
 		UserAgent string
 		Opts      config.Opts
 
-		logger *log.Entry
+		Logger *zap.SugaredLogger
 
 		config AuditConfig
 
@@ -66,7 +70,6 @@ type (
 
 func NewAzureAuditor() *AzureAuditor {
 	auditor := AzureAuditor{}
-	auditor.logger = log.WithFields(log.Fields{})
 	auditor.report = map[string]*AzureAuditorReport{}
 	auditor.reportUncommited = map[string]*AzureAuditorReport{}
 	auditor.reportLock = &sync.RWMutex{}
@@ -80,6 +83,8 @@ func (auditor *AzureAuditor) Init() {
 	auditor.initPrometheus()
 	auditor.initCache()
 	auditor.initCron()
+	
+	validator.Logger = auditor.Logger
 }
 
 func (auditor *AzureAuditor) GetConfig() AuditConfig {
@@ -96,11 +101,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjobBySubscription(
 			ReportResourceGroups,
 			auditor.Opts.Cronjobs.ResourceGroups,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.config.ResourceGroups.Reset()
 			},
 			auditor.auditResourceGroups,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.prometheus.resourceGroup.Reset()
 			},
 		)
@@ -110,11 +115,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjobBySubscription(
 			ReportRoleAssignments,
 			auditor.Opts.Cronjobs.RoleAssignments,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.config.RoleAssignments.Reset()
 			},
 			auditor.auditRoleAssignments,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.prometheus.roleAssignment.Reset()
 			},
 		)
@@ -124,11 +129,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjobBySubscription(
 			ReportKeyvaultAccessPolicies,
 			auditor.Opts.Cronjobs.KeyvaultAccessPolicies,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.config.KeyvaultAccessPolicies.Reset()
 			},
 			auditor.auditKeyvaultAccessPolicies,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.prometheus.keyvaultAccessPolicies.Reset()
 			},
 		)
@@ -138,11 +143,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjobBySubscription(
 			ReportResourceProviders,
 			auditor.Opts.Cronjobs.ResourceProvider,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.config.ResourceProviders.Reset()
 			},
 			auditor.auditResourceProviders,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.prometheus.resourceProvider.Reset()
 			},
 		)
@@ -152,11 +157,11 @@ func (auditor *AzureAuditor) Run() {
 		auditor.addCronjobBySubscription(
 			ReportResourceProviderFeatures,
 			auditor.Opts.Cronjobs.ResourceProvider,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.config.ResourceProviderFeatures.Reset()
 			},
 			auditor.auditResourceProviderFeatures,
-			func(ctx context.Context, logger *log.Entry) {
+			func(ctx context.Context, logger *zap.SugaredLogger) {
 				auditor.prometheus.resourceProviderFeature.Reset()
 			},
 		)
@@ -169,14 +174,14 @@ func (auditor *AzureAuditor) Run() {
 			auditor.addCronjobBySubscription(
 				fmt.Sprintf(ReportResourceGraph, queryName),
 				auditor.Opts.Cronjobs.ResourceGraph,
-				func(ctx context.Context, logger *log.Entry) {
+				func(ctx context.Context, logger *zap.SugaredLogger) {
 					auditor.config.ResourceGraph.Queries[queryName].Reset()
 				},
-				func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
-					contextLogger := log.WithField("configQueryName", queryName)
+				func(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+					contextLogger := logger.With(zap.String("configQueryName", queryName))
 					auditor.auditResourceGraph(ctx, contextLogger, subscription, queryName, resourceGraphConfig, report, callback)
 				},
-				func(ctx context.Context, logger *log.Entry) {
+				func(ctx context.Context, logger *zap.SugaredLogger) {
 					auditor.prometheus.resourceGraph[queryName].Reset()
 				},
 			)
@@ -190,14 +195,14 @@ func (auditor *AzureAuditor) Run() {
 			auditor.addCronjob(
 				fmt.Sprintf(ReportLogAnalytics, queryName),
 				auditor.Opts.Cronjobs.LogAnalytics,
-				func(ctx context.Context, logger *log.Entry) {
+				func(ctx context.Context, logger *zap.SugaredLogger) {
 					auditor.config.LogAnalytics.Queries[queryName].Reset()
 				},
-				func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()) {
-					contextLogger := log.WithField("configQueryName", queryName)
+				func(ctx context.Context, logger *zap.SugaredLogger, report *AzureAuditorReport, callback chan<- func()) {
+					contextLogger := logger.With(zap.String("configQueryName", queryName))
 					auditor.auditLogAnalytics(ctx, contextLogger, queryName, logAnalyticsConfig, report, callback)
 				},
-				func(ctx context.Context, logger *log.Entry) {
+				func(ctx context.Context, logger *zap.SugaredLogger) {
 					auditor.prometheus.logAnalytics[queryName].Reset()
 				},
 			)
@@ -207,7 +212,7 @@ func (auditor *AzureAuditor) Run() {
 	// check if cron jobs are active
 	cronjobEntries := auditor.cron.Entries()
 	if len(cronjobEntries) == 0 {
-		auditor.logger.Error("no cronjobs enabled")
+		auditor.Logger.Error("no cronjobs enabled")
 		os.Exit(1)
 	}
 
@@ -223,10 +228,8 @@ func (auditor *AzureAuditor) Run() {
 	}()
 }
 
-func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
-	contextLogger := auditor.logger.WithFields(log.Fields{
-		"report": name,
-	})
+func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCallback func(ctx context.Context, logger *zap.SugaredLogger), callback func(ctx context.Context, logger *zap.SugaredLogger, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *zap.SugaredLogger)) {
+	contextLogger := auditor.Logger.With(zap.String("report", name))
 	contextLogger.Infof("scheduling %v audit report cronjob with spec \"%v\"", name, cronSpec)
 	_, err := auditor.cron.AddFunc(
 		cronSpec,
@@ -263,21 +266,17 @@ func (auditor *AzureAuditor) addCronjob(name string, cronSpec string, startupCal
 			auditor.commitReport(name)
 
 			reportDuration := time.Since(startTime)
-			contextLogger.WithFields(log.Fields{
-				"duration": reportDuration.Seconds(),
-			}).Infof("finished %v audit report in %s", name, reportDuration.String())
+			contextLogger.With(zap.Float64("duration", reportDuration.Seconds())).Infof("finished %v audit report in %s", name, reportDuration.String())
 		},
 	)
 
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 }
 
-func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *log.Entry), callback func(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *log.Entry)) {
-	contextLogger := auditor.logger.WithFields(log.Fields{
-		"report": name,
-	})
+func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec string, startupCallback func(ctx context.Context, logger *zap.SugaredLogger), callback func(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()), finishCallback func(ctx context.Context, logger *zap.SugaredLogger)) {
+	contextLogger := auditor.Logger.With(zap.String("report", name))
 	contextLogger.Infof("scheduling %v audit report cronjob with spec \"%v\"", name, cronSpec)
 	_, err := auditor.cron.AddFunc(
 		cronSpec,
@@ -301,10 +300,10 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 					wg.Add(1)
 					go func(subscription *armsubscriptions.Subscription) {
 						defer wg.Done()
-						callLogger := contextLogger.WithFields(log.Fields{
-							"subscriptionID":   to.String(subscription.SubscriptionID),
-							"subscriptionName": to.String(subscription.DisplayName),
-						})
+						callLogger := contextLogger.With(
+							zap.String("subscriptionID", to.String(subscription.SubscriptionID)),
+							zap.String("subscriptionName", to.String(subscription.DisplayName)),
+						)
 						callback(ctx, callLogger, subscription, report, metricCallbackChannel)
 					}(subscription)
 				}
@@ -332,22 +331,20 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 			auditor.commitReport(name)
 
 			reportDuration := time.Since(startTime)
-			contextLogger.WithFields(log.Fields{
-				"duration": reportDuration.Seconds(),
-			}).Infof("finished %v audit report in %s", name, reportDuration.String())
+			contextLogger.With(zap.Float64("duration", reportDuration.Seconds())).Infof("finished %v audit report in %s", name, reportDuration.String())
 		},
 	)
 
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 }
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.logger.Logger)
+	auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.Logger)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 	auditor.azure.client.SetSubscriptionFilter(auditor.Opts.Azure.Subscription...)
@@ -355,9 +352,9 @@ func (auditor *AzureAuditor) initAzure() {
 
 func (auditor *AzureAuditor) initMsGraph() {
 	var err error
-	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.logger.Logger)
+	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.Logger)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 }
@@ -368,7 +365,8 @@ func (auditor *AzureAuditor) initCache() {
 }
 
 func (auditor *AzureAuditor) initCron() {
-	logger := cron.PrintfLogger(auditor.logger)
+	stdOutWriter := &zapio.Writer{Log: auditor.Logger.Desugar(), Level: zap.InfoLevel}
+	logger := cron.PrintfLogger(log.New(stdOutWriter, "cron: ", log.LstdFlags))
 	auditor.cron = cron.New(cron.WithChain(
 		cron.Recover(logger),
 	))

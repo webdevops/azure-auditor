@@ -17,7 +17,6 @@ import (
 	"github.com/google/uuid"
 	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 	"github.com/webdevops/go-common/azuresdk/prometheus/tracing"
 	yaml "gopkg.in/yaml.v3"
 
@@ -47,17 +46,18 @@ func main() {
 	initArgparser()
 	initLogger()
 
-	log.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
-	log.Info(string(opts.GetJson()))
+	logger.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
+	logger.Info(string(opts.GetJson()))
 
-	log.Infof("starting audit")
+	logger.Infof("starting audit")
 	azureAuditor = auditor.NewAzureAuditor()
 	azureAuditor.Opts = opts
+	azureAuditor.Logger = logger
 	azureAuditor.UserAgent = UserAgent + gitTag
 	azureAuditor.ParseConfig(opts.Config...)
 	azureAuditor.Run()
 
-	log.Infof("Starting http server on %s", opts.Server.Bind)
+	logger.Infof("Starting http server on %s", opts.Server.Bind)
 	startHttpServer()
 }
 
@@ -78,39 +78,6 @@ func initArgparser() {
 	}
 }
 
-func initLogger() {
-	// verbose level
-	if opts.Logger.Debug {
-		log.SetLevel(log.DebugLevel)
-	}
-
-	// trace level
-	if opts.Logger.Trace {
-		log.SetReportCaller(true)
-		log.SetLevel(log.TraceLevel)
-		log.SetFormatter(&log.TextFormatter{
-			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-				s := strings.Split(f.Function, "/")
-				funcName := s[len(s)-1]
-				return funcName, fmt.Sprintf("%s:%d", f.File, f.Line)
-			},
-		})
-	}
-
-	// json log format
-	if opts.Logger.Json {
-		log.SetReportCaller(true)
-		log.SetFormatter(&log.JSONFormatter{
-			DisableTimestamp: true,
-			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-				s := strings.Split(f.Function, "/")
-				funcName := s[len(s)-1]
-				return funcName, fmt.Sprintf("%s:%d", f.File, f.Line)
-			},
-		})
-	}
-}
-
 // start and handle prometheus handler
 func startHttpServer() {
 	var err error
@@ -119,14 +86,14 @@ func startHttpServer() {
 	// healthz
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
-			log.Error(err)
+			logger.Error(err)
 		}
 	})
 
 	// readyz
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
-			log.Error(err)
+			logger.Error(err)
 		}
 	})
 
@@ -163,7 +130,7 @@ func startHttpServer() {
 			var buf strings.Builder
 			err := tmpl.ExecuteTemplate(&buf, name, data)
 			if err != nil {
-				log.Panic(err.Error())
+				logger.Panic(err.Error())
 			}
 			return buf.String()
 		},
@@ -172,7 +139,7 @@ func startHttpServer() {
 		},
 	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/*")
 	if err != nil {
-		log.Panic(err)
+		logger.Panic(err)
 	}
 
 	mux.HandleFunc(opts.Server.PathReport, func(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +210,7 @@ func startHttpServer() {
 		}
 
 		if err := tmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
-			log.Error(err)
+			logger.Error(err)
 		}
 	})
 
@@ -372,14 +339,14 @@ func startHttpServer() {
 		content, err := yaml.Marshal(azureAuditor.GetConfig())
 		if err == nil {
 			if _, writeErr := w.Write(content); writeErr != nil {
-				log.Error(writeErr)
+				logger.Error(writeErr)
 			}
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			if _, writeErr := w.Write([]byte("Unable to marshal configuration")); writeErr != nil {
-				log.Error(writeErr)
+				logger.Error(writeErr)
 			}
-			log.Error(err)
+			logger.Error(err)
 		}
 	})
 
@@ -397,5 +364,5 @@ func startHttpServer() {
 		ReadTimeout:  opts.Server.ReadTimeout,
 		WriteTimeout: opts.Server.WriteTimeout,
 	}
-	log.Fatal(srv.ListenAndServe())
+	logger.Fatal(srv.ListenAndServe())
 }

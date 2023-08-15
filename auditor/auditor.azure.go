@@ -14,7 +14,7 @@ import (
 func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[string]*armsubscriptions.Subscription) {
 	list, err := auditor.azure.client.ListCachedSubscriptions(ctx)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 	return list
 }
@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[
 func (auditor *AzureAuditor) getResourceGroupList(ctx context.Context, subscription *armsubscriptions.Subscription) (list map[string]*armresources.ResourceGroup) {
 	list, err := auditor.azure.client.ListCachedResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 	return list
 }
@@ -42,14 +42,14 @@ func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *
 
 	client, err := armresources.NewClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 	pager := client.NewListPager(nil)
 
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			auditor.logger.Panic(err)
+			auditor.Logger.Panic(err)
 		}
 
 		for _, item := range result.ResourceListResult.Value {
@@ -58,7 +58,7 @@ func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *
 		}
 	}
 
-	auditor.logger.Infof("found %v Azure Resoures for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
+	auditor.Logger.Infof("found %v Azure Resoures for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
 
 	// save to cache
 	_ = auditor.cache.Add(cacheKey, list, auditor.cacheExpiry)
@@ -81,14 +81,14 @@ func (auditor *AzureAuditor) getRoleDefinitionList(ctx context.Context, subscrip
 
 	client, err := armauthorization.NewRoleDefinitionsClient(auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		auditor.logger.Panic(err)
+		auditor.Logger.Panic(err)
 	}
 
 	pager := client.NewListPager(*subscription.ID, nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			auditor.logger.Panic(err)
+			auditor.Logger.Panic(err)
 		}
 
 		for _, item := range result.RoleDefinitionListResult.Value {
@@ -97,7 +97,7 @@ func (auditor *AzureAuditor) getRoleDefinitionList(ctx context.Context, subscrip
 		}
 	}
 
-	auditor.logger.Infof("found %v Azure RoleDefinitions for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
+	auditor.Logger.Infof("found %v Azure RoleDefinitions for Subscription %v (%v) (cache update)", len(list), to.String(subscription.DisplayName), to.String(subscription.SubscriptionID))
 
 	// save to cache
 	_ = auditor.cache.Add(cacheKey, list, auditor.cacheExpiry)

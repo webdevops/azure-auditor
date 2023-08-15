@@ -210,4 +210,4 @@ logAnalytics:
       timespan: PT1H
 
       workspaces:
-        - /subscriptions/XXXXX/resourcegroups/XXXXX/providers/microsoft.operationalinsights/workspaces/XXXX
+        - /subscriptions/d86bcf13-ddf7-45ea-82f1-6f656767a318/resourcegroups/k8s/providers/microsoft.operationalinsights/workspaces/test

@@ -8,11 +8,11 @@ import (
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
 	"github.com/Azure/go-autorest/autorest/to"
-	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"go.uber.org/zap"
 )
 
-func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceGroups(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -34,7 +34,7 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *lo
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	resourceGroupList, err := auditor.azure.client.ListResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
 		logger.Panic(err)

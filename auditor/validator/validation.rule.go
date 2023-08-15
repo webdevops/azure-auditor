@@ -14,6 +14,7 @@ import (
 	"github.com/robertkrimen/otto"
 	_ "github.com/robertkrimen/otto/underscore"
 	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type (
@@ -37,6 +38,7 @@ type (
 var (
 	vm     = otto.New()
 	vmLock = sync.Mutex{}
+	Logger *zap.SugaredLogger
 )
 
 func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -180,11 +182,13 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 
 func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, status bool) bool {
 	atomic.AddInt64(&rule.Stats.Matches, 1)
-	log.WithFields(log.Fields{
-		"resourceID":       object.ResourceID(),
-		"rule":             rule.Rule,
-		"validationStatus": status,
-	}).Debugf("validation status: \"%v\"", status)
+	if Logger != nil {
+		Logger.With(
+			zap.String("resourceID", object.ResourceID()),
+			zap.String("rule", rule.Rule),
+			zap.Bool("validationStatus", status),
+		).Debugf("validation status: \"%v\"", status)
+	}
 	return status
 }
 

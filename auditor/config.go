@@ -3,7 +3,7 @@ package auditor
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
@@ -37,17 +37,17 @@ func (auditor *AzureAuditor) ParseConfig(configPaths ...string) {
 	auditor.config = AuditConfig{}
 
 	for _, path := range configPaths {
-		auditor.logger.Infof("reading configuration from file %v", path)
+		auditor.Logger.Infof("reading configuration from file %v", path)
 		/* #nosec */
 		if data, err := os.ReadFile(path); err == nil {
 			configRaw = data
 		} else {
-			auditor.logger.Panic(err)
+			auditor.Logger.Panic(err)
 		}
 
-		log.WithField("path", path).Info("parsing configuration")
+		auditor.Logger.With(zap.String("path", path)).Info("parsing configuration")
 		if err := yaml.Unmarshal(configRaw, &auditor.config); err != nil {
-			auditor.logger.Panic(err)
+			auditor.Logger.Panic(err)
 		}
 	}
 }

@@ -8,15 +8,15 @@ import (
 	armauthorization "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
-	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"go.uber.org/zap"
 
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -38,7 +38,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *l
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	list = []*validator.AzureObject{}
 
 	client, err := armauthorization.NewRoleAssignmentsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)

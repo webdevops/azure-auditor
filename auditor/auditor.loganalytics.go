@@ -6,10 +6,10 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	armoperationalinsights "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2"
-	log "github.com/sirupsen/logrus"
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
+	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -31,7 +31,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.Entry, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *zap.SugaredLogger, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.queryLogAnalytics(ctx, logger, config)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -53,14 +53,14 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *log.
 	}
 }
 
-func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.Entry, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *zap.SugaredLogger, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
 
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
 	for _, mainWorkspaceResourceId := range *config.Workspaces {
 		workspaceAuditList := []*validator.AzureObject{}
 
-		workspaceLogger := logger.WithField("logAnalyticsWorkspace", mainWorkspaceResourceId)
+		workspaceLogger := logger.With(zap.String("logAnalyticsWorkspace", mainWorkspaceResourceId))
 
 		mainWorkspaceInfo, err := azureCommon.ParseResourceId(mainWorkspaceResourceId)
 		if err != nil {
@@ -69,10 +69,10 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 
 		// lookup subscription from workspace id
 		if v, ok := subscriptionList[mainWorkspaceInfo.Subscription]; ok {
-			workspaceLogger = workspaceLogger.WithFields(log.Fields{
-				"subscriptionID":   to.String(v.SubscriptionID),
-				"subscriptionName": to.String(v.DisplayName),
-			})
+			workspaceLogger = workspaceLogger.With(
+				zap.String("subscriptionID", to.String(v.SubscriptionID)),
+				zap.String("subscriptionName", to.String(v.DisplayName)),
+			)
 		}
 
 		mainWorkspaceId, err := auditor.lookupWorkspaceResource(ctx, mainWorkspaceResourceId)
@@ -92,7 +92,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 			}
 		}
 
-		workspaceLogger.WithField("workspaces", workspaces).Debug("sending query")
+		workspaceLogger.With(zap.Any("workspaces", workspaces)).Debug("sending query")
 		startTime := time.Now()
 
 		clientOpts := azquery.LogsClientOptions{ClientOptions: *auditor.azure.client.NewAzCoreClientOptions()}
@@ -104,10 +104,11 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 
 		opts := azquery.LogsClientQueryWorkspaceOptions{}
 		queryBody := azquery.Body{
-			Query:      config.Query,
-			Timespan:   config.Timespan,
-			Workspaces: workspaces,
+			Query:                config.Query,
+			Timespan:             (*azquery.TimeInterval)(config.Timespan),
+			AdditionalWorkspaces: workspaces,
 		}
+
 		queryResults, err := logsClient.QueryWorkspace(ctx, *mainWorkspaceId, queryBody, &opts)
 		if err != nil {
 			workspaceLogger.Error(err)
@@ -143,7 +144,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *log.
 				workspaceAuditList = append(workspaceAuditList, validator.NewAzureObject(auditLine))
 			}
 		}
-		workspaceLogger.WithField("workspaces", workspaces).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
+		workspaceLogger.With(zap.Any("workspaces", workspaces)).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
 
 		if config.Enrich {
 			auditor.enrichAzureObjects(ctx, nil, &workspaceAuditList)

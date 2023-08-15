@@ -5,8 +5,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -15,7 +15,7 @@ const (
 	ResourceGraphQueryOptionsTop = 1000
 )
 
-func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.queryResourceGraph(ctx, logger, subscription, config)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -37,7 +37,7 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *log
 	}
 }
 
-func (auditor *AzureAuditor) queryResourceGraph(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) queryResourceGraph(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
 	client, err := armresourcegraph.NewClient(auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)

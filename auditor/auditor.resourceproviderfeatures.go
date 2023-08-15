@@ -6,15 +6,15 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
 	"github.com/Azure/go-autorest/autorest/to"
-	log "github.com/sirupsen/logrus"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 )
 
-func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceProviderFeatures(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -35,7 +35,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *log.Entry, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	client, err := armfeatures.NewClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
 		logger.Panic(err)
