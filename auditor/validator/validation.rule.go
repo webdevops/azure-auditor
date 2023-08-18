@@ -13,7 +13,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/robertkrimen/otto"
 	_ "github.com/robertkrimen/otto/underscore"
-	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
 
@@ -252,17 +251,17 @@ func (matcher *AuditConfigValidationRule) runFunc(object *AzureObject) bool {
 	defer vmLock.Unlock()
 
 	if err := vm.Set("obj", *object); err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
 	result, err := vm.Run(matcher.customFunction)
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
 	status, err := result.ToBoolean()
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 	return status
 }
