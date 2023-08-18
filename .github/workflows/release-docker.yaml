@@ -3,7 +3,11 @@ name: "Release: docker"
 on:
   push:
     branches:
-      - '**'
+      - 'main'
+      - 'feature-**'
+      - 'bugfix-**'
+    branches-ignore:
+      - 'dependabot/**'
     tags:
       - '*.*.*'
 
@@ -14,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
+        uses: pierotofy/set-swap-space@49819ab
         with:
           swap-size-gb: 12
 
