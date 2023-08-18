@@ -1,4 +1,4 @@
-name: "CI docker"
+name: "ci/docker"
 
 on: [pull_request, workflow_dispatch]
 
