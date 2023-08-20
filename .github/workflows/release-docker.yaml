@@ -6,8 +6,6 @@ on:
       - 'main'
       - 'feature-**'
       - 'bugfix-**'
-    branches-ignore:
-      - 'dependabot/**'
     tags:
       - '*.*.*'
 
