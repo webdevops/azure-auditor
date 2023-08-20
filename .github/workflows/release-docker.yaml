@@ -27,7 +27,7 @@ jobs:
           args: --print-resources-usage
 
   build:
-    name: "build ${{ matrix.Dockerfile }} -> ${{ matrix.target }} (suffix: ${{ matrix.suffix }};  "
+    name: "build ${{ matrix.Dockerfile }} -> ${{ matrix.target }}"
     needs: lint
     strategy:
       fail-fast: false
