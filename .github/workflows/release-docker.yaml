@@ -29,15 +29,18 @@ jobs:
           args: --print-resources-usage
 
   build:
+    name: "build ${{ matrix.Dockerfile }} -> ${{ matrix.target }} (suffix: ${{ matrix.suffix }};  "
     needs: lint
     strategy:
       fail-fast: false
       matrix:
         Dockerfile: [Dockerfile]
+        target: ["final-static"]
         suffix: [""]
         latest: ["auto"]
         include:
-          - Dockerfile: Dockerfile.azcli
+          - Dockerfile: Dockerfile
+            target: "final-azcli"
             suffix: -azcli
             latest: false
     runs-on: ubuntu-latest
@@ -84,6 +87,7 @@ jobs:
         with:
           context: .
           file: ./${{ matrix.Dockerfile }}
+          target: ${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}

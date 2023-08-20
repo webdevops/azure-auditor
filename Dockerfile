@@ -29,9 +29,20 @@ COPY --from=build /go/src/github.com/webdevops/azure-auditor/templates ./templat
 RUN ["./azure-auditor", "--help"]
 
 #############################################
-# Final
+# final-azcli
 #############################################
-FROM gcr.io/distroless/static
+FROM mcr.microsoft.com/azure-cli as final-azcli
+ENV LOG_JSON=1
+WORKDIR /
+COPY --from=test /app .
+USER 1000:1000
+ENTRYPOINT ["/azure-auditor"]
+
+
+#############################################
+# final-static
+#############################################
+FROM gcr.io/distroless/static as final-static
 ENV LOG_JSON=1
 WORKDIR /
 COPY --from=test /app .
