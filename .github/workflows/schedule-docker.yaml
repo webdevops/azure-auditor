@@ -1,4 +1,4 @@
-name: "scheduled/docker"
+name: "schedule/docker"
 
 on:
   schedule:
