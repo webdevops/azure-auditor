@@ -16,7 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
