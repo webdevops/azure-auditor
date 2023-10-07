@@ -9,6 +9,10 @@ small { font-size: 0.6em; }
     body { margin-left: 290px; }
 }
 
+.hidden {
+    display: none !important;
+}
+
 .navbar h1 {
     text-align: center;
     display: block;
@@ -110,16 +114,16 @@ h3 { font-size: 1.2rem; }
     opacity: 0.5;
 }
 
-.dropdown.bootstrap-select,
-.dropdown.bootstrap-select button {
-    background-color: white;
-}
 
-.dropdown.bootstrap-select button {
-    border: var(--bs-border-width) solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+.ms-sel-item {
+    background: #f3f3f3;
+    color: #999;
+    float: left;
+    font-size: 12px;
+    padding: 0 5px;
+    border-radius: 3px;
+    border: 1px solid #DDD;
+    margin: 1px 5px 1px 0;
 }
 
 @media print {

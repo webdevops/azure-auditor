@@ -5,6 +5,7 @@
 
 let globalSettingsKey = "auditor-global-settings";
 let globalSettings = {};
+const resultListDelimiter = ";";
 
 function onlyUnique(value, index, array) {
     return array.indexOf(value) === index;
@@ -56,8 +57,8 @@ processGlobalSettings();
 // Report
 // ################################
 
-let reportName = "{{ $root.RequestReport }}";
-let reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
+const reportName = "{{ $root.RequestReport }}";
+const reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
 let reportAjaxParams = {report:reportName, groupBy: "Status"};
 
 let reportFilter = [];
@@ -119,27 +120,36 @@ let ajaxRequestFunc = (url, config, params) => {
                 resolve(data);
 
                 // collect rules
-                let filterRules = []
-                window.foo = data
+                let filterRules = {}
                 if (data && data.length) {
                     data.forEach((row) => {
-                        filterRules.push(row.rule)
+                        if (!filterRules[row.rule]) {
+                            filterRules[row.rule] = 1
+                        } else {
+                            filterRules[row.rule]++
+                        }
                     });
                 }
-                filterRules = filterRules.filter(onlyUnique)
-                filterRules.sort()
 
-                let ruleOptionHtml = '<option val="">~~ no selection ~~</option>'
-                filterRules.forEach((val) => {
-                    ruleOptionHtml += '<option>' + $('<div/>').text(val).html() + '</option>';
+                let ruleSelections = [];
+                Object.keys(filterRules).sort().forEach((val) => {
+                    ruleSelections.push({id: val, name: val})
                 })
-                console.log(ruleOptionHtml)
+                $("#reportFilterRuleSelector").magicSuggest().setData(ruleSelections);
+                return
+
+
                 $('#reportFilterRule').html(ruleOptionHtml);
                 setTimeout(() => {
-                    $('#reportFilterRule').selectpicker('destroy');
+                    try {
+                        $('#reportFilterRule').selectpicker('destroy');
+                    } catch(e) {}
+
                     $('#reportFilterRule').selectpicker();
                     if (params['rule']) {
                         $('#reportFilterRule').selectpicker('val', params['rule']);
+                    } else {
+                        $('#reportFilterRule').selectpicker('val', '');
                     }
 
                 }, 100);
@@ -220,7 +230,7 @@ let refreshTableFilter = () => {
         let fieldName = el.data("report-filter");
         let fieldValue = el.val();
 
-        if (fieldValue !== "") {
+        if (fieldValue && fieldValue !== "") {
             switch (fieldName) {
                 case "resource":
                     fieldValue.split("\n").forEach(value => {
@@ -229,6 +239,9 @@ let refreshTableFilter = () => {
                             reportFilter.push({field:fieldName, type:"like", value:value});
                         }
                     });
+                    break;
+                case "rule":
+                    reportFilter.push({field:fieldName, type:"in", value:el.val().split(resultListDelimiter)});
                     break;
                 default:
                     reportFilter.push({field:fieldName, type:"like", value:el.val()});
@@ -310,4 +323,26 @@ table.on("tableBuilt", () => {
     refreshTableData();
     refreshTableFilter();
     table.restoreRedraw();
+
+
+    let ruleSelectorData = [];
+    $("#reportFilterRule").val().split(resultListDelimiter).forEach((val) => {
+        ruleSelectorData.push({
+            id: val,
+            name: val
+        })
+    });
+    let ruleMs = $("#reportFilterRuleSelector").magicSuggest({
+        placeholder: '~~ no selection ~~',
+        data: ruleSelectorData,
+        valueField: 'id',
+        value: ruleSelectorData,
+        expandOnFocus: true,
+        resultAsStringDelimiter: resultListDelimiter,
+    });
+    $(ruleMs).on('selectionchange', function(e,m) {
+        $("#reportFilterRule").val(this.getValue().join(resultListDelimiter));
+        formSaveToHash();
+        refreshTableFilter();
+    });
 });
