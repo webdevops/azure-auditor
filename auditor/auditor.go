@@ -347,7 +347,7 @@ func (auditor *AzureAuditor) initAzure() {
 		auditor.Logger.Panic(err)
 	}
 	auditor.azure.client.SetUserAgent(auditor.UserAgent)
-	auditor.azure.client.SetSubscriptionFilter(auditor.Opts.Azure.Subscription...)
+	auditor.azure.client.SetSubscriptionID(auditor.Opts.Azure.Subscription...)
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
