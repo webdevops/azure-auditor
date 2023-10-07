@@ -6,6 +6,11 @@
 let globalSettingsKey = "auditor-global-settings";
 let globalSettings = {};
 
+function onlyUnique(value, index, array) {
+    return array.indexOf(value) === index;
+}
+
+
 // restore settings
 try {
     globalSettings = JSON.parse(localStorage.getItem(globalSettingsKey));
@@ -112,6 +117,32 @@ let ajaxRequestFunc = (url, config, params) => {
             })
             .then(data => {
                 resolve(data);
+
+                // collect rules
+                let filterRules = []
+                window.foo = data
+                if (data && data.length) {
+                    data.forEach((row) => {
+                        filterRules.push(row.rule)
+                    });
+                }
+                filterRules = filterRules.filter(onlyUnique)
+                filterRules.sort()
+
+                let ruleOptionHtml = '<option val="">~~ no selection ~~</option>'
+                filterRules.forEach((val) => {
+                    ruleOptionHtml += '<option>' + $('<div/>').text(val).html() + '</option>';
+                })
+                console.log(ruleOptionHtml)
+                $('#reportFilterRule').html(ruleOptionHtml);
+                setTimeout(() => {
+                    $('#reportFilterRule').selectpicker('destroy');
+                    $('#reportFilterRule').selectpicker();
+                    if (params['rule']) {
+                        $('#reportFilterRule').selectpicker('val', params['rule']);
+                    }
+
+                }, 100);
             })
             .catch((error) => {
                 reject(error);

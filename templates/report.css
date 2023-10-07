@@ -110,6 +110,18 @@ h3 { font-size: 1.2rem; }
     opacity: 0.5;
 }
 
+.dropdown.bootstrap-select,
+.dropdown.bootstrap-select button {
+    background-color: white;
+}
+
+.dropdown.bootstrap-select button {
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
 @media print {
     body { margin: 0 !important; padding: 0 !important; }
     nav.navbar { display: none; }
