@@ -181,7 +181,7 @@ let table = new Tabulator("#report-table", {
     ajaxRequestFunc: ajaxRequestFunc,
 
     columns: [
-        {title:"Status", field:"status", formatter:"tickCross", width:115},
+        {title:"Status", field:"status", formatter:"plaintext", width:100},
         {title:"Resource", field:"resource", formatter:yamlFormatter, formatterPrint:yamlFormatter},
         {title:"Rule", field:"rule", formatter:"plaintext",  width:300},
         {title:"Count", field:"count", formatter:"plaintext",  width:100},

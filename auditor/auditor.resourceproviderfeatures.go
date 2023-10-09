@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 		matchingRuleId, status := auditor.config.ResourceProviderFeatures.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status && auditor.config.ResourceProviderFeatures.IsMetricsEnabled() {
+		if status.IsDeny() && auditor.config.ResourceProviderFeatures.IsMetricsEnabled() {
 			violationMetric.AddInfo(
 				auditor.config.ResourceProviderFeatures.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
 			)

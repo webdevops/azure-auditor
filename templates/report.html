@@ -35,7 +35,12 @@
                         {{- if not (hasPrefix "ResourceGraph" $ReportName) -}}
                         {{- if not (hasPrefix "LogAnalytics" $ReportName) -}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                                {{ $ReportName }}
+                                <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
+                                <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
+                                <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                            </a>
                         </li>
                         {{- end -}}
                         {{- end -}}
@@ -49,7 +54,12 @@
                     {{- range $ReportName, $report := .Reports -}}
                         {{- if (hasPrefix "ResourceGraph" $ReportName) -}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ trimPrefix "ResourceGraph:" $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                                {{ trimPrefix "ResourceGraph:" $ReportName }}
+                                <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
+                                <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
+                                <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                            </a>
                         </li>
                         {{- end -}}
                     {{- end -}}
@@ -62,7 +72,12 @@
                     {{- range $ReportName, $report := .Reports -}}
                     {{- if (hasPrefix "LogAnalytics" $ReportName) -}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">{{ trimPrefix "LogAnalytics:" $ReportName }} <span class="badge bg-success {{if eq $report.Summary.Ok 0 }}badge-disabled{{end}}">{{ $report.Summary.Ok }}</span> <span class="badge bg-danger {{if eq $report.Summary.Failed 0 }}badge-disabled{{end}}">{{ $report.Summary.Failed }}</span></a>
+                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                            {{ trimPrefix "LogAnalytics:" $ReportName }}
+                            <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
+                            <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
+                            <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                        </a>
                     </li>
                     {{- end -}}
                     {{- end -}}
@@ -132,6 +147,7 @@
                                 <select class="form-select" id="reportFilterStatus" data-report-refresh="true" data-report-param="status" data-default="deny">
                                     <option value="">all</option>
                                     <option value="deny" selected>deny</option>
+                                    <option value="ignore">ignore</option>
                                     <option value="allow">allow</option>
                                 </select>
                             </div>

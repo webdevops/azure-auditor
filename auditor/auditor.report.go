@@ -9,6 +9,7 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
+	"github.com/webdevops/azure-auditor/auditor/types"
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
@@ -25,15 +26,16 @@ type (
 	}
 
 	AzureAuditorReportSummary struct {
-		Ok     int64
-		Failed int64
+		Ignore int64
+		Deny   int64
+		Allow  int64
 	}
 
 	AzureAuditorReportLine struct {
 		Resource map[string]interface{} `json:"resource"`
 		RuleID   string                 `json:"rule"`
 		GroupBy  interface{}            `json:"groupBy"`
-		Status   bool                   `json:"status"`
+		Status   string                 `json:"status"`
 		Count    uint64                 `json:"count"`
 	}
 )
@@ -73,7 +75,7 @@ func (report *AzureAuditorReport) Clear() {
 	report.Lines = []*AzureAuditorReportLine{}
 }
 
-func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID string, status bool) {
+func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID string, status types.RuleStatus) {
 	report.lock.Lock()
 	defer report.lock.Unlock()
 
@@ -82,13 +84,16 @@ func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID st
 		&AzureAuditorReportLine{
 			Resource: *resource,
 			RuleID:   ruleID,
-			Status:   status,
+			Status:   status.String(),
 		},
 	)
 
-	if status {
-		report.Summary.Ok++
-	} else {
-		report.Summary.Failed++
+	switch status {
+	case types.RuleStatusIgnore:
+		report.Summary.Ignore++
+	case types.RuleStatusDeny:
+		report.Summary.Deny++
+	case types.RuleStatusAllow:
+		report.Summary.Allow++
 	}
 }

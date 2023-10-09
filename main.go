@@ -21,6 +21,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
+	"github.com/webdevops/azure-auditor/auditor/types"
 	"github.com/webdevops/azure-auditor/auditor/validator"
 	"github.com/webdevops/azure-auditor/config"
 )
@@ -217,7 +218,7 @@ func startHttpServer() {
 	mux.HandleFunc(opts.Server.PathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
 		var reportGroupBy *string
 		var reportFields *[]string
-		var reportStatus *bool
+		var reportStatus *types.RuleStatus
 
 		if val := r.URL.Query().Get("groupBy"); val != "" {
 			reportGroupBy = &val
@@ -232,13 +233,7 @@ func startHttpServer() {
 		}
 
 		if val := r.URL.Query().Get("status"); val != "" {
-			valStatus := true
-			switch strings.ToLower(val) {
-			case "1", "true", "allow":
-				valStatus = true
-			case "0", "false", "deny":
-				valStatus = false
-			}
+			valStatus := types.StringToRuleStatus(val)
 			reportStatus = &valStatus
 		}
 
@@ -259,7 +254,7 @@ func startHttpServer() {
 
 					// filter: status
 					if reportStatus != nil {
-						if row.Status != *reportStatus {
+						if row.Status != (*reportStatus).String() {
 							continue
 						}
 					}
@@ -271,11 +266,7 @@ func startHttpServer() {
 						case "rule", "ruleid":
 							line.GroupBy = line.RuleID
 						case "status":
-							if line.Status {
-								line.GroupBy = "allow"
-							} else {
-								line.GroupBy = "deny"
-							}
+							line.GroupBy = line.Status
 						default:
 							if val, ok := line.Resource[*reportGroupBy]; ok {
 								line.GroupBy = val

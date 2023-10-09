@@ -26,6 +26,10 @@ test:
         regexp: "^barfoo"
       action: continue
 
+    - rule: ignoretest
+      resourcegroup.name: barfoo
+      action: ignore
+
     - rule: name
       resourcegroup.name: foobar
       action: allow
@@ -44,7 +48,7 @@ test:
 			"resourcegroup.tag.foobar": "barfoo",
 		},
 	)
-	if _, status := config.Test.Validate(obj); !status {
+	if _, status := config.Test.Validate(obj); !status.IsAllow() {
 		t.Errorf("expected matching object, got: %v", status)
 	}
 
@@ -54,7 +58,17 @@ test:
 			"resourcegroup.tag.barfoo": "foobar",
 		},
 	)
-	if _, status := config.Test.Validate(obj); status {
+	if _, status := config.Test.Validate(obj); !status.IsDeny() {
+		t.Errorf("expected NOT matching object, got: %v", status)
+	}
+
+	obj = NewAzureObject(
+		map[string]interface{}{
+			"resourcegroup.name":       "barfoo",
+			"resourcegroup.tag.foobar": "barfoo",
+		},
+	)
+	if _, status := config.Test.Validate(obj); !status.IsIgnore() {
 		t.Errorf("expected NOT matching object, got: %v", status)
 	}
 }
@@ -122,7 +136,7 @@ test:
 			"principal.type":           "group",
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); !status {
+	if ruleId, status := config.Test.Validate(obj); !status.IsAllow() {
 		t.Errorf("expected matching object, got: %v by rule %v", status, ruleId)
 	}
 
@@ -134,7 +148,7 @@ test:
 			"principal.type":           "group",
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); status {
+	if ruleId, status := config.Test.Validate(obj); !status.IsDeny() {
 		t.Errorf("expected NOT matching object, got: %v by rule %v", status, ruleId)
 	}
 
@@ -173,7 +187,7 @@ test:
 			"principal.type":           "group",
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); !status {
+	if ruleId, status := config.Test.Validate(obj); !status.IsAllow() {
 		t.Errorf("expected matching object, got: %v by rule %v", status, ruleId)
 	}
 
@@ -185,7 +199,7 @@ test:
 			"principal.type":           "group",
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); status || ruleId != "deny" {
+	if ruleId, status := config.Test.Validate(obj); !status.IsDeny() || ruleId != "deny" {
 		t.Errorf("expected NOT matching object with rule deny, got: %v by rule %v", status, ruleId)
 	}
 
@@ -215,7 +229,7 @@ test:
 			"resourcegroup.tag.updated": time.Now().Format("YYYY-MM-DD"),
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); !status {
+	if ruleId, status := config.Test.Validate(obj); !status.IsAllow() {
 		t.Errorf("expected matching object, got: %v by rule %v", status, ruleId)
 	}
 
@@ -224,7 +238,7 @@ test:
 			"resourcegroup.tag.updated": "2000-01-01",
 		},
 	)
-	if ruleId, status := config.Test.Validate(obj); status || ruleId != "deny" {
+	if ruleId, status := config.Test.Validate(obj); !status.IsDeny() || ruleId != "deny" {
 		t.Errorf("expected NOT matching object with rule deny, got: %v by rule %v", status, ruleId)
 	}
 

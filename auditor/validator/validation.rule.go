@@ -14,6 +14,8 @@ import (
 	"github.com/robertkrimen/otto"
 	_ "github.com/robertkrimen/otto/underscore"
 	"go.uber.org/zap"
+
+	"github.com/webdevops/azure-auditor/auditor/types"
 )
 
 type (
@@ -179,13 +181,13 @@ func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface
 	return nil
 }
 
-func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, status bool) bool {
+func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, status types.RuleStatus) types.RuleStatus {
 	atomic.AddInt64(&rule.Stats.Matches, 1)
 	if Logger != nil {
 		Logger.With(
 			zap.String("resourceID", object.ResourceID()),
 			zap.String("rule", rule.Rule),
-			zap.Bool("validationStatus", status),
+			zap.String("validationStatus", status.String()),
 		).Debugf("validation status: \"%v\"", status)
 	}
 	return status
@@ -195,16 +197,18 @@ func (matcher *AuditConfigValidationRule) IsActionContinue() bool {
 	return matcher.Action == "continue"
 }
 
-func (matcher *AuditConfigValidationRule) ValidationStatus() *bool {
+func (matcher *AuditConfigValidationRule) ValidationStatus() (ret *types.RuleStatus) {
 	switch strings.ToLower(matcher.Action) {
+	case "ignore":
+		ret = &types.RuleStatusIgnore
 	case "deny":
-		return to.BoolPtr(false)
+		ret = &types.RuleStatusDeny
 	case "allow":
-		return to.BoolPtr(true)
+		ret = &types.RuleStatusAllow
 	case "continue":
-		return nil
+		ret = nil
 	}
-	return nil
+	return
 }
 
 func (matcher *AuditConfigValidationRule) IsMatching(object *AzureObject) bool {

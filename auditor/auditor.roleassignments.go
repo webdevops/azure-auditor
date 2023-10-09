@@ -25,7 +25,7 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *z
 		matchingRuleId, status := auditor.config.RoleAssignments.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status && auditor.config.RoleAssignments.IsMetricsEnabled() {
+		if status.IsDeny() && auditor.config.RoleAssignments.IsMetricsEnabled() {
 			violationMetric.AddInfo(
 				auditor.config.RoleAssignments.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
 			)

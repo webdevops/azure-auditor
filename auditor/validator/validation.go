@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/webdevops/azure-auditor/auditor/types"
 )
 
 type (
@@ -97,7 +99,7 @@ func (validation *AuditConfigValidation) CreatePrometheusMetricFromAzureObject(o
 	return labels
 }
 
-func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, bool) {
+func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, types.RuleStatus) {
 	resourceID := object.ResourceID()
 
 	if validation.Rules != nil {
@@ -108,7 +110,7 @@ func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, 
 					continue
 				} else {
 					// valid is not valid, returning here
-					return rule.Rule, rule.handleRuleStatus(object, false)
+					return rule.Rule, rule.handleRuleStatus(object, types.RuleStatusDeny)
 				}
 			}
 
@@ -127,7 +129,7 @@ func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, 
 						continue
 					} else {
 						// valid is not valid, returning here
-						return rule.Rule, rule.handleRuleStatus(object, false)
+						return rule.Rule, rule.handleRuleStatus(object, types.RuleStatusDeny)
 					}
 				}
 
@@ -138,5 +140,5 @@ func (validation *AuditConfigValidation) Validate(object *AzureObject) (string, 
 		}
 	}
 
-	return "__DEFAULTDENY__", false
+	return "__DEFAULTDENY__", types.RuleStatusDeny
 }

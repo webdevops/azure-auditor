@@ -80,6 +80,10 @@ resourceGroups:
       resourcegroup.location: { regexp: "westeurope" }
       action: continue
 
+    - rule: ignoretest
+      resourcegroup.name: barfoo
+      action: ignore
+
     - rule: no-tag-owner-devteam0
       resourcegroup.tag.owner:
           mode: optional

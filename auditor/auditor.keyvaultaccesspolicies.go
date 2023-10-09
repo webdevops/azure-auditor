@@ -24,7 +24,7 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 		matchingRuleId, status := auditor.config.KeyvaultAccessPolicies.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status && auditor.config.KeyvaultAccessPolicies.IsMetricsEnabled() {
+		if status.IsDeny() && auditor.config.KeyvaultAccessPolicies.IsMetricsEnabled() {
 			violationMetric.AddInfo(
 				auditor.config.KeyvaultAccessPolicies.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
 			)

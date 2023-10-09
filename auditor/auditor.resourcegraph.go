@@ -24,7 +24,7 @@ func (auditor *AzureAuditor) auditResourceGraph(ctx context.Context, logger *zap
 		matchingRuleId, status := config.Validate(object)
 		report.Add(object, matchingRuleId, status)
 
-		if !status && config.IsMetricsEnabled() {
+		if status.IsDeny() && config.IsMetricsEnabled() {
 			violationMetric.AddInfo(
 				config.CreatePrometheusMetricFromAzureObject(object, matchingRuleId),
 			)
