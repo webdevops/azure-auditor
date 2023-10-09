@@ -115,13 +115,14 @@ h3 { font-size: 1.2rem; }
 }
 
 
-.ms-sel-item {
+body .ms-sel-item,
+body .ms-ctn .ms-sel-item {
     background: #f3f3f3;
-    color: #999;
+    color: var(--bs-body-color);
     float: left;
-    font-size: 12px;
-    padding: 0 5px;
-    border-radius: 3px;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.9rem;
+    border-radius: var(--bs-border-radius);
     border: 1px solid #DDD;
     margin: 1px 5px 1px 0;
 }

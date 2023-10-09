@@ -7,10 +7,26 @@ let globalSettingsKey = "auditor-global-settings";
 let globalSettings = {};
 const resultListDelimiter = ";";
 
-function onlyUnique(value, index, array) {
-    return array.indexOf(value) === index;
+let  onlyUnique = (val, index, array) => {
+    return array.indexOf(val) === index;
 }
 
+let convertListToString = (val) => {
+    return val.join(resultListDelimiter)
+}
+
+let convertStringToList = (val) => {
+    let ret = [];
+
+    val = val.trim();
+    val.split(resultListDelimiter).forEach((item) => {
+        item = item.trim();
+        if (item) {
+            ret.push(item);
+        }
+    })
+    return ret
+}
 
 // restore settings
 try {
@@ -241,7 +257,8 @@ let refreshTableFilter = () => {
                     });
                     break;
                 case "rule":
-                    reportFilter.push({field:fieldName, type:"in", value:el.val().split(resultListDelimiter)});
+                    let valueList = convertStringToList(el.val());
+                    reportFilter.push({field:fieldName, type:"in", value:valueList});
                     break;
                 default:
                     reportFilter.push({field:fieldName, type:"like", value:el.val()});
@@ -326,7 +343,7 @@ table.on("tableBuilt", () => {
 
 
     let ruleSelectorData = [];
-    $("#reportFilterRule").val().split(resultListDelimiter).forEach((val) => {
+    convertStringToList($("#reportFilterRule").val()).forEach((val) => {
         ruleSelectorData.push({
             id: val,
             name: val
@@ -341,7 +358,7 @@ table.on("tableBuilt", () => {
         resultAsStringDelimiter: resultListDelimiter,
     });
     $(ruleMs).on('selectionchange', function(e,m) {
-        $("#reportFilterRule").val(this.getValue().join(resultListDelimiter));
+        $("#reportFilterRule").val(convertListToString(this.getValue()));
         formSaveToHash();
         refreshTableFilter();
     });
