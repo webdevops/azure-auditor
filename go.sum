@@ -1,5 +1,5 @@
-github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0-beta.3 h1:XV/HZqgyUQQAc1/UwYXK/p9PyPuDrprwSXcKARy183U=
-github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0-beta.3/go.mod h1:bjGvMhVMb+EEm3VRNQawDMUyMMjo+S5ewNjflkep/0Q=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0-beta.1 h1:ODs3brnqQM99Tq1PffODpAViYv3Bf8zOg464MU7p5ew=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0-beta.1/go.mod h1:3Ug6Qzto9anB6mGlEdgYMDF5zHQ+wwhEaYR4s17PHMw=
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.1 h1:LNHhpdK7hzUcx/k1LIcuh5k7k1LGIWLQfCjaneSj7Fc=
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.1/go.mod h1:uE9zaUfEQT/nbQjVi2IblCG9iaLtZsuYZ8ne+PuQ02M=
 github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 h1:sXr+ck84g/ZlZUOZiNELInmMgOsuGwdjjVkEIde0OtY=
@@ -18,8 +18,8 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanage
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanagementgroups v1.0.0/go.mod h1:mLfWfj8v3jfWKsL9G4eoBoXVcsqcIUTapmdKy7uGOp0=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2 v2.0.0-beta.3 h1:M1crtD5xLQdt1WFoO4g9onH2Bs23TprcK5JD4E4ttAM=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2 v2.0.0-beta.3/go.mod h1:/eYJMwoYM1BQZSyskkQQLyDW8SwIt8307FYFjak3rTk=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.8.1 h1:nGiU2ovpbtkcC3x+g/wNHV4S9TOIYe2/yOVAj3wiGHI=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.8.1/go.mod h1:T3ZgvD1aRKu12mEA0fU3PPvI7V0Nh0wzIdK0QMBhf0Y=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.8.2 h1:f9lam+D19V0TDn17+aFhrVhWPpfsF5zaGHeqDGJZAVc=
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.8.2/go.mod h1:29c9+gYpdWhyC4TPANZBPlgoWllMDhguL2AIByPYQtk=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures v1.1.0 h1:NhvID5juwkPxMUD8hdV3no0nugxk9QM8d5OSLskjOLM=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures v1.1.0/go.mod h1:hDdPReNCfyh7kmZm6uKm3uH3OQkGn8gbeb1c/JkmEdE=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.1.1 h1:7CBQ+Ei8SP2c6ydQTGCCrS35bDxgTMfoP2miAwK++OU=
