@@ -21,7 +21,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.18.0
-	github.com/robertkrimen/otto v0.3.0
+	github.com/robertkrimen/otto v0.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/webdevops/go-common v0.0.0-20240210120128-6531d37585c1
 	go.uber.org/zap v1.26.0
