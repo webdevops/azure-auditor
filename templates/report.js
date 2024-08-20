@@ -74,7 +74,7 @@ processGlobalSettings();
 // ################################
 
 const reportName = "{{ $root.RequestReport }}";
-const reportAjaxUrl = "{{ $root.ServerPathReport }}/data";
+const reportAjaxUrl = "{{ printf "%s/data" $root.ServerPathReport | trimPrefix "//" }}";
 let reportAjaxParams = {report:reportName, groupBy: "Status"};
 
 let reportFilter = [];

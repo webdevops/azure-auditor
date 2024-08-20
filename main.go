@@ -86,15 +86,28 @@ func startHttpServer() {
 	var err error
 	mux := http.NewServeMux()
 
+	if Opts.Server.PathReport == "/" {
+		Opts.Server.PathReport = ""
+	}
+
+	endpoints := map[string]string{
+		"healthz":  "/healthz",
+		"readyz":   "/readyz",
+		"metrics":  "/metrics",
+		"frontend": Opts.Server.PathReport + "/",
+		"data":     Opts.Server.PathReport + "/data",
+		"config":   Opts.Server.PathReport + "/config",
+	}
+
 	// healthz
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(endpoints["healthz"], func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			logger.Error(err)
 		}
 	})
 
 	// readyz
-	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(endpoints["readyz"], func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
 			logger.Error(err)
 		}
@@ -145,7 +158,7 @@ func startHttpServer() {
 		logger.Panic(err)
 	}
 
-	mux.HandleFunc(Opts.Server.PathReport, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(endpoints["frontend"], func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
 		w.Header().Add("Content-Type", "text/html")
@@ -217,7 +230,7 @@ func startHttpServer() {
 		}
 	})
 
-	mux.HandleFunc(Opts.Server.PathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(endpoints["data"], func(w http.ResponseWriter, r *http.Request) {
 		var reportGroupBy *string
 		var reportFields *[]string
 		var reportStatus *types.RuleStatus
@@ -326,7 +339,7 @@ func startHttpServer() {
 	})
 
 	// config
-	mux.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(endpoints["config"], func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/plain")
 
 		content, err := yaml.Marshal(azureAuditor.GetConfig())
@@ -343,7 +356,7 @@ func startHttpServer() {
 		}
 	})
 
-	mux.Handle("/metrics", http.HandlerFunc(
+	mux.Handle(endpoints["metrics"], http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			azureAuditor.MetricsLock().RLock()
 			defer azureAuditor.MetricsLock().RUnlock()

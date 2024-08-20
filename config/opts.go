@@ -51,7 +51,7 @@ type (
 			ReadTimeout  time.Duration `long:"server.timeout.read"      env:"SERVER_TIMEOUT_READ"   description:"Server read timeout"   default:"5s"`
 			WriteTimeout time.Duration `long:"server.timeout.write"     env:"SERVER_TIMEOUT_WRITE"  description:"Server write timeout"  default:"10s"`
 
-			PathReport string `long:"server.path.report" env:"SERVER_PATH_REPORT"   description:"Server path for report"     default:"/report"`
+			PathReport string `long:"server.path.report" env:"SERVER_PATH_REPORT"   description:"Server path for report"     default:""`
 		}
 	}
 )
