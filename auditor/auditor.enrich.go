@@ -169,16 +169,16 @@ func (auditor *AzureAuditor) enrichAzureObjectsWithMsGraphPrincipals(ctx context
 						obj["principal.displayname"] = directoryObjectInfo.DisplayName
 					}
 
-					if directoryObjectInfo.ApplicationID != "" {
-						obj["principal.applicationid"] = directoryObjectInfo.ApplicationID
+					if directoryObjectInfo.ApplicationID != nil {
+						obj["principal.applicationid"] = to.String(directoryObjectInfo.ApplicationID)
 					}
 
-					if directoryObjectInfo.ServicePrincipalType != "" {
-						obj["principal.serviceprincipaltype"] = directoryObjectInfo.ServicePrincipalType
+					if directoryObjectInfo.ServicePrincipalType != nil {
+						obj["principal.serviceprincipaltype"] = to.String(directoryObjectInfo.ServicePrincipalType)
 					}
 
-					if directoryObjectInfo.ManagedIdentity != "" {
-						obj["principal.managedidentity"] = directoryObjectInfo.ManagedIdentity
+					if directoryObjectInfo.ManagedIdentity != nil {
+						obj["principal.managedidentity"] = to.String(directoryObjectInfo.ManagedIdentity)
 					}
 				}
 			}
