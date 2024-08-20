@@ -34,7 +34,7 @@ const (
 
 var (
 	argparser *flags.Parser
-	opts      config.Opts
+	Opts      config.Opts
 
 	azureAuditor *auditor.AzureAuditor
 
@@ -45,25 +45,27 @@ var (
 
 func main() {
 	initArgparser()
-	initLogger()
+	defer initLogger().Sync() // nolint:errcheck
 
 	logger.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
-	logger.Info(string(opts.GetJson()))
+	logger.Info(string(Opts.GetJson()))
+
+	initSystem()
 
 	logger.Infof("starting audit")
 	azureAuditor = auditor.NewAzureAuditor()
-	azureAuditor.Opts = opts
+	azureAuditor.Opts = Opts
 	azureAuditor.Logger = logger
 	azureAuditor.UserAgent = UserAgent + gitTag
-	azureAuditor.ParseConfig(opts.Config...)
+	azureAuditor.ParseConfig(Opts.Config...)
 	azureAuditor.Run()
 
-	logger.Infof("Starting http server on %s", opts.Server.Bind)
+	logger.Infof("Starting http server on %s", Opts.Server.Bind)
 	startHttpServer()
 }
 
 func initArgparser() {
-	argparser = flags.NewParser(&opts, flags.Default)
+	argparser = flags.NewParser(&Opts, flags.Default)
 	_, err := argparser.Parse()
 
 	// check if there is a parse error
@@ -143,7 +145,7 @@ func startHttpServer() {
 		logger.Panic(err)
 	}
 
-	mux.HandleFunc(opts.Server.PathReport, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(Opts.Server.PathReport, func(w http.ResponseWriter, r *http.Request) {
 		cspNonce := base64.StdEncoding.EncodeToString([]byte(uuid.New().String()))
 
 		w.Header().Add("Content-Type", "text/html")
@@ -170,10 +172,10 @@ func startHttpServer() {
 		}{
 			Nonce:            cspNonce,
 			Config:           azureAuditor.GetConfig(),
-			ReportTitle:      opts.Report.Title,
+			ReportTitle:      Opts.Report.Title,
 			ReportConfig:     nil,
 			Reports:          azureAuditor.GetReport(),
-			ServerPathReport: opts.Server.PathReport,
+			ServerPathReport: Opts.Server.PathReport,
 			RequestReport:    "",
 		}
 
@@ -215,7 +217,7 @@ func startHttpServer() {
 		}
 	})
 
-	mux.HandleFunc(opts.Server.PathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(Opts.Server.PathReport+"/data", func(w http.ResponseWriter, r *http.Request) {
 		var reportGroupBy *string
 		var reportFields *[]string
 		var reportStatus *types.RuleStatus
@@ -350,10 +352,10 @@ func startHttpServer() {
 	))
 
 	srv := &http.Server{
-		Addr:         opts.Server.Bind,
+		Addr:         Opts.Server.Bind,
 		Handler:      mux,
-		ReadTimeout:  opts.Server.ReadTimeout,
-		WriteTimeout: opts.Server.WriteTimeout,
+		ReadTimeout:  Opts.Server.ReadTimeout,
+		WriteTimeout: Opts.Server.WriteTimeout,
 	}
 	logger.Fatal(srv.ListenAndServe())
 }
