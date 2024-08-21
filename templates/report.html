@@ -35,11 +35,13 @@
                         {{- if not (hasPrefix "ResourceGraph" $ReportName) -}}
                         {{- if not (hasPrefix "LogAnalytics" $ReportName) -}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                            <a class="nav-link nav-link-report" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
                                 {{ $ReportName }}
-                                <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
-                                <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
-                                <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                                <span class="report-stats">
+                                    <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow | humanizeReportCount }}</span>
+                                    <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny | humanizeReportCount }}</span>
+                                    <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore | humanizeReportCount }}</span>
+                                </span>
                             </a>
                         </li>
                         {{- end -}}
@@ -54,11 +56,13 @@
                     {{- range $ReportName, $report := .Reports -}}
                         {{- if (hasPrefix "ResourceGraph" $ReportName) -}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                            <a class="nav-link nav-link-report" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
                                 {{ trimPrefix "ResourceGraph:" $ReportName }}
-                                <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
-                                <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
-                                <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                                <span class="report-stats">
+                                    <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow | humanizeReportCount }}</span>
+                                    <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny | humanizeReportCount }}</span>
+                                    <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore | humanizeReportCount }}</span>
+                                </span>
                             </a>
                         </li>
                         {{- end -}}
@@ -72,11 +76,13 @@
                     {{- range $ReportName, $report := .Reports -}}
                     {{- if (hasPrefix "LogAnalytics" $ReportName) -}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
+                        <a class="nav-link nav-link-report" href="{{ $root.ServerPathReport }}?report={{ $ReportName }}">
                             {{ trimPrefix "LogAnalytics:" $ReportName }}
-                            <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow }}</span>
-                            <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny }}</span>
-                            <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore }}</span>
+                            <span class="report-stats">
+                                <span class="badge bg-success {{if eq $report.Summary.Allow 0 }}badge-disabled{{end}}">{{ $report.Summary.Allow | humanizeReportCount }}</span>
+                                <span class="badge bg-danger {{if eq $report.Summary.Deny 0 }}badge-disabled{{end}}">{{ $report.Summary.Deny | humanizeReportCount }}</span>
+                                <span class="badge bg-secondary {{if eq $report.Summary.Ignore 0 }}badge-disabled{{end}}">{{ $report.Summary.Ignore | humanizeReportCount }}</span>
+                            </span>
                         </a>
                     </li>
                     {{- end -}}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	sprig "github.com/Masterminds/sprig/v3"
+	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -150,6 +151,9 @@ func startHttpServer() {
 				reportTitle = strings.TrimPrefix(reportTitle, reportTitle[0:pos+1])
 			}
 			return
+		},
+		"humanizeReportCount": func(val int64) string {
+			return humanize.SIWithDigits(float64(val), 1, "")
 		},
 		"include": func(name string, data interface{}) string {
 			var buf strings.Builder

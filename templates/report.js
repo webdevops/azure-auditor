@@ -202,6 +202,7 @@ let table = new Tabulator("#report-table", {
     pagination: true,
     paginationSize: {{ $root.ReportPaginationSize | default "10" }},
     paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
+    paginationCounter:"rows",
 
     printHeader: $("#report-title").html(),
     printRowRange: "active",
