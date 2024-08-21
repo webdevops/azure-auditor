@@ -25,7 +25,7 @@ let convertStringToList = (val) => {
             ret.push(item);
         }
     })
-    return ret
+    return ret;
 }
 
 // restore settings

@@ -133,6 +133,15 @@ func startHttpServer() {
 			return template.CSS(val) // #nosec G203 this template function is for returning unescaped html
 		},
 		"rawJs": func(val string) template.JS {
+			jsFilter := regexp.MustCompile(`(?m)^[\s]*(//.+$)?`)
+			if !Opts.Logger.Development {
+				val = jsFilter.ReplaceAllString(val, "")
+				val = jsFilter.ReplaceAllString(val, "")
+				val = strings.ReplaceAll(val, "{\n", "{")
+				val = strings.ReplaceAll(val, "}\n", "};")
+				val = strings.ReplaceAll(val, ";\n", ";")
+				val = strings.ReplaceAll(val, ",\n", ",")
+			}
 			return template.JS(val) // #nosec G203 this template function is for returning unescaped html
 		},
 		"reportTitle": func(val string) (reportTitle string) {
