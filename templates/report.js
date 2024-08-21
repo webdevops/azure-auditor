@@ -200,7 +200,7 @@ let table = new Tabulator("#report-table", {
     renderHorizontal: "virtual",
 
     pagination: true,
-    paginationSize: 10,
+    paginationSize: {{ $root.ReportPaginationSize | default "10" }},
     paginationSizeSelector: [5, 10, 25, 50, 100, 250, true],
 
     printHeader: $("#report-title").html(),

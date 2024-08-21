@@ -175,21 +175,23 @@ func startHttpServer() {
 		selectedReport := r.URL.Query().Get("report")
 
 		templatePayload := struct {
-			Nonce            string
-			Config           auditor.AuditConfig
-			ReportTitle      string
-			ReportConfig     *validator.AuditConfigValidation
-			Reports          map[string]*auditor.AzureAuditorReport
-			ServerPathReport string
-			RequestReport    string
+			Nonce                string
+			Config               auditor.AuditConfig
+			ReportTitle          string
+			ReportConfig         *validator.AuditConfigValidation
+			Reports              map[string]*auditor.AzureAuditorReport
+			ServerPathReport     string
+			RequestReport        string
+			ReportPaginationSize int
 		}{
-			Nonce:            cspNonce,
-			Config:           azureAuditor.GetConfig(),
-			ReportTitle:      Opts.Report.Title,
-			ReportConfig:     nil,
-			Reports:          azureAuditor.GetReport(),
-			ServerPathReport: Opts.Server.PathReport,
-			RequestReport:    "",
+			Nonce:                cspNonce,
+			Config:               azureAuditor.GetConfig(),
+			ReportTitle:          Opts.Report.Title,
+			ReportConfig:         nil,
+			Reports:              azureAuditor.GetReport(),
+			ServerPathReport:     Opts.Server.PathReport,
+			RequestReport:        "",
+			ReportPaginationSize: Opts.Report.PaginationSize,
 		}
 
 		reportInfo := strings.SplitN(selectedReport, ":", 2)

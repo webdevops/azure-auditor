@@ -24,7 +24,8 @@ type (
 
 		// report
 		Report struct {
-			Title string `long:"report.title"   env:"REPORT_TITLE"                     description:"Report title"`
+			Title          string `long:"report.title"             env:"REPORT_TITLE"            description:"Report title"`
+			PaginationSize int    `long:"report.pagination.size"   env:"REPORT_PAGINATION_SIZE"  description:"Report pagination size" default:"50" choice:"5" choice:"10" choice:"25" choice:"50" choice:"100" choice:"250"`
 		}
 
 		// scrape times
