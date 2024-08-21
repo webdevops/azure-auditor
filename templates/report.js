@@ -252,7 +252,21 @@ let refreshTableFilter = () => {
                     fieldValue.split("\n").forEach(value => {
                         value = value.trim();
                         if (value !== "") {
-                            reportFilter.push({field:fieldName, type:"like", value:value});
+                            if (value.startsWith("/") && value.endsWith("/")) {
+                                // regexp filter
+                                let valueRegexString= "^.*" + value.substring(1, value.length-1) + ".*$"
+                                let valueRegex = new RegExp(valueRegexString, "gim")
+                                reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
+                            } else if (value.startsWith("[") && value.endsWith("]")) {
+                                let valueList= value.substring(1, value.length-1).split(",");
+                                console.log(valueList);
+                                reportFilter.push({field:fieldName, type:"in", value:valueList});
+                            } else {
+                                // normal filter
+                                console.log("normal");
+                                reportFilter.push({field:fieldName, type:"like", value:value});
+                            }
+
                         }
                     });
                     break;
