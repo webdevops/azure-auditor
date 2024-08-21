@@ -31,12 +31,16 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) ParseConfig(configPaths ...string) {
+func (auditor *AzureAuditor) SetConfigs(configPaths ...string) {
+	auditor.configFiles = configPaths
+
+}
+func (auditor *AzureAuditor) reloadConfig() {
 	var configRaw []byte
 
 	auditor.config = AuditConfig{}
 
-	for _, path := range configPaths {
+	for _, path := range auditor.configFiles {
 		auditor.Logger.Infof("reading configuration from file %v", path)
 		/* #nosec */
 		if data, err := os.ReadFile(path); err == nil {

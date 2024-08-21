@@ -17,6 +17,38 @@ type (
 )
 
 func (auditor *AzureAuditor) initPrometheus() {
+	if auditor.prometheus.roleAssignment != nil {
+		prometheus.Unregister(auditor.prometheus.roleAssignment)
+	}
+
+	if auditor.prometheus.resourceGroup != nil {
+		prometheus.Unregister(auditor.prometheus.resourceGroup)
+	}
+
+	if auditor.prometheus.resourceProvider != nil {
+		prometheus.Unregister(auditor.prometheus.resourceProvider)
+	}
+
+	if auditor.prometheus.resourceProviderFeature != nil {
+		prometheus.Unregister(auditor.prometheus.resourceProviderFeature)
+	}
+
+	if auditor.prometheus.keyvaultAccessPolicies != nil {
+		prometheus.Unregister(auditor.prometheus.keyvaultAccessPolicies)
+	}
+
+	if auditor.prometheus.resourceGraph != nil {
+		for _, metric := range auditor.prometheus.resourceGraph {
+			prometheus.Unregister(metric)
+		}
+	}
+
+	if auditor.prometheus.logAnalytics != nil {
+		for _, metric := range auditor.prometheus.logAnalytics {
+			prometheus.Unregister(metric)
+		}
+	}
+
 	if auditor.config.RoleAssignments.IsEnabled() {
 		auditor.prometheus.roleAssignment = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"os/signal"
 	"regexp"
 	"runtime"
 	"strings"
@@ -58,7 +60,7 @@ func main() {
 	azureAuditor.Opts = Opts
 	azureAuditor.Logger = logger
 	azureAuditor.UserAgent = UserAgent + gitTag
-	azureAuditor.ParseConfig(Opts.Config...)
+	azureAuditor.SetConfigs(Opts.Config...)
 	azureAuditor.Run()
 
 	logger.Infof("Starting http server on %s", Opts.Server.Bind)
@@ -189,6 +191,7 @@ func startHttpServer() {
 
 		templatePayload := struct {
 			Nonce                string
+			AzureAuditor         auditor.AzureAuditor
 			Config               auditor.AuditConfig
 			ReportTitle          string
 			ReportConfig         *validator.AuditConfigValidation
@@ -385,5 +388,17 @@ func startHttpServer() {
 		ReadTimeout:  Opts.Server.ReadTimeout,
 		WriteTimeout: Opts.Server.WriteTimeout,
 	}
-	logger.Fatal(srv.ListenAndServe())
+	go func() {
+		logger.Fatal(srv.ListenAndServe())
+	}()
+	// Setting up signal capturing
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	// Waiting for SIGINT (kill -2)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	logger.Fatal(srv.Shutdown(ctx))
 }

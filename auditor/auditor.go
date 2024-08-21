@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
@@ -41,6 +43,8 @@ type (
 		Logger *zap.SugaredLogger
 
 		config AuditConfig
+
+		configFiles []string
 
 		azure struct {
 			client  *armclient.ArmClient
@@ -88,10 +92,45 @@ func (auditor *AzureAuditor) Init() {
 }
 
 func (auditor *AzureAuditor) GetConfig() AuditConfig {
+
 	return auditor.config
 }
 
+func (auditor *AzureAuditor) reloadOnSighup() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGHUP)
+	go func() {
+		for sig := range c {
+			auditor.Logger.Infof(`got signal %v, reloading`, sig.String())
+			auditor.Reload()
+		}
+	}()
+}
+
+func (auditor *AzureAuditor) Reload() {
+	if auditor.cron != nil {
+		auditor.cron.Stop()
+	}
+
+	// reset reports
+	auditor.reportLock.Lock()
+	auditor.report = map[string]*AzureAuditorReport{}
+	defer auditor.reportLock.Unlock()
+
+	// reload config
+	auditor.reloadConfig()
+
+	// start service
+	auditor.start()
+}
+
 func (auditor *AzureAuditor) Run() {
+	auditor.reloadConfig()
+	auditor.start()
+	auditor.reloadOnSighup()
+}
+
+func (auditor *AzureAuditor) start() {
 	auditor.Init()
 
 	// force subscription list update
@@ -342,26 +381,32 @@ func (auditor *AzureAuditor) addCronjobBySubscription(name string, cronSpec stri
 
 func (auditor *AzureAuditor) initAzure() {
 	var err error
-	auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.Logger)
-	if err != nil {
-		auditor.Logger.Panic(err)
+	if auditor.azure.client == nil {
+		auditor.azure.client, err = armclient.NewArmClientWithCloudName(*auditor.Opts.Azure.Environment, auditor.Logger)
+		if err != nil {
+			auditor.Logger.Panic(err)
+		}
+		auditor.azure.client.SetUserAgent(auditor.UserAgent)
+		auditor.azure.client.SetSubscriptionID(auditor.Opts.Azure.Subscription...)
 	}
-	auditor.azure.client.SetUserAgent(auditor.UserAgent)
-	auditor.azure.client.SetSubscriptionID(auditor.Opts.Azure.Subscription...)
 }
 
 func (auditor *AzureAuditor) initMsGraph() {
 	var err error
-	auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.Logger)
-	if err != nil {
-		auditor.Logger.Panic(err)
+	if auditor.azure.msGraph == nil {
+		auditor.azure.msGraph, err = msgraphclient.NewMsGraphClientWithCloudName(*auditor.Opts.Azure.Environment, *auditor.Opts.Azure.Tenant, auditor.Logger)
+		if err != nil {
+			auditor.Logger.Panic(err)
+		}
+		auditor.azure.client.SetUserAgent(auditor.UserAgent)
 	}
-	auditor.azure.client.SetUserAgent(auditor.UserAgent)
 }
 
 func (auditor *AzureAuditor) initCache() {
 	auditor.cacheExpiry = 60 * time.Minute
-	auditor.cache = cache.New(auditor.cacheExpiry, time.Duration(1*time.Minute))
+	if auditor.cache == nil {
+		auditor.cache = cache.New(auditor.cacheExpiry, time.Duration(1*time.Minute))
+	}
 }
 
 func (auditor *AzureAuditor) initCron() {
