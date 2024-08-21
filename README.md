@@ -23,30 +23,32 @@ Usage:
   azure-auditor [OPTIONS]
 
 Application Options:
-      --log.debug                     debug mode [$LOG_DEBUG]
-      --log.trace                     trace mode [$LOG_TRACE]
-      --log.json                      Switch log output to json format [$LOG_JSON]
-      --azure.environment=            Azure environment name (default: AZUREPUBLICCLOUD)
-                                      [$AZURE_ENVIRONMENT]
-      --azure.subscription=           Azure subscription ID [$AZURE_SUBSCRIPTION_ID]
-      --report.title=                 Report title [$REPORT_TITLE]
-      --cron.keytvaultaccesspolicies= Cronjob for KeyVault AccessPolicies report (default: 0 * * * *)
-                                      [$CRON_KEYTVAULTACCESSPOLICIES]
-      --cron.resourcegroups=          Cronjob for ResourceGroups report (default: */30 * * * *)
-                                      [$CRON_RESOURCEGROUPS]
-      --cron.resourceproviders=       Cronjob for ResourceProviders report (default: 0 * * * *)
-                                      [$CRON_RESOURCEPROVIDERS]
-      --cron.roleassignments=         Cronjob for RoleAssignments report (default: */5 * * * *)
-                                      [$CRON_ROLEASSIGNMENTS]
-      --cron.resourcegraph=           Cronjob for ResourceGraph report (default: 15 * * * *)
-                                      [$CRON_RESOURCEGRAPH]
-      --config=                       Config file path [$CONFIG]
-      --dry-run                       Dry Run (report only) [$DRYRUN]
-      --bind=                         Server address (default: :8080) [$SERVER_BIND]
-      --server.path.report=           Server path for report (default: /report) [$SERVER_PATH_REPORT]
+      --log.debug                                   debug mode [$LOG_DEBUG]
+      --log.devel                                   development mode [$LOG_DEVEL]
+      --log.json                                    Switch log output to json format [$LOG_JSON]
+      --azure.environment=                          Azure environment name (default: AZUREPUBLICCLOUD) [$AZURE_ENVIRONMENT]
+      --azure.tenant=                               Azure tenant id [$AZURE_TENANT_ID]
+      --azure.subscription=                         Azure subscription ID [$AZURE_SUBSCRIPTION_ID]
+      --azure.tag.inherit=                          Inherit tags [$AZURE_TAG_INHERIT]
+      --report.title=                               Report title [$REPORT_TITLE]
+      --report.pagination.size=[5|10|25|50|100|250] Report pagination size (default: 50) [$REPORT_PAGINATION_SIZE]
+      --cron.keytvaultaccesspolicies=               Cronjob for KeyVault AccessPolicies report (default: 0 * * * *)
+                                                    [$CRON_KEYTVAULTACCESSPOLICIES]
+      --cron.resourcegroups=                        Cronjob for ResourceGroups report (default: */30 * * * *) [$CRON_RESOURCEGROUPS]
+      --cron.resourceproviders=                     Cronjob for ResourceProviders report (default: 0 * * * *) [$CRON_RESOURCEPROVIDERS]
+      --cron.roleassignments=                       Cronjob for RoleAssignments report (default: */5 * * * *) [$CRON_ROLEASSIGNMENTS]
+      --cron.resourcegraph=                         Cronjob for ResourceGraph report (default: 15 * * * *) [$CRON_RESOURCEGRAPH]
+      --cron.loganalytics=                          Cronjob for LogAnalytics report (default: 30 * * * *) [$CRON_LOGANALYTICS]
+      --loganalytics.waitduration=                  Wait duration between LogAnalytics queries (default: 5s) [$LOGANALYTICS_WAITDURATION]
+      --config=                                     Config file path [$CONFIG]
+      --dry-run                                     Dry Run (report only) [$DRYRUN]
+      --server.bind=                                Server address (default: :8080) [$SERVER_BIND]
+      --server.timeout.read=                        Server read timeout (default: 5s) [$SERVER_TIMEOUT_READ]
+      --server.timeout.write=                       Server write timeout (default: 10s) [$SERVER_TIMEOUT_WRITE]
+      --server.path.report=                         Server path for report [$SERVER_PATH_REPORT]
 
 Help Options:
-  -h, --help                          Show this help message
+  -h, --help                                        Show this help message
 ```
 
 crons can be disabled by setting them to empty string or `false`
