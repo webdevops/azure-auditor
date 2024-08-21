@@ -70,6 +70,14 @@ $(document).on("change", ".global-settings input:checkbox", processGlobalSetting
 processGlobalSettings();
 
 // ################################
+// funcs
+// ################################
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+// ################################
 // Report
 // ################################
 
@@ -242,6 +250,17 @@ let refreshTableData = () => {
 
 let refreshTableFilter = () => {
     reportFilter = [];
+
+    let searchValueArrayToRegexString = (val) => {
+        let list = val.substring(1, val.length-1).split(",");
+        list = list.map(s => escapeRegExp(s.trim()));
+        return "(" + list.join("|") + ")";
+    }
+    let searchValueRegexToRegexString = (val) => {
+        return val.substring(1, val.length-1)
+    }
+
+
     $("#report-form :input[data-report-filter]").each((num, el) => {
         el = $(el);
         let fieldName = el.data("report-filter");
@@ -253,16 +272,38 @@ let refreshTableFilter = () => {
                     fieldValue.split("\n").forEach(value => {
                         value = value.trim();
                         if (value !== "") {
-                            if (value.startsWith("/") && value.endsWith("/")) {
-                                // regexp filter
-                                let valueRegexString= "^.*" + value.substring(1, value.length-1) + ".*$"
-                                let valueRegex = new RegExp(valueRegexString, "gim")
+                            if (value.includes(":")) {
+                                // field:value
+                                let valueList = value.split(":");
+                                let resourceName = valueList[0].trim();
+                                valueList.splice(0, 1);
+                                let resourceValue = valueList.join(":").trim();
+
+                                let resourceNameRegexpString = escapeRegExp(resourceName);
+                                let resourceValueRegexpString = escapeRegExp(resourceValue);
+
+                                if (resourceValue.startsWith("/") && resourceValue.endsWith("/")) {
+                                    resourceValueRegexpString = searchValueRegexToRegexString(resourceValue);
+                                } else if (resourceValue.startsWith("[") && resourceValue.endsWith("]")) {
+                                    let valueList= resourceValue.substring(1, resourceValue.length-1).split(",");
+                                    resourceValueRegexpString = searchValueArrayToRegexString(resourceValue);
+                                }
+
+                                let valueRegexString = "^" + resourceNameRegexpString + ":[\\s]*" + resourceValueRegexpString + ".*$";
+                                let valueRegex = new RegExp(valueRegexString, "gim");
+                                reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
+                            } else if (value.startsWith("/") && value.endsWith("/")) {
+                                // fulltext search: regex
+                                let valueRegexString= "^.*" + searchValueRegexToRegexString(value) + ".*$";
+                                let valueRegex = new RegExp(valueRegexString, "gim");
                                 reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
                             } else if (value.startsWith("[") && value.endsWith("]")) {
-                                let valueList= value.substring(1, value.length-1).split(",");
-                                reportFilter.push({field:fieldName, type:"in", value:valueList});
+                                // fulltext search: list
+                                let valueRegexString= "^.*" + searchValueArrayToRegexString(value) + ".*$";
+                                let valueRegex = new RegExp(valueRegexString, "gim");
+                                reportFilter.push({field:fieldName, type:"regex", value:valueRegex});
                             } else {
-                                // normal filter
+                                // fulltext search: like
                                 reportFilter.push({field:fieldName, type:"like", value:value});
                             }
 
@@ -279,6 +320,7 @@ let refreshTableFilter = () => {
             }
         }
     });
+
     table.setFilter(reportFilter);
 };
 
