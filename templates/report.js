@@ -260,11 +260,9 @@ let refreshTableFilter = () => {
                                 reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
                             } else if (value.startsWith("[") && value.endsWith("]")) {
                                 let valueList= value.substring(1, value.length-1).split(",");
-                                console.log(valueList);
                                 reportFilter.push({field:fieldName, type:"in", value:valueList});
                             } else {
                                 // normal filter
-                                console.log("normal");
                                 reportFilter.push({field:fieldName, type:"like", value:value});
                             }
 
