@@ -92,12 +92,6 @@
 
             <li class="nav-item nav-item-settings global-settings">
                 <a class="nav-link disabled">Settings</a>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="0" id="showConfig" data-setting-name="show-config">
-                    <label class="form-check-label" for="showConfig">
-                        Show config
-                    </label>
-                </div>
 
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="1" id="saveFilterSettings" data-setting-name="save-filter-settings">
@@ -134,11 +128,6 @@
         </div>
 
         {{if $root.RequestReport }}
-            <div class="mb-3 row audit-config hide-print">
-                <h3 id="config">Config</h3>
-                {{if $root.ReportConfig }}<pre class="code">{{ $root.ReportConfig | toYaml }}</pre>{{end}}
-            </div>
-
             <div class="mb-3 row">
                 <form id="report-form">
                     <div class="row g-6">

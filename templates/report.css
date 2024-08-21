@@ -35,9 +35,6 @@ small { font-size: 0.6em; }
     padding-left: 3rem;
 }
 
-.audit-config { display: none; }
-.show-config .audit-config { display: block; }
-
 .tabulator-cell { font-size: 0.8rem; white-space: pre !important; }
 
 .tabulator-print-header { text-align: center; font-size: 1.5rem; }
