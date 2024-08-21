@@ -191,7 +191,6 @@ func startHttpServer() {
 
 		templatePayload := struct {
 			Nonce                string
-			AzureAuditor         auditor.AzureAuditor
 			Config               auditor.AuditConfig
 			ReportTitle          string
 			ReportConfig         *validator.AuditConfigValidation

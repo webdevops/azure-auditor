@@ -25,7 +25,7 @@ require (
 	github.com/prometheus/client_golang v1.20.1
 	github.com/robertkrimen/otto v0.4.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/webdevops/go-common v0.0.0-20240817151728-d02b3cd2f9fe
+	github.com/webdevops/go-common v0.0.0-20240821190643-248b039cf4c0
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.2.0
 	gopkg.in/yaml.v3 v3.0.1
