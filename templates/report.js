@@ -290,17 +290,17 @@ let refreshTableFilter = () => {
                                 }
 
                                 let valueRegexString = "^" + resourceNameRegexpString + ":[\\s]*" + resourceValueRegexpString + ".*$";
-                                let valueRegex = new RegExp(valueRegexString, "gim");
+                                let valueRegex = new RegExp(valueRegexString, "im");
                                 reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
                             } else if (value.startsWith("/") && value.endsWith("/")) {
                                 // fulltext search: regex
                                 let valueRegexString= "^.*" + searchValueRegexToRegexString(value) + ".*$";
-                                let valueRegex = new RegExp(valueRegexString, "gim");
+                                let valueRegex = new RegExp(valueRegexString, "im");
                                 reportFilter.push({field: fieldName, type: "regex", value: valueRegex});
                             } else if (value.startsWith("[") && value.endsWith("]")) {
                                 // fulltext search: list
                                 let valueRegexString= "^.*" + searchValueArrayToRegexString(value) + ".*$";
-                                let valueRegex = new RegExp(valueRegexString, "gim");
+                                let valueRegex = new RegExp(valueRegexString, "im");
                                 reportFilter.push({field:fieldName, type:"regex", value:valueRegex});
                             } else {
                                 // fulltext search: like
