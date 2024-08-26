@@ -22,7 +22,7 @@ require (
 	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.20.1
+	github.com/prometheus/client_golang v1.20.2
 	github.com/robertkrimen/otto v0.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/webdevops/go-common v0.0.0-20240821190643-248b039cf4c0
