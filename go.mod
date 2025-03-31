@@ -2,11 +2,13 @@ module github.com/webdevops/azure-auditor
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization v1.0.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2 v2.2.0
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.4.0
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2 v2.0.0-beta.4
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.9.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures v1.2.0
@@ -14,7 +16,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions v1.3.0
 	github.com/Azure/go-autorest/autorest v0.11.30
 	github.com/Azure/go-autorest/autorest/to v0.4.1
-	github.com/KimMachineGun/automemlimit v0.7.0
+	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -22,7 +24,7 @@ require (
 	github.com/jeremywohl/flatten/v2 v2.0.0-20211013061545-07e4a09fb8e4
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.1
 	github.com/robertkrimen/otto v0.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/webdevops/go-common v0.0.0-20250202124351-b61548f2447b
@@ -33,15 +35,15 @@ require (
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.24 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.1 // indirect
 	github.com/Azure/go-autorest/logger v0.2.2 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.1 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.3.3 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -83,10 +85,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	k8s.io/apimachinery v0.32.1 // indirect
