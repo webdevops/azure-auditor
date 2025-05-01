@@ -9,28 +9,28 @@ import (
 type (
 	AuditConfigValidationRuleField struct {
 		// general
-		Not      bool `yaml:"bool,omitempty"`
-		Required bool `yaml:"required,omitempty"`
+		Not      bool `json:"bool,omitempty"`
+		Required bool `json:"required,omitempty"`
 
 		// CAST
-		ParseAs *string `yaml:"castTo,omitempty"`
+		ParseAs *string `json:"castTo,omitempty"`
 
 		// STRING type
-		Match  *string        `yaml:"match,omitempty"`
-		Regexp *string        `yaml:"regexp,omitempty"`
-		regexp *regexp.Regexp `yaml:"-"`
+		Match  *string        `json:"match,omitempty"`
+		Regexp *string        `json:"regexp,omitempty"`
+		regexp *regexp.Regexp `json:"-"`
 
 		// STRINGLIST type
-		AllOf *[]string `yaml:"allOf,omitempty,flow"`
-		AnyOf *[]string `yaml:"anyOf,omitempty,flow"`
+		AllOf *[]string `json:"allOf,omitempty,flow"`
+		AnyOf *[]string `json:"anyOf,omitempty,flow"`
 
 		// NUMERIC
-		Min *float64 `yaml:"min,omitempty"`
-		Max *float64 `yaml:"max,omitempty"`
+		Min *float64 `json:"min,omitempty"`
+		Max *float64 `json:"max,omitempty"`
 
 		// DURATION
-		MinDuration *time.Duration `yaml:"minDuration,omitempty"`
-		MaxDuration *time.Duration `yaml:"maxDuration,omitempty"`
+		MinDuration *time.Duration `json:"minDuration,omitempty"`
+		MaxDuration *time.Duration `json:"maxDuration,omitempty"`
 	}
 )
 

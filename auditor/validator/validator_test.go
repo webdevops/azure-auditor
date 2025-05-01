@@ -9,7 +9,7 @@ import (
 
 type (
 	TestValidator struct {
-		Test *AuditConfigValidation `yaml:"test"`
+		Test *AuditConfigValidation `json:"test"`
 	}
 )
 

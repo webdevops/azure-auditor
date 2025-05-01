@@ -10,35 +10,35 @@ import (
 
 type (
 	AuditConfigValidation struct {
-		Enabled              bool                                    `yaml:"enabled"`
-		Metrics              *bool                                   `yaml:"metrics"`
-		Query                *string                                 `yaml:"query,omitempty"`
-		Timespan             *string                                 `yaml:"timespan,omitempty"`
-		Workspaces           *[]string                               `yaml:"workspaces,omitempty"`
-		AdditionalWorkspaces *[]string                               `yaml:"additionalWorkspaces,omitempty"`
-		Rules                []*AuditConfigValidationRule            `yaml:"rules,omitempty"`
-		Prometheus           AuditConfigValidationPrometheus         `yaml:"prometheus,omitempty"`
-		Report               AuditConfigValidationReport             `yaml:"report,omitempty"`
-		Mapping              *map[string]string                      `yaml:"mapping,omitempty"`
-		Enrich               bool                                    `yaml:"enrich,omitempty"`
-		ScopeRules           map[string][]*AuditConfigValidationRule `yaml:"scopeRules,omitempty"`
+		Enabled              bool                                    `json:"enabled"`
+		Metrics              *bool                                   `json:"metrics"`
+		Query                *string                                 `json:"query,omitempty"`
+		Timespan             *string                                 `json:"timespan,omitempty"`
+		Workspaces           *[]string                               `json:"workspaces,omitempty"`
+		AdditionalWorkspaces *[]string                               `json:"additionalWorkspaces,omitempty"`
+		Rules                []*AuditConfigValidationRule            `json:"rules,omitempty"`
+		Prometheus           AuditConfigValidationPrometheus         `json:"prometheus,omitempty"`
+		Report               AuditConfigValidationReport             `json:"report,omitempty"`
+		Mapping              *map[string]string                      `json:"mapping,omitempty"`
+		Enrich               bool                                    `json:"enrich,omitempty"`
+		ScopeRules           map[string][]*AuditConfigValidationRule `json:"scopeRules,omitempty"`
 	}
 
 	AuditConfigValidationPrometheus struct {
-		Labels map[string]string `yaml:"labels,omitempty"`
+		Labels map[string]string `json:"labels,omitempty"`
 	}
 
 	AuditConfigValidationReport struct {
 		Filter struct {
-			Status   string `yaml:"status,omitempty"`
-			Resource string `yaml:"resource,omitempty"`
-			Rule     string `yaml:"rule,omitempty"`
-		} `yaml:"filter,omitempty"`
+			Status   string `json:"status,omitempty"`
+			Resource string `json:"resource,omitempty"`
+			Rule     string `json:"rule,omitempty"`
+		} `json:"filter,omitempty"`
 
 		Settings struct {
-			GroupBy string `yaml:"groupBy,omitempty"`
-			Fields  string `yaml:"fields,omitempty"`
-		} `yaml:"settings,omitempty"`
+			GroupBy string `json:"groupBy,omitempty"`
+			Fields  string `json:"fields,omitempty"`
+		} `json:"settings,omitempty"`
 	}
 )
 

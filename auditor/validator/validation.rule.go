@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -20,19 +21,19 @@ import (
 
 type (
 	AuditConfigValidationRule struct {
-		Rule   string `yaml:"rule"`
+		Rule   string `json:"rule"`
 		Fields map[string]AuditConfigValidationRuleField
-		Action string `yaml:"action"`
+		Action string `json:"action"`
 
 		// FUNC
-		CustomFunction *string `yaml:"func,omitempty"`
+		CustomFunction *string `json:"func,omitempty"`
 		customFunction *otto.Script
 
-		Stats AuditConfigValidationRuleStats `yaml:"stats,flow"`
+		Stats AuditConfigValidationRuleStats `json:"stats,flow"`
 	}
 
 	AuditConfigValidationRuleStats struct {
-		Matches int64 `yaml:"matches"`
+		Matches int64 `json:"matches"`
 	}
 )
 
@@ -42,9 +43,9 @@ var (
 	Logger *zap.SugaredLogger
 )
 
-func (matcher *AuditConfigValidationRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (matcher *AuditConfigValidationRule) UnmarshalJSON(b []byte) error {
 	config := map[string]interface{}{}
-	err := unmarshal(&config)
+	err := json.Unmarshal(b, &config)
 	if err == nil {
 		matcher.Fields = map[string]AuditConfigValidationRuleField{}
 		matcher.Action = "allow"
