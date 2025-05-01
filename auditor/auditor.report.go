@@ -3,10 +3,14 @@ package auditor
 import (
 	"crypto/sha1" // #nosec G505
 	"encoding/json"
+	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/webdevops/go-common/utils/to"
 	yaml "sigs.k8s.io/yaml"
 
 	"github.com/webdevops/azure-auditor/auditor/types"
@@ -32,12 +36,14 @@ type (
 	}
 
 	AzureAuditorReportLine struct {
-		Resource map[string]interface{} `json:"resource"`
-		RuleID   string                 `json:"rule"`
-		GroupBy  interface{}            `json:"groupBy"`
-		Status   string                 `json:"status"`
-		Count    uint64                 `json:"count"`
+		Resource AzureAuditorReportLineResource `json:"resource"`
+		RuleID   string                         `json:"rule"`
+		GroupBy  interface{}                    `json:"groupBy"`
+		Status   string                         `json:"status"`
+		Count    uint64                         `json:"count"`
 	}
+
+	AzureAuditorReportLineResource map[string]interface{}
 )
 
 func NewAzureAuditorReport() *AzureAuditorReport {
@@ -56,14 +62,12 @@ func (reportLine *AzureAuditorReportLine) Hash() [20]byte {
 func (reportLine *AzureAuditorReportLine) MarshalJSON() ([]byte, error) {
 	data := map[string]interface{}{}
 
-	resourceInfo, _ := yaml.Marshal(reportLine.Resource)
-	data["resource"] = string(resourceInfo)
+	resourceInfo, _ := reportLine.Resource.MarshalJSON()
+	data["resource"] = yamlCleanupRegexp.ReplaceAllString(string(resourceInfo), "$1: $2")
 	data["rule"] = reportLine.RuleID
 	data["status"] = reportLine.Status
 	data["groupBy"] = reportLine.GroupBy
 	data["count"] = reportLine.Count
-
-	data["resource"] = yamlCleanupRegexp.ReplaceAllString(data["resource"].(string), "$1: $2")
 
 	return json.Marshal(data)
 }
@@ -82,7 +86,7 @@ func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID st
 	report.Lines = append(
 		report.Lines,
 		&AzureAuditorReportLine{
-			Resource: *resource,
+			Resource: AzureAuditorReportLineResource(*resource),
 			RuleID:   ruleID,
 			Status:   status.String(),
 		},
@@ -96,4 +100,35 @@ func (report *AzureAuditorReport) Add(resource *validator.AzureObject, ruleID st
 	case types.RuleStatusAllow:
 		report.Summary.Allow++
 	}
+}
+
+func (resource *AzureAuditorReportLineResource) MarshalJSON() ([]byte, error) {
+	lines := map[string]string{}
+
+	for key, value := range *resource {
+		switch v := value.(type) {
+		case []*string:
+			lines[key] = strings.Join(to.Slice(v), ", ")
+		case []string:
+			lines[key] = strings.Join(v, ", ")
+		case map[string]interface{}:
+			data, _ := yaml.Marshal(v)
+			lines[key] = string(data)
+		default:
+			lines[key] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	keys := make([]string, 0, len(lines))
+	for k := range lines {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	ret := ""
+	for _, key := range keys {
+		ret += fmt.Sprintf("%s: %s\n", key, lines[key])
+	}
+
+	return []byte(ret), nil
 }

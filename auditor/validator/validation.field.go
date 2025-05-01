@@ -21,8 +21,8 @@ type (
 		regexp *regexp.Regexp `json:"-"`
 
 		// STRINGLIST type
-		AllOf *[]string `json:"allOf,omitempty,flow"`
-		AnyOf *[]string `json:"anyOf,omitempty,flow"`
+		AllOf *[]string `json:"allOf,omitempty"`
+		AnyOf *[]string `json:"anyOf,omitempty"`
 
 		// NUMERIC
 		Min *float64 `json:"min,omitempty"`

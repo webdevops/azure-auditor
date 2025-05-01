@@ -29,7 +29,7 @@ type (
 		CustomFunction *string `json:"func,omitempty"`
 		customFunction *otto.Script
 
-		Stats AuditConfigValidationRuleStats `json:"stats,flow"`
+		Stats AuditConfigValidationRuleStats `json:"stats"`
 	}
 
 	AuditConfigValidationRuleStats struct {
