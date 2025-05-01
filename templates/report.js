@@ -417,4 +417,12 @@ table.on("tableBuilt", () => {
         formSaveToHash();
         refreshTableFilter();
     });
+
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+    const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl, {
+        container: 'body',
+        html: true,
+        content: $(popoverTriggerEl).data('bs-content').replaceAll("\\n", "<br>"),
+    }));
+
 });

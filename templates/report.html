@@ -138,7 +138,11 @@
                     <div class="row g-6">
                         <div class="col-md-6">
                             <div class="input-group mb-3">
-                                <label class="input-group-text" for="reportFilterStatus">Status</label>
+                                <label class="input-group-text" for="reportFilterStatus">
+                                    <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Validation status" data-bs-content="Filter results by validation status">
+                                        Status
+                                    </span>
+                                </label>
                                 <select class="form-select" id="reportFilterStatus" data-report-refresh="true" data-report-param="status" data-default="deny">
                                     <option value="">all</option>
                                     <option value="deny" selected>deny</option>
@@ -148,12 +152,20 @@
                             </div>
 
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="reportFilterResourceLabel">Resource</span>
+                                <label class="input-group-text" id="reportFilterResourceLabel">
+                                    <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Resource filters" data-bs-content="One filter per line, formats:\n\nfilter by content (contains):\n<strong>field: value</strong>\n\nregexp filter:\n<strong>field: /regexp/">
+                                        Resource
+                                    </span>
+                                </label>
                                 <textarea class="form-control" id="reportFilterResource" data-report-filter="resource" aria-label="Resource" aria-describedby="reportFilterResourceLabel" rows="2" data-default="{{ $root.ReportConfig.Report.Filter.Resource }}"></textarea>
                             </div>
 
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="reportFilterRuleLabel">Rule</span>
+                                <label class="input-group-text" id="reportFilterRuleLabel">
+                                    <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Rule filter" data-bs-content="Filters results by validation rule">
+                                        Rule
+                                    </span>
+                                </label>
                                 <input type="text" class="form-control" id="reportFilterRuleSelector">
                                 <input type="text" class="form-control hidden" id="reportFilterRule" data-report-filter="rule" aria-label="Rule" aria-describedby="reportFilterRuleLabel" data-default="{{ $root.ReportConfig.Report.Filter.Rule }}">
                             </div>
@@ -161,12 +173,20 @@
 
                         <div class="col-md-6">
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="reportGroupByLabel">groupBy</span>
+                                <label class="input-group-text" id="reportGroupByLabel">
+                                    <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Grouping" data-bs-content="Groups resources by fieldname">
+                                        groupBy
+                                    </span>
+                                </label>
                                 <input type="text" class="form-control" id="reportGroupBy" data-report-refresh="true" data-report-param="groupBy" aria-label="groupBy" aria-describedby="reportGroupByLabel" data-default="{{ $root.ReportConfig.Report.Settings.GroupBy }}">
                             </div>
 
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="reportFieldsLabel">Fields</span>
+                                <label class="input-group-text" id="reportFieldsLabel">
+                                    <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-title="Fields" data-bs-content="Selects fields which should be visible in results, similar results are grouped (see count value)">
+                                        Fields
+                                    </span>
+                                </label>
                                 <textarea class="form-control" id="reportFields" data-report-refresh="true" data-report-param="fields" aria-label="Fields" rows="4" data-default="{{ $root.ReportConfig.Report.Settings.Fields }}"></textarea>
                             </div>
                         </div>
