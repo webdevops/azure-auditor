@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	yaml "gopkg.in/yaml.v3"
+	yaml "sigs.k8s.io/yaml"
 
 	"github.com/webdevops/azure-auditor/auditor/types"
 	"github.com/webdevops/azure-auditor/auditor/validator"

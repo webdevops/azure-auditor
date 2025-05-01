@@ -21,7 +21,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/webdevops/go-common/azuresdk/prometheus/tracing"
-	yaml "gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
 	"github.com/webdevops/azure-auditor/auditor/types"

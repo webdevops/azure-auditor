@@ -4,30 +4,30 @@ import (
 	"os"
 
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
 type (
 	AuditConfig struct {
-		RoleAssignments          *validator.AuditConfigValidation `yaml:"roleAssignments"`
-		ResourceGroups           *validator.AuditConfigValidation `yaml:"resourceGroups"`
-		ResourceProviders        *validator.AuditConfigValidation `yaml:"resourceProviders"`
-		ResourceProviderFeatures *validator.AuditConfigValidation `yaml:"resourceProviderFeatures"`
-		KeyvaultAccessPolicies   *validator.AuditConfigValidation `yaml:"keyvaultAccessPolicies"`
-		ResourceGraph            *AuditConfigResourceGraph        `yaml:"resourceGraph"`
-		LogAnalytics             *AuditConfiLogAnalytics          `yaml:"logAnalytics"`
+		RoleAssignments          *validator.AuditConfigValidation `json:"roleAssignments"`
+		ResourceGroups           *validator.AuditConfigValidation `json:"resourceGroups"`
+		ResourceProviders        *validator.AuditConfigValidation `json:"resourceProviders"`
+		ResourceProviderFeatures *validator.AuditConfigValidation `json:"resourceProviderFeatures"`
+		KeyvaultAccessPolicies   *validator.AuditConfigValidation `json:"keyvaultAccessPolicies"`
+		ResourceGraph            *AuditConfigResourceGraph        `json:"resourceGraph"`
+		LogAnalytics             *AuditConfiLogAnalytics          `json:"logAnalytics"`
 	}
 
 	AuditConfigResourceGraph struct {
-		Enabled bool                                        `yaml:"enabled"`
-		Queries map[string]*validator.AuditConfigValidation `yaml:"queries"`
+		Enabled bool                                        `json:"enabled"`
+		Queries map[string]*validator.AuditConfigValidation `json:"queries"`
 	}
 
 	AuditConfiLogAnalytics struct {
-		Enabled bool                                        `yaml:"enabled"`
-		Queries map[string]*validator.AuditConfigValidation `yaml:"queries"`
+		Enabled bool                                        `json:"enabled"`
+		Queries map[string]*validator.AuditConfigValidation `json:"queries"`
 	}
 )
 

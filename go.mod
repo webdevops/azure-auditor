@@ -28,7 +28,7 @@ require (
 	github.com/webdevops/go-common v0.0.0-20250501125726-52273986367f
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.3.0
-	gopkg.in/yaml.v3 v3.0.1
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
@@ -81,6 +81,7 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apimachinery v0.33.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e // indirect
