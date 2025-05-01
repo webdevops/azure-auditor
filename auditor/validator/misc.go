@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/jeremywohl/flatten/v2"
+	"github.com/webdevops/go-common/utils/to"
 )
 
 var (

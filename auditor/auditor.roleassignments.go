@@ -7,8 +7,8 @@ import (
 
 	armauthorization "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest/to"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 	"go.uber.org/zap"
 
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
@@ -53,7 +53,7 @@ func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *z
 			logger.Panic(err)
 		}
 
-		for _, roleAssignment := range result.RoleAssignmentListResult.Value {
+		for _, roleAssignment := range result.Value {
 			scopeResourceId := strings.ToLower(to.String(roleAssignment.Properties.Scope))
 
 			azureScope, _ := azureCommon.ParseResourceId(scopeResourceId)

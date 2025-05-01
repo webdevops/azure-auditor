@@ -6,9 +6,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/to"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 	"go.uber.org/zap"
 
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
@@ -50,8 +49,8 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 			logger.Panic(err)
 		}
 
-		for _, item := range result.ResourceListResult.Value {
-			resourceInfo, _ := azure.ParseResourceID(to.String(item.ID))
+		for _, item := range result.Value {
+			resourceInfo, _ := azureCommon.ParseResourceId(to.String(item.ID))
 
 			keyvaultResource, err := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName, nil)
 			if err != nil {

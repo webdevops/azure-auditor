@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/webdevops/go-common/utils/to"
 
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 

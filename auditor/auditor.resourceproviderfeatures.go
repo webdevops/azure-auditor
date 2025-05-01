@@ -10,8 +10,8 @@ import (
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 )
 
 func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
@@ -48,7 +48,7 @@ func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, 
 			logger.Panic(err)
 		}
 
-		for _, feature := range result.FeatureOperationsListResult.Value {
+		for _, feature := range result.Value {
 			if strings.EqualFold(to.String(feature.Properties.State), "Registered") {
 				nameParts := strings.SplitN(stringPtrToStringLower(feature.Name), "/", 2)
 

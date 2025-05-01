@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/patrickmn/go-cache"
 	cron "github.com/robfig/cron/v3"
+	"github.com/webdevops/go-common/utils/to"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapio"

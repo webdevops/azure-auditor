@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/gofrs/uuid"
 	"github.com/robertkrimen/otto"
 	_ "github.com/robertkrimen/otto/underscore"
+	"github.com/webdevops/go-common/utils/to"
 	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/types"

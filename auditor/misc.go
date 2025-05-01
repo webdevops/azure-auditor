@@ -3,7 +3,7 @@ package auditor
 import (
 	"strings"
 
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/webdevops/go-common/utils/to"
 )
 
 func cronspecIsValid(cronspec string) bool {

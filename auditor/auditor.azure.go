@@ -8,7 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/webdevops/go-common/utils/to"
 )
 
 func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[string]*armsubscriptions.Subscription) {
@@ -52,7 +52,7 @@ func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *
 			auditor.Logger.Panic(err)
 		}
 
-		for _, item := range result.ResourceListResult.Value {
+		for _, item := range result.Value {
 			resourceID := strings.ToLower(to.String(item.ID))
 			list[resourceID] = item
 		}
@@ -91,7 +91,7 @@ func (auditor *AzureAuditor) getRoleDefinitionList(ctx context.Context, subscrip
 			auditor.Logger.Panic(err)
 		}
 
-		for _, item := range result.RoleDefinitionListResult.Value {
+		for _, item := range result.Value {
 			resourceID := strings.ToLower(to.String(item.ID))
 			list[resourceID] = item
 		}

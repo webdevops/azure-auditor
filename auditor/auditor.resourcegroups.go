@@ -7,8 +7,8 @@ import (
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 	"go.uber.org/zap"
 )
 

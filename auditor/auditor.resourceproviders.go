@@ -10,8 +10,8 @@ import (
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
+	"github.com/webdevops/go-common/utils/to"
 )
 
 func (auditor *AzureAuditor) auditResourceProviders(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
@@ -49,7 +49,7 @@ func (auditor *AzureAuditor) fetchResourceProviders(ctx context.Context, logger 
 			logger.Panic(err)
 		}
 
-		for _, resourceProvider := range result.ProviderListResult.Value {
+		for _, resourceProvider := range result.Value {
 			if strings.EqualFold(to.String(resourceProvider.RegistrationState), "Registered") {
 				obj := map[string]interface{}{
 					"resource.id":     stringPtrToStringLower(resourceProvider.ID),
