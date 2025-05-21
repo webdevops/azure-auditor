@@ -17,11 +17,11 @@ import (
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/dustin/go-humanize"
+	yaml "github.com/goccy/go-yaml"
 	"github.com/google/uuid"
 	flags "github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/webdevops/go-common/azuresdk/prometheus/tracing"
-	"sigs.k8s.io/yaml"
 
 	auditor "github.com/webdevops/azure-auditor/auditor"
 	"github.com/webdevops/azure-auditor/auditor/types"
