@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -40,18 +40,13 @@ var (
 	Opts      config.Opts
 
 	azureAuditor *auditor.AzureAuditor
-
-	// Git version information
-	gitCommit = "<unknown>"
-	gitTag    = "<unknown>"
 )
 
 func main() {
 	initArgparser()
-	defer initLogger().Sync() // nolint:errcheck
+	initLogger()
 
-	logger.Infof("starting azure-auditor v%s (%s; %s; by %v)", gitTag, gitCommit, runtime.Version(), Author)
-	logger.Info(string(Opts.GetJson()))
+	printStartup("azure-auditor", Author)
 
 	initSystem()
 
@@ -63,7 +58,7 @@ func main() {
 	azureAuditor.SetConfigs(Opts.Config...)
 	azureAuditor.Run()
 
-	logger.Infof("Starting http server on %s", Opts.Server.Bind)
+	logger.Info("Starting http server", slog.String("bind", Opts.Server.Bind))
 	startHttpServer()
 }
 
@@ -105,14 +100,14 @@ func startHttpServer() {
 	// healthz
 	mux.HandleFunc(endpoints["healthz"], func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
-			logger.Error(err)
+			logger.Error(err.Error())
 		}
 	})
 
 	// readyz
 	mux.HandleFunc(endpoints["readyz"], func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fmt.Fprint(w, "Ok"); err != nil {
-			logger.Error(err)
+			logger.Error(err.Error())
 		}
 	})
 
@@ -137,7 +132,7 @@ func startHttpServer() {
 		},
 		"rawJs": func(val string) template.JS {
 			jsFilter := regexp.MustCompile(`(?m)^[\s]*(//.+$)?`)
-			if !Opts.Logger.Development {
+			if Opts.Logger.Level != "trace" {
 				val = jsFilter.ReplaceAllString(val, "")
 				val = jsFilter.ReplaceAllString(val, "")
 				val = strings.ReplaceAll(val, "{\n", "{")
@@ -170,7 +165,7 @@ func startHttpServer() {
 		},
 	}).Funcs(sprig.HtmlFuncMap()).ParseGlob("./templates/*")
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	mux.HandleFunc(endpoints["frontend"], func(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +238,7 @@ func startHttpServer() {
 		}
 
 		if err := tmpl.ExecuteTemplate(w, "report.html", templatePayload); err != nil {
-			logger.Error(err)
+			logger.Error(err.Error())
 		}
 	})
 
@@ -362,14 +357,14 @@ func startHttpServer() {
 		content, err := yaml.Marshal(azureAuditor.GetConfig())
 		if err == nil {
 			if _, writeErr := w.Write(content); writeErr != nil {
-				logger.Error(writeErr)
+				logger.Error(writeErr.Error())
 			}
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			if _, writeErr := w.Write([]byte("Unable to marshal configuration")); writeErr != nil {
-				logger.Error(writeErr)
+				logger.Error(writeErr.Error())
 			}
-			logger.Error(err)
+			logger.Error(err.Error())
 		}
 	})
 
@@ -388,7 +383,9 @@ func startHttpServer() {
 		WriteTimeout: Opts.Server.WriteTimeout,
 	}
 	go func() {
-		logger.Fatal(srv.ListenAndServe())
+		if err := srv.ListenAndServe(); err != nil {
+			logger.Fatal(err.Error())
+		}
 	}()
 	// Setting up signal capturing
 	stop := make(chan os.Signal, 1)
@@ -399,5 +396,8 @@ func startHttpServer() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	logger.Fatal(srv.Shutdown(ctx))
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal(err.Error())
+	}
 }

@@ -1,10 +1,10 @@
 package auditor
 
 import (
+	"log/slog"
 	"os"
 
 	yaml "github.com/goccy/go-yaml"
-	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -46,13 +46,13 @@ func (auditor *AzureAuditor) reloadConfig() {
 		if data, err := os.ReadFile(path); err == nil {
 			configRaw = data
 		} else {
-			auditor.Logger.Panic(err)
+			auditor.Logger.Panic(err.Error())
 		}
 
-		auditor.Logger.With(zap.String("path", path)).Info("parsing configuration")
+		auditor.Logger.With(slog.String("path", path)).Info("parsing configuration")
 		err := yaml.UnmarshalWithOptions(configRaw, &auditor.config, yaml.Strict(), yaml.UseJSONUnmarshaler())
 		if err != nil {
-			auditor.Logger.Panic(err)
+			auditor.Logger.Panic(err.Error())
 		}
 	}
 }

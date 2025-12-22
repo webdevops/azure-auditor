@@ -1,7 +1,7 @@
 #############################################
 # Build
 #############################################
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build
 
 RUN apk upgrade --no-cache --force
 RUN apk add --update build-base make git
@@ -37,7 +37,6 @@ WORKDIR /
 COPY --from=test /app .
 USER 1000:1000
 ENTRYPOINT ["/azure-auditor"]
-
 
 #############################################
 # final-static

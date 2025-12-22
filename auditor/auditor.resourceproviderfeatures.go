@@ -2,11 +2,12 @@ package auditor
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armfeatures"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"go.uber.org/zap"
+	"github.com/webdevops/go-common/log/slogger"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/webdevops/go-common/utils/to"
 )
 
-func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceProviderFeatures(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -30,22 +31,22 @@ func (auditor *AzureAuditor) auditResourceProviderFeatures(ctx context.Context, 
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal ResourceProviderFeatures", len(violationMetric.GetList()))
+		logger.Info("found illegal ResourceProviderFeatures", slog.Int("violations", len(violationMetric.GetList())))
 		violationMetric.GaugeSetInc(auditor.prometheus.resourceProviderFeature)
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchResourceProviderFeatures(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	client, err := armfeatures.NewClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	pager := client.NewListAllPager(nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			logger.Panic(err)
+			logger.Panic(err.Error())
 		}
 
 		for _, feature := range result.Value {

@@ -2,21 +2,21 @@ package auditor
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 
 	armauthorization "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/log/slogger"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
-	"go.uber.org/zap"
-
-	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchRoleAssignments(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -33,24 +33,24 @@ func (auditor *AzureAuditor) auditRoleAssignments(ctx context.Context, logger *z
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal RoleAssignments", len(violationMetric.GetList()))
+		logger.Info("found illegal RoleAssignments", slog.Int("violations", len(violationMetric.GetList())))
 		violationMetric.GaugeSetInc(auditor.prometheus.roleAssignment)
 	}
 }
 
-func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchRoleAssignments(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	list = []*validator.AzureObject{}
 
 	client, err := armauthorization.NewRoleAssignmentsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	pager := client.NewListForSubscriptionPager(nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			logger.Panic(err)
+			logger.Panic(err.Error())
 		}
 
 		for _, roleAssignment := range result.Value {

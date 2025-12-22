@@ -14,7 +14,7 @@ import (
 func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[string]*armsubscriptions.Subscription) {
 	list, err := auditor.azure.client.ListCachedSubscriptions(ctx)
 	if err != nil {
-		auditor.Logger.Panic(err)
+		auditor.Logger.Panic(err.Error())
 	}
 	return list
 }
@@ -22,7 +22,7 @@ func (auditor *AzureAuditor) getSubscriptionList(ctx context.Context) (list map[
 func (auditor *AzureAuditor) getResourceGroupList(ctx context.Context, subscription *armsubscriptions.Subscription) (list map[string]*armresources.ResourceGroup) {
 	list, err := auditor.azure.client.ListResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
-		auditor.Logger.Panic(err)
+		auditor.Logger.Panic(err.Error())
 	}
 	return list
 }
@@ -42,14 +42,14 @@ func (auditor *AzureAuditor) getResourceList(ctx context.Context, subscription *
 
 	client, err := armresources.NewClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		auditor.Logger.Panic(err)
+		auditor.Logger.Panic(err.Error())
 	}
 	pager := client.NewListPager(nil)
 
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			auditor.Logger.Panic(err)
+			auditor.Logger.Panic(err.Error())
 		}
 
 		for _, item := range result.Value {
@@ -81,14 +81,14 @@ func (auditor *AzureAuditor) getRoleDefinitionList(ctx context.Context, subscrip
 
 	client, err := armauthorization.NewRoleDefinitionsClient(auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		auditor.Logger.Panic(err)
+		auditor.Logger.Panic(err.Error())
 	}
 
 	pager := client.NewListPager(*subscription.ID, nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			auditor.Logger.Panic(err)
+			auditor.Logger.Panic(err.Error())
 		}
 
 		for _, item := range result.Value {

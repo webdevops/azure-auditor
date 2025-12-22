@@ -38,7 +38,7 @@ test:
 
 	config := TestValidator{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), &config); err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
@@ -124,7 +124,7 @@ test:
 
 	config := TestValidator{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), &config); err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
@@ -175,7 +175,7 @@ test:
 
 	config := TestValidator{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), &config); err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
@@ -220,7 +220,7 @@ test:
 
 	config := TestValidator{}
 	if err := yaml.Unmarshal([]byte(yamlConfig), &config); err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 

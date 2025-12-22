@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"sync"
@@ -13,8 +14,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/robertkrimen/otto"
 	_ "github.com/robertkrimen/otto/underscore"
+	"github.com/webdevops/go-common/log/slogger"
 	"github.com/webdevops/go-common/utils/to"
-	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/types"
 )
@@ -40,7 +41,7 @@ type (
 var (
 	vm     = otto.New()
 	vmLock = sync.Mutex{}
-	Logger *zap.SugaredLogger
+	Logger *slogger.Logger
 )
 
 func (matcher *AuditConfigValidationRule) UnmarshalJSON(b []byte) error {
@@ -186,9 +187,9 @@ func (rule *AuditConfigValidationRule) handleRuleStatus(object *AzureObject, sta
 	atomic.AddInt64(&rule.Stats.Matches, 1)
 	if Logger != nil {
 		Logger.With(
-			zap.String("resourceID", object.ResourceID()),
-			zap.String("rule", rule.Rule),
-			zap.String("validationStatus", status.String()),
+			slog.String("resourceID", object.ResourceID()),
+			slog.String("rule", rule.Rule),
+			slog.String("validationStatus", status.String()),
 		).Debugf("validation status: \"%v\"", status)
 	}
 	return status

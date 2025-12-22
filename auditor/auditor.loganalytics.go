@@ -2,14 +2,15 @@ package auditor
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	armoperationalinsights "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights/v2"
 	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/log/slogger"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
-	"go.uber.org/zap"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
@@ -31,7 +32,7 @@ type (
 	}
 )
 
-func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *zap.SugaredLogger, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *slogger.Logger, configName string, config *validator.AuditConfigValidation, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.queryLogAnalytics(ctx, logger, config)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -48,36 +49,36 @@ func (auditor *AzureAuditor) auditLogAnalytics(ctx context.Context, logger *zap.
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal LogAnalytics:%v", len(violationMetric.GetList()), configName)
+		logger.Info("found illegal LogAnalytics resources", slog.Int("violations", len(violationMetric.GetList())))
 		violationMetric.GaugeSetInc(auditor.prometheus.logAnalytics[configName])
 	}
 }
 
-func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *zap.SugaredLogger, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *slogger.Logger, config *validator.AuditConfigValidation) (list []*validator.AzureObject) {
 
 	subscriptionList := auditor.getSubscriptionList(ctx)
 
 	for _, mainWorkspaceResourceId := range *config.Workspaces {
 		workspaceAuditList := []*validator.AzureObject{}
 
-		workspaceLogger := logger.With(zap.String("logAnalyticsWorkspace", mainWorkspaceResourceId))
+		workspaceLogger := logger.With(slog.String("logAnalyticsWorkspace", mainWorkspaceResourceId))
 
 		mainWorkspaceInfo, err := azureCommon.ParseResourceId(mainWorkspaceResourceId)
 		if err != nil {
-			workspaceLogger.Panic(err)
+			workspaceLogger.Panic(err.Error())
 		}
 
 		// lookup subscription from workspace id
 		if v, ok := subscriptionList[mainWorkspaceInfo.Subscription]; ok {
 			workspaceLogger = workspaceLogger.With(
-				zap.String("subscriptionID", to.String(v.SubscriptionID)),
-				zap.String("subscriptionName", to.String(v.DisplayName)),
+				slog.String("subscriptionID", to.String(v.SubscriptionID)),
+				slog.String("subscriptionName", to.String(v.DisplayName)),
 			)
 		}
 
 		mainWorkspaceId, err := auditor.lookupWorkspaceResource(ctx, mainWorkspaceResourceId)
 		if err != nil {
-			workspaceLogger.Panic(err)
+			workspaceLogger.Panic(err.Error())
 		}
 
 		var workspaces []*string
@@ -85,20 +86,20 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *zap.
 			for _, additionalWorkspaceResourceId := range *config.AdditionalWorkspaces {
 				additionalWorkspaceId, err := auditor.lookupWorkspaceResource(ctx, additionalWorkspaceResourceId)
 				if err != nil {
-					workspaceLogger.Panic(err)
+					workspaceLogger.Panic(err.Error())
 				}
 
 				workspaces = append(workspaces, additionalWorkspaceId)
 			}
 		}
 
-		workspaceLogger.With(zap.Any("workspaces", workspaces)).Debug("sending query")
+		workspaceLogger.With(slog.Any("workspaces", workspaces)).Debug("sending query")
 		startTime := time.Now()
 
 		clientOpts := azquery.LogsClientOptions{ClientOptions: *auditor.azure.client.NewAzCoreClientOptions()}
 		logsClient, err := azquery.NewLogsClient(auditor.azure.client.GetCred(), &clientOpts)
 		if err != nil {
-			workspaceLogger.Error(err)
+			workspaceLogger.Error(err.Error())
 			return
 		}
 
@@ -111,7 +112,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *zap.
 
 		queryResults, err := logsClient.QueryWorkspace(ctx, *mainWorkspaceId, queryBody, &opts)
 		if err != nil {
-			workspaceLogger.Error(err)
+			workspaceLogger.Error(err.Error())
 			return
 		}
 
@@ -144,7 +145,7 @@ func (auditor *AzureAuditor) queryLogAnalytics(ctx context.Context, logger *zap.
 				workspaceAuditList = append(workspaceAuditList, validator.NewAzureObject(auditLine))
 			}
 		}
-		workspaceLogger.With(zap.Any("workspaces", workspaces)).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
+		workspaceLogger.With(slog.Any("workspaces", workspaces)).Debugf("finished query, fetched %d rows after %s", len(workspaceAuditList), time.Since(startTime).String())
 
 		if config.Enrich {
 			auditor.enrichAzureObjects(ctx, nil, &workspaceAuditList)

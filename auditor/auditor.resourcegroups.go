@@ -2,17 +2,18 @@ package auditor
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	"github.com/webdevops/go-common/log/slogger"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
-	"go.uber.org/zap"
 )
 
-func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchResourceGroups(ctx, logger, subscription)
 
 	violationMetric := prometheusCommon.NewMetricsList()
@@ -29,15 +30,15 @@ func (auditor *AzureAuditor) auditResourceGroups(ctx context.Context, logger *za
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal ResourceGroups", len(violationMetric.GetList()))
+		logger.Info("found illegal ResourceGroups", slog.Int("violations", len(violationMetric.GetList())))
 		violationMetric.GaugeSetInc(auditor.prometheus.resourceGroup)
 	}
 }
 
-func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchResourceGroups(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	resourceGroupList, err := auditor.azure.client.ListResourceGroups(ctx, *subscription.SubscriptionID)
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	for _, resourceGroup := range resourceGroupList {

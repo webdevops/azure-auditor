@@ -23,17 +23,20 @@ Usage:
   azure-auditor [OPTIONS]
 
 Application Options:
-      --log.debug                                   debug mode [$LOG_DEBUG]
-      --log.devel                                   development mode [$LOG_DEVEL]
-      --log.json                                    Switch log output to json format [$LOG_JSON]
+      --version                                     Show version
+      --version.template=                           Version go template, eg {{.Version}}
+      --log.level=[trace|debug|info|warning|error]  Log level (default: info) [$LOG_LEVEL]
+      --log.format=[logfmt|json]                    Log format (default: logfmt) [$LOG_FORMAT]
+      --log.source=[|short|file|full]               Show source for every log message (useful for debugging and bug reports) [$LOG_SOURCE]
+      --log.color=[|auto|yes|no]                    Enable color for logs [$LOG_COLOR]
+      --log.time                                    Show log time [$LOG_TIME]
       --azure.environment=                          Azure environment name (default: AZUREPUBLICCLOUD) [$AZURE_ENVIRONMENT]
       --azure.tenant=                               Azure tenant id [$AZURE_TENANT_ID]
       --azure.subscription=                         Azure subscription ID [$AZURE_SUBSCRIPTION_ID]
       --azure.tag.inherit=                          Inherit tags [$AZURE_TAG_INHERIT]
       --report.title=                               Report title [$REPORT_TITLE]
       --report.pagination.size=[5|10|25|50|100|250] Report pagination size (default: 50) [$REPORT_PAGINATION_SIZE]
-      --cron.keytvaultaccesspolicies=               Cronjob for KeyVault AccessPolicies report (default: 0 * * * *)
-                                                    [$CRON_KEYTVAULTACCESSPOLICIES]
+      --cron.keytvaultaccesspolicies=               Cronjob for KeyVault AccessPolicies report (default: 0 * * * *) [$CRON_KEYTVAULTACCESSPOLICIES]
       --cron.resourcegroups=                        Cronjob for ResourceGroups report (default: */30 * * * *) [$CRON_RESOURCEGROUPS]
       --cron.resourceproviders=                     Cronjob for ResourceProviders report (default: 0 * * * *) [$CRON_RESOURCEPROVIDERS]
       --cron.roleassignments=                       Cronjob for RoleAssignments report (default: */5 * * * *) [$CRON_ROLEASSIGNMENTS]

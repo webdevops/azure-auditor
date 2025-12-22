@@ -2,20 +2,20 @@ package auditor
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
+	"github.com/webdevops/go-common/log/slogger"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"github.com/webdevops/go-common/utils/to"
-	"go.uber.org/zap"
-
-	azureCommon "github.com/webdevops/go-common/azuresdk/armclient"
 
 	"github.com/webdevops/azure-auditor/auditor/validator"
 )
 
-func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
+func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription, report *AzureAuditorReport, callback chan<- func()) {
 	list := auditor.fetchKeyvaultAccessPolicies(ctx, logger, subscription)
 	violationMetric := prometheusCommon.NewMetricsList()
 
@@ -31,22 +31,22 @@ func (auditor *AzureAuditor) auditKeyvaultAccessPolicies(ctx context.Context, lo
 	}
 
 	callback <- func() {
-		logger.Infof("found %v illegal KeyVault AccessPolicies", len(violationMetric.GetList()))
+		logger.Info("foundillegal KeyVault AccessPolicies", slog.Int("violations", len(violationMetric.GetList())))
 		violationMetric.GaugeSetInc(auditor.prometheus.keyvaultAccessPolicies)
 	}
 }
 
-func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *zap.SugaredLogger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
+func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, logger *slogger.Logger, subscription *armsubscriptions.Subscription) (list []*validator.AzureObject) {
 	client, err := armkeyvault.NewVaultsClient(*subscription.SubscriptionID, auditor.azure.client.GetCred(), nil)
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(err.Error())
 	}
 
 	pager := client.NewListPager(nil)
 	for pager.More() {
 		result, err := pager.NextPage(ctx)
 		if err != nil {
-			logger.Panic(err)
+			logger.Panic(err.Error())
 		}
 
 		for _, item := range result.Value {
@@ -54,7 +54,7 @@ func (auditor *AzureAuditor) fetchKeyvaultAccessPolicies(ctx context.Context, lo
 
 			keyvaultResource, err := client.Get(ctx, resourceInfo.ResourceGroup, resourceInfo.ResourceName, nil)
 			if err != nil {
-				logger.Panic(err)
+				logger.Panic(err.Error())
 			}
 
 			if keyvaultResource.Properties.AccessPolicies != nil {
