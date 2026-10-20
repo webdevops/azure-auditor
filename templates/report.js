@@ -110,7 +110,7 @@ let loadFromHash = () => {
     try {
         if (window.location.hash && window.location.hash.length >= 2) {
             let hashString = window.location.hash.substring(1);
-            let formData = jQuery.parseJSON(atob(hashString));
+            let formData = JSON.parse(atob(hashString));
 
             $("#report-form :input").val("");
             Object.keys(formData).forEach((fieldName) => {
